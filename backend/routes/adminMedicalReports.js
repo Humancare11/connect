@@ -13,6 +13,7 @@ const {
   ReportValidationError,
   validatePdfUpload,
   cleanClinicalFields,
+  hasClinicalContent,
   createMedicalReport,
   serializeReport,
   readClinicalContent,
@@ -21,6 +22,7 @@ const {
 
 const MAX_TITLE = 150;
 const MAX_DOCTOR_NAME = 120;
+const MAX_PATIENT_NAME = 120;
 const MAX_VOID_REASON = 500;
 
 const escapeRegex = (text) => String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -29,7 +31,7 @@ const escapeRegex = (text) => String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"
 // The size limit is enforced while streaming, the type and magic bytes afterwards.
 const uploader = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_PDF_BYTES, files: 1, fields: 20, fieldSize: 20_000 },
+  limits: { fileSize: MAX_PDF_BYTES, files: 1, fields: 30, fieldSize: 20_000 },
 }).single("file");
 
 const parseBody = (req, res, next) => {
@@ -64,8 +66,19 @@ router.post("/", verifyAdminToken, adminOnly, parseBody, async (req, res) => {
     if (!["generated", "uploaded"].includes(reportType)) {
       return res.status(400).json({ msg: "Choose a valid report type." });
     }
-    if (!mongoose.isValidObjectId(body.patientId)) {
+    // A report is linked to a patient account (patientId) or, for generated reports only, typed in
+    // by hand with a patientName ("unlinked").
+    const hasPatientId = body.patientId !== undefined && body.patientId !== null && String(body.patientId).trim() !== "";
+    if (hasPatientId ? !mongoose.isValidObjectId(body.patientId) : reportType !== "generated") {
       return res.status(400).json({ msg: "Select a patient." });
+    }
+    const patientName = text(body.patientName);
+    if (!hasPatientId) {
+      if (!patientName) return res.status(400).json({ msg: "Enter the patient's name." });
+      if (patientName.length > MAX_PATIENT_NAME) return res.status(400).json({ msg: "The patient name is too long." });
+      if (text(body.patientDob) && !/^\d{4}-\d{2}-\d{2}$/.test(text(body.patientDob))) {
+        return res.status(400).json({ msg: "The date of birth must be a valid date." });
+      }
     }
 
     const title = text(body.title);
@@ -77,10 +90,13 @@ router.post("/", verifyAdminToken, adminOnly, parseBody, async (req, res) => {
     if (!reportDate) return res.status(400).json({ msg: "A valid report date is required." });
 
     // Patient accounts only — never an admin, doctor or other staff login.
-    const patient = await User.findOne({ _id: body.patientId, role: "user" })
-      .select("name email patientId dob gender")
-      .lean();
-    if (!patient) return res.status(404).json({ msg: "Patient not found." });
+    let patient = null;
+    if (hasPatientId) {
+      patient = await User.findOne({ _id: body.patientId, role: "user" })
+        .select("name email patientId dob gender mobile city state country")
+        .lean();
+      if (!patient) return res.status(404).json({ msg: "Patient not found." });
+    }
 
     const content = cleanClinicalFields(body);
     let file = null;
@@ -88,7 +104,7 @@ router.post("/", verifyAdminToken, adminOnly, parseBody, async (req, res) => {
       file = validatePdfUpload(req.file);
     } else {
       if (req.file) return res.status(400).json({ msg: "A file can only be attached to an uploaded report." });
-      if (!Object.keys(content).length) {
+      if (!hasClinicalContent(content)) {
         return res.status(400).json({ msg: "Fill in at least one section of the report." });
       }
     }
@@ -96,6 +112,7 @@ router.post("/", verifyAdminToken, adminOnly, parseBody, async (req, res) => {
     const report = await createMedicalReport({
       reportType,
       patient,
+      patientName,
       issuedBy: req.user.id,
       issuedByRole: req.user.role,
       title,
@@ -110,7 +127,7 @@ router.post("/", verifyAdminToken, adminOnly, parseBody, async (req, res) => {
       action: "PHI_CREATE_MEDICAL_REPORT",
       resource: "MedicalReport",
       resourceId: report._id,
-      patientId: patient._id,
+      patientId: patient?._id,
       details: { reportNumber: report.reportNumber, reportType },
     });
 
@@ -147,6 +164,7 @@ router.get("/", verifyAdminToken, adminOnly, async (req, res) => {
         { reportNumber: pattern },
         { title: pattern },
         { patientId: { $in: matchingPatients.map((p) => p._id) } },
+        { patientName: pattern },
       ];
     }
 

@@ -1,21 +1,40 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FileText } from "lucide-react";
 import api from "../../api";
 import { useToast } from "../../components/ui/Toast";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
 import "./MedicalReports.css";
 
-const MAX_PDF_BYTES = 10 * 1024 * 1024;
 const DEFAULT_DOCTOR = "Issued by Humancare";
 
-// Template sections, in the order they print. Keys match the backend.
+// Template sections (HCC Medical Report), in the order they print. Keys match the backend.
 const SECTIONS = [
   ["chiefComplaint", "Chief complaint"],
+  ["examination", "Clinical findings"],
+  ["diagnosis", "Diagnosis"],
+  ["treatment", "Plan / disposition / treatment (one item per line)"],
+];
+
+// Typed patient details (printed in the Patient Details table; "N/A" when left empty).
+// There is no patient account behind the report, so these are entered by hand.
+const PATIENT_FIELDS = [
+  ["patientContact", "Contact number", "Optional"],
+  ["patientLocation", "Patient location", "Optional"],
+];
+const REQUEST_TYPES = ["In-Clinic Consultation", "Video Consultation", "Home Visit", "Teleconsultation"];
+
+// Labels for the detail view — includes fields used by older reports.
+const DETAIL_FIELDS = [
+  ["requestType", "Request type"],
+  ["patientDob", "Date of birth"],
+  ["patientContact", "Contact number"],
+  ["patientLocation", "Patient location"],
+  ["chiefComplaint", "Chief complaint"],
+  ["examination", "Clinical findings"],
   ["history", "History"],
-  ["examination", "Examination findings"],
   ["investigations", "Investigations"],
   ["diagnosis", "Diagnosis"],
-  ["treatment", "Treatment & recommendations"],
+  ["treatment", "Plan / disposition / treatment"],
   ["followUp", "Follow-up"],
   ["remarks", "Remarks"],
 ];
@@ -31,111 +50,15 @@ const formatDate = (value) => {
 };
 
 const emptyForm = () => ({
-  reportType: "generated",
   title: "",
   reportDate: today(),
   doctorName: "",
-  notify: true,
-  file: null,
+  requestType: "",
+  patientName: "",
+  patientDob: "",
   ...Object.fromEntries(SECTIONS.map(([key]) => [key, ""])),
+  ...Object.fromEntries(PATIENT_FIELDS.map(([key]) => [key, ""])),
 });
-
-// Searchable, server-paged patient list (patient accounts only).
-function PatientPicker({ value, onChange }) {
-  const [q, setQ] = useState("");
-  const [results, setResults] = useState([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef(null);
-
-  const load = useCallback(async (query, nextPage) => {
-    setLoading(true);
-    try {
-      const res = await api.get("/api/admin/users", { params: { q: query, page: nextPage, limit: 10 } });
-      setResults((prev) => (nextPage === 1 ? res.data.users : [...prev, ...res.data.users]));
-      setTotalPages(res.data.totalPages || 1);
-      setPage(nextPage);
-    } catch {
-      if (nextPage === 1) setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Debounced server-side search whenever the box is open and the text changes.
-  useEffect(() => {
-    if (!open) return undefined;
-    const timer = setTimeout(() => load(q.trim(), 1), 250);
-    return () => clearTimeout(timer);
-  }, [q, open, load]);
-
-  useEffect(() => {
-    const onPointerDown = (event) => {
-      if (!wrapRef.current?.contains(event.target)) setOpen(false);
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, []);
-
-  if (value) {
-    return (
-      <div className="mrp-picked">
-        <div>
-          <strong>{value.name}</strong>
-          <span className="mrp-muted"> · {value.email}{value.patientId ? ` · ID ${value.patientId}` : ""}</span>
-        </div>
-        <button type="button" className="mrp-link" onClick={() => onChange(null)}>
-          Change
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mrp-picker" ref={wrapRef}>
-      <input
-        className="mrp-input"
-        type="search"
-        placeholder="Search patient by name, email, phone or patient ID…"
-        value={q}
-        onFocus={() => setOpen(true)}
-        onChange={(e) => {
-          setQ(e.target.value);
-          setOpen(true);
-        }}
-        aria-label="Search patients"
-      />
-      {open && (
-        <div className="mrp-dropdown" role="listbox">
-          {results.map((p) => (
-            <button
-              type="button"
-              role="option"
-              key={p._id}
-              className="mrp-option"
-              onClick={() => {
-                onChange(p);
-                setOpen(false);
-              }}
-            >
-              <strong>{p.name}</strong>
-              <span className="mrp-muted">{p.email}{p.patientId ? ` · ID ${p.patientId}` : ""}</span>
-            </button>
-          ))}
-          {!loading && results.length === 0 && <div className="mrp-empty">No patients found.</div>}
-          {loading && <div className="mrp-empty">Searching…</div>}
-          {!loading && page < totalPages && (
-            <button type="button" className="mrp-more" onClick={() => load(q.trim(), page + 1)}>
-              Load more
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function StatusBadge({ report }) {
   if (report.isDeleted) return <span className="mrp-badge mrp-badge--deleted">Deleted</span>;
@@ -149,11 +72,9 @@ export default function MedicalReports() {
   const [tab, setTab] = useState("issue");
 
   // ── Issue form ──
-  const [patient, setPatient] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const fileRef = useRef(null);
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
   // ── History ──
@@ -195,50 +116,37 @@ export default function MedicalReports() {
   const submit = async (event) => {
     event.preventDefault();
     setError("");
-    if (!patient) return setError("Select a patient.");
+    if (!form.patientName.trim()) return setError("Enter the patient's name.");
     if (!form.title.trim()) return setError("Enter a report title.");
     if (!form.reportDate) return setError("Choose the report date.");
-    const uploaded = form.reportType === "uploaded";
-    if (uploaded) {
-      if (!form.file) return setError("Choose a PDF file.");
-      if (form.file.type !== "application/pdf") return setError("Only PDF files are allowed.");
-      if (form.file.size > MAX_PDF_BYTES) return setError("The PDF must be 10 MB or smaller.");
-    } else if (!SECTIONS.some(([key]) => form[key].trim())) {
+    if (!SECTIONS.some(([key]) => form[key].trim())) {
       return setError("Fill in at least one section of the report.");
     }
 
     const ok = await confirm({
       title: "Issue medical report?",
-      message: `This report will be issued to ${patient.name}${form.notify ? " and they will be notified" : ""}. Reports cannot be edited afterwards — only voided.`,
+      message: `This report will be issued for ${form.patientName.trim()}. It is not linked to a patient account, so no notification is sent. Reports cannot be edited afterwards — only voided.`,
       confirmText: "Issue Report",
     });
     if (!ok) return;
 
     const fields = {
-      reportType: form.reportType,
-      patientId: patient._id,
+      reportType: "generated",
+      patientName: form.patientName.trim(),
+      patientDob: form.patientDob,
       title: form.title.trim(),
       reportDate: form.reportDate,
       doctorName: form.doctorName.trim(),
-      notify: form.notify ? "1" : "0",
+      requestType: form.requestType,
       ...Object.fromEntries(SECTIONS.map(([key]) => [key, form[key]])),
+      ...Object.fromEntries(PATIENT_FIELDS.map(([key]) => [key, form[key]])),
     };
 
     setSubmitting(true);
     try {
-      let res;
-      if (uploaded) {
-        const fd = new FormData();
-        Object.entries(fields).forEach(([k, v]) => fd.append(k, v));
-        fd.append("file", form.file);
-        res = await api.post("/api/admin/medical-reports", fd);
-      } else {
-        res = await api.post("/api/admin/medical-reports", { ...fields, notify: form.notify });
-      }
-      toast.success(`Report ${res.data.report.reportNumber} issued to ${patient.name}.`);
+      const res = await api.post("/api/admin/medical-reports", fields);
+      toast.success(`Report ${res.data.report.reportNumber} issued for ${fields.patientName}.`);
       setForm(emptyForm());
-      setPatient(null);
-      if (fileRef.current) fileRef.current.value = "";
       setTab("history");
       setPage(1);
     } catch (err) {
@@ -291,7 +199,7 @@ export default function MedicalReports() {
   const remove = async (report) => {
     const ok = await confirm({
       title: "Delete report?",
-      message: `${report.reportNumber} will be hidden from ${report.patient?.name || "the patient"} and from this list. The record is kept for audit.`,
+      message: `${report.reportNumber} will be hidden from ${report.patient?.linked === false ? "this list" : `${report.patient?.name || "the patient"} and from this list`}. The record is kept for audit.`,
       confirmText: "Delete",
     });
     if (!ok) return;
@@ -307,15 +215,13 @@ export default function MedicalReports() {
     }
   };
 
-  const uploaded = form.reportType === "uploaded";
-
   return (
     <div className="mrp-page">
       <header className="mrp-header">
         <FileText size={22} aria-hidden="true" />
         <div>
           <h1 className="mrp-title">Medical Report</h1>
-          <p className="mrp-sub">Issue a medical report to a patient. It appears in their Medical Records.</p>
+          <p className="mrp-sub">Issue a medical report by typing in the patient's details. The PDF is stored here; it is not added to any patient account.</p>
         </div>
       </header>
 
@@ -336,53 +242,56 @@ export default function MedicalReports() {
 
       {tab === "issue" && (
         <form className="mrp-card" onSubmit={submit} noValidate>
-          <label className="mrp-label">Patient</label>
-          <PatientPicker value={patient} onChange={setPatient} />
-
-          <div className="mrp-modes" role="radiogroup" aria-label="Report type">
-            {[["generated", "Fill in template (PDF generated)"], ["uploaded", "Upload existing PDF"]].map(([key, label]) => (
-              <label key={key} className={`mrp-mode${form.reportType === key ? " is-active" : ""}`}>
-                <input type="radio" name="reportType" checked={form.reportType === key} onChange={() => set("reportType", key)} />
-                {label}
-              </label>
-            ))}
-          </div>
-
           <div className="mrp-row">
             <div>
               <label className="mrp-label" htmlFor="mrp-title">Report title</label>
               <input id="mrp-title" className="mrp-input" maxLength={150} value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="e.g. Annual health check-up" />
             </div>
             <div>
-              <label className="mrp-label" htmlFor="mrp-date">Report date</label>
+              <label className="mrp-label" htmlFor="mrp-date">Date of service</label>
               <input id="mrp-date" className="mrp-input" type="date" value={form.reportDate} onChange={(e) => set("reportDate", e.target.value)} />
             </div>
           </div>
 
-          <label className="mrp-label" htmlFor="mrp-doctor">Doctor name (optional)</label>
+          <label className="mrp-label" htmlFor="mrp-doctor">Assigned / attending doctor (optional)</label>
           <input id="mrp-doctor" className="mrp-input" maxLength={120} value={form.doctorName} onChange={(e) => set("doctorName", e.target.value)} placeholder={DEFAULT_DOCTOR} />
 
-          {uploaded && (
-            <>
-              <label className="mrp-label" htmlFor="mrp-file">PDF file (max 10 MB)</label>
-              <input id="mrp-file" ref={fileRef} className="mrp-input" type="file" accept="application/pdf,.pdf" onChange={(e) => set("file", e.target.files?.[0] || null)} />
-            </>
-          )}
+          <label className="mrp-label" htmlFor="mrp-requestType">Request type</label>
+          <input id="mrp-requestType" className="mrp-input" maxLength={200} value={form.requestType} onChange={(e) => set("requestType", e.target.value)} placeholder="e.g. In-Clinic Consultation" list="mrp-request-types" />
+          <datalist id="mrp-request-types">
+            {REQUEST_TYPES.map((type) => <option key={type} value={type} />)}
+          </datalist>
 
           <fieldset className="mrp-sections">
-            <legend className="mrp-label">{uploaded ? "Clinical notes (optional, stored encrypted)" : "Report content"}</legend>
+            <legend className="mrp-label">Patient details</legend>
+            <div className="mrp-row">
+              <div>
+                <label className="mrp-sublabel" htmlFor="mrp-patientName">Patient name</label>
+                <input id="mrp-patientName" className="mrp-input" maxLength={120} value={form.patientName} onChange={(e) => set("patientName", e.target.value)} required />
+              </div>
+              <div>
+                <label className="mrp-sublabel" htmlFor="mrp-patientDob">Date of birth (optional)</label>
+                <input id="mrp-patientDob" className="mrp-input" type="date" max={today()} value={form.patientDob} onChange={(e) => set("patientDob", e.target.value)} />
+              </div>
+            </div>
+            {PATIENT_FIELDS.map(([key, label, placeholder]) => (
+              <div key={key}>
+                <label className="mrp-sublabel" htmlFor={`mrp-${key}`}>{label}</label>
+                <input id={`mrp-${key}`} className="mrp-input" maxLength={200} value={form[key]} onChange={(e) => set(key, e.target.value)} placeholder={placeholder} />
+              </div>
+            ))}
+          </fieldset>
+
+          <fieldset className="mrp-sections">
+            <legend className="mrp-label">Report content</legend>
             {SECTIONS.map(([key, label]) => (
               <div key={key}>
                 <label className="mrp-sublabel" htmlFor={`mrp-${key}`}>{label}</label>
                 <textarea id={`mrp-${key}`} className="mrp-input mrp-textarea" rows={3} maxLength={5000} value={form[key]} onChange={(e) => set(key, e.target.value)} />
               </div>
             ))}
+            <p className="mrp-muted">Please use English. Hindi/Devanagari text is not supported in the PDF.</p>
           </fieldset>
-
-          <label className="mrp-check">
-            <input type="checkbox" checked={form.notify} onChange={(e) => set("notify", e.target.checked)} />
-            Notify the patient (push: “A new medical report is available”)
-          </label>
 
           {error && <div className="mrp-error" role="alert">{error}</div>}
 
@@ -424,7 +333,7 @@ export default function MedicalReports() {
                         <strong>{r.reportNumber}</strong>
                         <div className="mrp-muted">{r.title} · {r.reportType === "uploaded" ? "Uploaded PDF" : "Template"}</div>
                       </td>
-                      <td>{r.patient?.name || "—"}<div className="mrp-muted">{r.patient?.email}</div></td>
+                      <td>{r.patient?.name || "—"}<div className="mrp-muted">{r.patient?.email || (r.patient?.linked === false ? "Not linked to an account" : "")}</div></td>
                       <td>{formatDate(r.reportDate)}</td>
                       <td>{r.doctorName}<div className="mrp-muted">{r.issuedBy?.name}</div></td>
                       <td>
@@ -470,7 +379,7 @@ export default function MedicalReports() {
             </p>
             {detail.voidReason && <p className="mrp-muted">Void reason: {detail.voidReason}</p>}
 
-            {SECTIONS.filter(([key]) => detail.content?.[key]).map(([key, label]) => (
+            {DETAIL_FIELDS.filter(([key]) => detail.content?.[key]).map(([key, label]) => (
               <div key={key}>
                 <div className="mrp-sublabel">{label}</div>
                 <p className="mrp-detail-text">{detail.content[key]}</p>

@@ -2,13 +2,15 @@ const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const MedicalReport = require("../models/MedicalReport");
 const { s3Client, getBucketName } = require("../config/s3");
 const { encryptPHI, decryptPHI } = require("./phiCrypto");
-const { buildMedicalReportPdfBuffer, SECTIONS } = require("./medicalReportPdf");
+const { buildMedicalReportPdfBuffer, SECTIONS, INFO_FIELDS } = require("./medicalReportPdf");
 const { nextSequenceValue } = require("./idSequence");
 const { sendPushToUser } = require("./pushNotifications");
 
 const MAX_PDF_BYTES = 10 * 1024 * 1024;
 const ACCESS_LOG_MAX = 200;
-const FIELD_KEYS = SECTIONS.map(([key]) => key);
+const CLINICAL_KEYS = SECTIONS.map(([key]) => key);
+// Clinical sections + the template's info fields (request type, contact, location).
+const FIELD_KEYS = [...CLINICAL_KEYS, ...INFO_FIELDS.map(([key]) => key)];
 const MAX_FIELD_LENGTH = 5000;
 const DEFAULT_DOCTOR_NAME = "Issued by Humancare";
 
@@ -58,6 +60,11 @@ function cleanClinicalFields(raw = {}) {
   return out;
 }
 
+// True when at least one clinical section is filled (info fields alone don't make a report).
+function hasClinicalContent(content = {}) {
+  return CLINICAL_KEYS.some((key) => Boolean(content[key]));
+}
+
 async function putReportPdf(key, buffer) {
   await s3Client.send(
     new PutObjectCommand({
@@ -71,7 +78,11 @@ async function putReportPdf(key, buffer) {
   );
 }
 
-async function createMedicalReport({ reportType, patient, issuedBy, issuedByRole, title, reportDate, doctorName, content, file, notify = true }) {
+// `patient` is the linked User (profile fallbacks, push, patient-app visibility). When it is
+// null the report is "unlinked": the name comes from `patientName` and the other details from
+// `content` (encrypted with the rest), nothing is pushed and no patient account can see it.
+async function createMedicalReport({ reportType, patient, patientName = "", issuedBy, issuedByRole, title, reportDate, doctorName, content, file, notify = true }) {
+  const linked = Boolean(patient && patient._id);
   const reportNumber = await nextReportNumber();
   const doctor = doctorName || DEFAULT_DOCTOR_NAME;
 
@@ -86,19 +97,33 @@ async function createMedicalReport({ reportType, patient, issuedBy, issuedByRole
       title,
       reportDate,
       doctorName: doctor,
-      patient: { name: patient.name, patientId: patient.patientId, dob: patient.dob, gender: patient.gender },
+      patient: linked
+        ? {
+            name: patient.name,
+            patientId: patient.patientId,
+            dob: patient.dob,
+            gender: patient.gender,
+            mobile: patient.mobile,
+            city: patient.city,
+            state: patient.state,
+            country: patient.country,
+          }
+        : { name: patientName, dob: content?.patientDob },
       content,
     });
   }
 
-  const pdfKey = `${resolveReportPrefix()}/${patient._id}/${reportNumber}.pdf`;
+  const pdfKey = linked
+    ? `${resolveReportPrefix()}/${patient._id}/${reportNumber}.pdf`
+    : `${resolveReportPrefix()}/unlinked/${reportNumber}.pdf`;
   await putReportPdf(pdfKey, pdfBuffer);
 
   const hasContent = Object.keys(content || {}).length > 0;
   const report = await MedicalReport.create({
     reportNumber,
     reportType,
-    patientId: patient._id,
+    ...(linked ? { patientId: patient._id } : {}),
+    patientName: linked ? patient.name || "" : patientName,
     title,
     reportDate,
     issuedBy,
@@ -109,7 +134,7 @@ async function createMedicalReport({ reportType, patient, issuedBy, issuedByRole
     originalFilename,
   });
 
-  if (notify) {
+  if (linked && notify) {
     // Generic text only — no clinical detail ever leaves the server in a push payload.
     await sendPushToUser(patient._id, {
       title: "Humancare Connect",
@@ -142,7 +167,9 @@ function serializeReport(doc, { forAdmin = false } = {}) {
     ...base,
     patient: patient
       ? { _id: patient._id, name: patient.name, email: patient.email, patientId: patient.patientId }
-      : { _id: String(doc.patientId?._id || doc.patientId) },
+      : !doc.patientId
+        ? { name: doc.patientName || "", linked: false }
+        : { _id: String(doc.patientId?._id || doc.patientId) },
     issuedByRole: doc.issuedByRole,
     issuedBy: issuer ? { name: issuer.name, email: issuer.email } : undefined,
     originalFilename: doc.originalFilename || undefined,
@@ -182,6 +209,7 @@ module.exports = {
   ReportValidationError,
   validatePdfUpload,
   cleanClinicalFields,
+  hasClinicalContent,
   createMedicalReport,
   serializeReport,
   readClinicalContent,

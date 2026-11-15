@@ -168,6 +168,180 @@ describe("admin medical reports", () => {
       assert.equal(calls.puts.length, 0);
     });
 
+    test("info fields alone (request type, contact, location) do not count as report content", async () => {
+      const { status, body } = await generated({
+        diagnosis: "",
+        treatment: "",
+        requestType: "Video Consultation",
+        patientContact: "+1 555 0100",
+        patientLocation: "Dubai, UAE",
+      });
+      assert.equal(status, 400);
+      assert.match(body.msg, /at least one section/i);
+      assert.equal(calls.puts.length, 0);
+    });
+
+    test("requestType, patientContact and patientLocation are stored encrypted and returned to the admin", async () => {
+      const created = await generated({
+        requestType: "Video Consultation",
+        patientContact: "+1 555 0100",
+        patientLocation: "Dubai, UAE",
+      });
+      assert.equal(created.status, 201);
+      const row = await MedicalReport.findById(created.body.report._id).lean();
+      const raw = JSON.stringify(row);
+      assert.ok(!raw.includes("Video Consultation") && !raw.includes("Dubai"), "info fields must not be plaintext");
+      const { body } = await adminCall("GET", `/api/admin/medical-reports/${created.body.report._id}`);
+      assert.equal(body.report.content.requestType, "Video Consultation");
+      assert.equal(body.report.content.patientContact, "+1 555 0100");
+      assert.equal(body.report.content.patientLocation, "Dubai, UAE");
+    });
+
+    test("legacy sections (history, investigations, followUp, remarks) are still accepted and returned", async () => {
+      const created = await generated({ history: "H", investigations: "I", followUp: "F", remarks: "R" });
+      assert.equal(created.status, 201);
+      const { body } = await adminCall("GET", `/api/admin/medical-reports/${created.body.report._id}`);
+      assert.deepEqual(
+        ["history", "investigations", "followUp", "remarks"].map((k) => body.report.content[k]),
+        ["H", "I", "F", "R"]
+      );
+    });
+
+    // Devanagari is not supported in the PDF by design (reports are filled in in English); this only
+    // asserts that such input is accepted and a valid PDF is still produced.
+    test("a Hindi patient name and 5000-character info fields still produce a valid PDF", async () => {
+      const hindi = await User.create({ name: "राहुल शर्मा", email: "rahul@x.com", role: "user" });
+      let res;
+      try {
+        res = await generated({
+          patientId: String(hindi._id),
+          requestType: "x".repeat(5000),
+          patientLocation: "y ".repeat(2500).trim(),
+        });
+      } finally {
+        await User.deleteOne({ _id: hindi._id });
+      }
+      assert.equal(res.status, 201);
+      assert.equal(calls.puts[0].Body.subarray(0, 5).toString("latin1"), "%PDF-");
+      assert.ok(calls.puts[0].Body.length > 1000);
+    });
+
+    test("multipart submissions with all 17 form fields are not rejected by the field limit", async () => {
+      const fields = {
+        reportType: "generated", patientId: String(patient._id), title: "T", reportDate: "2026-10-01",
+        doctorName: "Dr A", notify: "1", chiefComplaint: "c", history: "h", examination: "e", investigations: "i",
+        diagnosis: "d", treatment: "t", followUp: "f", remarks: "r", requestType: "q", patientContact: "p", patientLocation: "l",
+      };
+      const form = new FormData();
+      for (const [k, v] of Object.entries(fields)) form.append(k, v);
+      const res = await fetch(`${base}/api/admin/medical-reports`, { method: "POST", headers: { "x-test-admin": String(admin._id) }, body: form });
+      assert.equal(res.status, 201);
+    });
+
+    describe("unlinked reports (patient typed in by hand)", () => {
+      const unlinked = (extra = {}) =>
+        generated({
+          patientId: undefined,
+          patientName: "Walk-in Visitor",
+          patientDob: "1985-07-09",
+          patientContact: "+971 50 000 0000",
+          patientLocation: "Dubai, UAE",
+          ...extra,
+        });
+
+      test("is created without a patientId; DOB, contact and location are encrypted; no push; unlinked S3 prefix", async () => {
+        const { status, body } = await unlinked();
+        assert.equal(status, 201);
+        assert.equal(calls.pushes.length, 0, "no push for an unlinked report");
+        assert.equal(calls.puts.length, 1);
+        assert.match(calls.puts[0].Key, new RegExp(`^${resolveReportPrefix()}/unlinked/MR-\\d{6}\\.pdf$`));
+        assert.equal(calls.puts[0].Body.subarray(0, 5).toString("latin1"), "%PDF-");
+
+        const row = await MedicalReport.findById(body.report._id).lean();
+        assert.ok(!row.patientId, "no patientId stored");
+        assert.equal(row.patientName, "Walk-in Visitor");
+        assert.equal(row.patientNotifiedAt, null);
+        const raw = JSON.stringify(row);
+        for (const secret of ["1985-07-09", "+971 50 000 0000", "Dubai", "Mild hypertension"]) {
+          assert.ok(!raw.includes(secret), `${secret} must not be stored in plaintext`);
+        }
+        assert.deepEqual(body.report.patient, { name: "Walk-in Visitor", linked: false });
+      });
+
+      test("a patient name is required (and capped at 120 characters)", async () => {
+        assert.equal((await unlinked({ patientName: "" })).status, 400);
+        assert.equal((await unlinked({ patientName: "   " })).status, 400);
+        assert.equal((await unlinked({ patientName: undefined })).status, 400);
+        assert.equal((await unlinked({ patientName: "x".repeat(121) })).status, 400);
+        assert.equal((await unlinked({ patientName: "x".repeat(120) })).status, 201);
+        assert.equal((await unlinked({ patientDob: "not-a-date" })).status, 400);
+      });
+
+      test("still needs clinical content, and an uploaded report cannot be unlinked", async () => {
+        assert.equal((await unlinked({ diagnosis: "", treatment: "" })).status, 400);
+        const res = await upload({ fields: { patientId: undefined, patientName: "Walk-in Visitor" } });
+        assert.equal(res.status, 400);
+        assert.equal(res.body.msg, "Select a patient.");
+      });
+
+      test("detail view returns the encrypted manual details", async () => {
+        const created = await unlinked();
+        const { status, body } = await adminCall("GET", `/api/admin/medical-reports/${created.body.report._id}`);
+        assert.equal(status, 200);
+        assert.equal(body.report.patient.name, "Walk-in Visitor");
+        assert.equal(body.report.content.patientDob, "1985-07-09");
+        assert.equal(body.report.content.patientContact, "+971 50 000 0000");
+        assert.equal(body.report.content.patientLocation, "Dubai, UAE");
+      });
+
+      test("history list shows it and search matches patientName (linked reports still match by account name)", async () => {
+        await unlinked();
+        await generated(); // linked to "Jane Patient"
+        const byManualName = await adminCall("GET", "/api/admin/medical-reports?q=walk-in");
+        assert.equal(byManualName.body.total, 1);
+        assert.equal(byManualName.body.reports[0].patient.name, "Walk-in Visitor");
+        const byAccountName = await adminCall("GET", "/api/admin/medical-reports?q=jane");
+        assert.equal(byAccountName.body.total, 1);
+        assert.equal((await adminCall("GET", "/api/admin/medical-reports")).body.total, 2);
+      });
+
+      test("search still finds old linked reports that have no patientName stored", async () => {
+        const created = await generated();
+        await MedicalReport.updateOne({ _id: created.body.report._id }, { $unset: { patientName: 1 } });
+        assert.equal((await adminCall("GET", "/api/admin/medical-reports?q=jane")).body.total, 1);
+      });
+
+      test("linked reports keep their behaviour: push sent, patientName copied from the account", async () => {
+        const created = await generated();
+        assert.equal(calls.pushes.length, 1);
+        const row = await MedicalReport.findById(created.body.report._id).lean();
+        assert.equal(String(row.patientId), String(patient._id));
+        assert.equal(row.patientName, "Jane Patient");
+      });
+
+      test("patient endpoints never return an unlinked report", async () => {
+        const hidden = await unlinked();
+        const visible = await generated();
+        const list = await patientCall("/my-reports");
+        assert.equal(list.status, 200);
+        const ids = list.body.map((r) => r._id);
+        assert.deepEqual(ids, [visible.body.report._id]);
+        assert.ok(!JSON.stringify(list.body).includes("Walk-in Visitor"));
+        for (const user of [patient._id, otherPatient._id]) {
+          const dl = await patientCall(`/my-reports/${hidden.body.report._id}/download`, user);
+          assert.equal(dl.status, 404);
+        }
+      });
+
+      test("download, void and delete work for an unlinked report", async () => {
+        const created = await unlinked();
+        const id = created.body.report._id;
+        assert.equal((await adminCall("GET", `/api/admin/medical-reports/${id}/download`)).status, 200);
+        assert.equal((await adminCall("POST", `/api/admin/medical-reports/${id}/void`, { reason: "typo in name" })).status, 200);
+        assert.equal((await adminCall("DELETE", `/api/admin/medical-reports/${id}`)).status, 200);
+      });
+    });
+
     test("only patient accounts can receive a report", async () => {
       assert.equal((await generated({ patientId: String(doctorUser._id) })).status, 404);
       assert.equal((await generated({ patientId: String(admin._id) })).status, 404);

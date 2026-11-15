@@ -11,7 +11,12 @@ const medicalReportSchema = new mongoose.Schema(
     reportNumber: { type: String, required: true, unique: true, index: true },
     reportType: { type: String, enum: ["generated", "uploaded"], required: true },
 
-    patientId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    // Optional: a report typed in by hand has no patient account behind it ("unlinked"). Those rows
+    // have no patientId, so every patient-facing query (which filters on patientId) can never see them.
+    patientId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false, index: true },
+    // Plain-text patient name, used for the history list and search. Set for unlinked reports and
+    // (since the template update) copied from the account for linked ones; older rows don't have it.
+    patientName: { type: String, default: "", trim: true, index: true },
 
     title: { type: String, required: true, trim: true },
     reportDate: { type: Date, required: true },
@@ -24,7 +29,8 @@ const medicalReportSchema = new mongoose.Schema(
     doctorName: { type: String, default: "Issued by Humancare", trim: true },
 
     // PHI at rest: AES-256-GCM blob of { chiefComplaint, history, examination,
-    // investigations, diagnosis, treatment, followUp, remarks }.
+    // investigations, diagnosis, treatment, followUp, remarks, requestType, patientContact,
+    // patientLocation, patientDob }.
     cipherText: { type: String, default: "" },
     iv: { type: String, default: "" },
     authTag: { type: String, default: "" },
