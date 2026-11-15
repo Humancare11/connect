@@ -309,7 +309,6 @@ export const SEO_ROUTES = {
   "/rheumatoid-arthritis": {"title":"Rheumatoid Arthritis Treatment Online | Joint Pain & Inflammation Care","description":"Connect with a licensed provider online for rheumatoid arthritis treatment, joint pain relief, inflammation management, medication support, and ongoing care.","lastmod":"2026-08-24"},
   "/ringworm": {"title":"Ringworm Treatment Online | Virtual Care for Fungal Skin Infections","description":"Get fast online treatment for ringworm. Connect with a licensed provider about itchy, red, circular rashes, with antifungal treatment and skincare guidance.","lastmod":"2026-08-24"},
   "/seasonal-allergies": {"title":"Seasonal Allergy Treatment Online | Fast Relief for Allergy Symptoms","description":"Get online treatment for seasonal allergies. Connect with a licensed provider about sneezing, congestion, itchy eyes and sinus pressure, with allergy relief.","lastmod":"2026-08-24"},
-  "/service-areas": {"title":"Service Areas | Humancare Connect","description":"See where Humancare Connect offers teleconsultation across the United States, and which states do not currently have teleconsultation available for patients.","lastmod":"2026-10-03"},
   "/service-consultant": {"robots":"noindex,nofollow"},
   "/service-sexual-health": {"title":"Sexual Health Services Online | Confidential Virtual Care | Humancare Connect","description":"Access confidential sexual health services online. Connect with licensed providers for sexual wellness support, preventive care and treatment guidance.","lastmod":"2026-09-28"},
   "/services-prices": {"robots":"noindex,nofollow"},
@@ -425,6 +424,11 @@ export const SEO_ROUTES = {
   "/women-health/women-mental-health/perinatal-anxiety": {"title":"Perinatal Anxiety Treatment Online | Pregnancy & Postpartum Mental Health","description":"Get compassionate support for perinatal anxiety online. Connect with a licensed provider for pregnancy and postpartum anxiety, emotional wellness.","lastmod":"2026-08-24"},
   "/women-health/women-mental-health/pmdd": {"title":"PMDD Treatment Online | Premenstrual Dysphoric Disorder Care","description":"Get expert online care for PMDD. Connect with a licensed provider for severe premenstrual symptoms, mood changes, anxiety, depression, hormone-related concerns.","lastmod":"2026-08-24"},
   "/women-health/women-mental-health/postnatal-depression": {"title":"Postnatal Depression Treatment Online | Postpartum Mental Health Care","description":"Get compassionate support for postnatal depression online. Connect with a licensed provider for postpartum depression, anxiety, mood changes.","lastmod":"2026-08-24"},
+"/doctors-note-sick-notes": {
+  title: "Doctor's Note & Sick Notes | Humancare Connect",
+  description: "Get professional medical consultations and doctor's notes through Humancare Connect.",
+  lastmod: "2026-11-15"
+},
 };
 
 export function normalizePath(pathname = "/") {
