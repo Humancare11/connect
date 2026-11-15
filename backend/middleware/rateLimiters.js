@@ -255,6 +255,18 @@ const liveChatConfigLimiter = buildKeyedLimiter({
   describeKey: (req, key) => `ip:${key}`,
 });
 
+// GET /api/livechat/files/:id/url: a thumbnail asks for one short link per picture (up to 10 files per chat), so it has
+// its own, larger budget and never uses up the /config budget of the same IP.
+const liveChatFileUrlStore = new Map();
+const liveChatFileUrlLimiter = buildKeyedLimiter({
+  store:    liveChatFileUrlStore,
+  windowMs: 60 * 1000,
+  max:      120,
+  message:  "Too many requests. Please wait a moment and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+
 // POST /api/search/settle (search analytics). Its own store, so it never
 // shares a budget with search itself. Keyed by IP only; the text is never part
 // of the key or of the logged security event.
@@ -329,6 +341,7 @@ module.exports = {
   liveChatUploadLimiter,
   liveChatContactLimiter,
   liveChatConfigLimiter,
+  liveChatFileUrlLimiter,
   appVersionLimiter,
   careersLimiter,
   blogPublicLimiter,

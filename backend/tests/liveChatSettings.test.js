@@ -107,14 +107,17 @@ describe("live chat: AI agent settings, canned replies, display names", () => {
       chat.socket.close();
     });
 
-    test("prices and business facts reach the AI prompt", async () => {
-      await save({ prices: [{ name: "General consultation", price: 59 }, { name: "Fit to fly", price: 79 }], businessFacts: "We are closed on Christmas Day." });
+    test("business facts reach the AI prompt, and the prices come from the Super Admin pricing, not the settings", async () => {
+      await save({ businessFacts: "We are closed on Christmas Day." });
+      lc.prices.book.USD["general-consultation"] = 59;
       const chat = await openChat();
       await lc.call(chat.socket, "chat:message", { text: "How much?" });
-      const prompt = buildSystemPrompt(await current());
+      const sent = lc.ai.calls.at(-1);
+      const prompt = buildSystemPrompt(await current(), [], { prices: sent.prices });
       assert.ok(prompt.includes("General consultation: $59") && prompt.includes("closed on Christmas Day"));
-      assert.equal(prompt.includes("Prescription refills: $60"), false);
-      await save({ prices: DEFAULT_SETTINGS.prices, businessFacts: "" });
+      assert.equal(prompt.includes("General consultation: $49"), false, "the old manual list is not read");
+      lc.prices.book.USD["general-consultation"] = 49;
+      await save({ businessFacts: "" });
       chat.socket.close();
     });
 
@@ -350,9 +353,9 @@ describe("live chat: AI agent settings, canned replies, display names", () => {
       assert.ok((await save({ quickOptions: [{ ...options[0], icon: "skull" }] })).body.errors["quickOptions.0.icon"]);
       assert.ok((await save({ quickOptions: [{ ...options[0], reply: "" }] })).body.errors["quickOptions.0.reply"]);
       assert.ok((await save({ quickOptions: [{ ...options[0], label: "x".repeat(81) }] })).body.errors["quickOptions.0.label"]);
-      assert.ok((await save({ prices: [{ name: "Visit", price: -5 }] })).body.errors["prices.0.price"]);
-      assert.ok((await save({ prices: [{ name: "", price: 5 }] })).body.errors["prices.0.name"]);
-      assert.ok((await save({ prices: Array.from({ length: 31 }, (_, i) => ({ name: `s${i}`, price: 1 })) })).body.errors.prices);
+      const retired = await save({ prices: [{ name: "Visit", price: -5 }] });
+      assert.equal(retired.status, 200, "the retired price list is ignored, not validated");
+      assert.equal(retired.body.changed, 0);
     });
 
     test("multi-line business facts keep their line breaks", async () => {

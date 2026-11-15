@@ -3,7 +3,7 @@ const multer = require("multer");
 const { getClientIp: realClientIp } = require("../utils/clientIp");
 const { devFakeIp } = require("../utils/liveChat/config");
 const { aiNameOf } = require("../services/liveChat/settingsDefaults");
-const { liveChatContactLimiter, liveChatConfigLimiter, liveChatUploadLimiter } = require("../middleware/rateLimiters");
+const { liveChatContactLimiter, liveChatConfigLimiter, liveChatFileUrlLimiter, liveChatUploadLimiter } = require("../middleware/rateLimiters");
 const { signChatToken, verifyChatToken } = require("../services/liveChat/chatToken");
 const { FileError } = require("../services/liveChat/fileService");
 
@@ -12,7 +12,7 @@ const { FileError } = require("../services/liveChat/fileService");
 //
 //   GET  /api/livechat/config   tells the widget the module is on (the widget stays hidden on a 404)
 //   POST /api/livechat/upload   a patient's report (pdf/jpg/png, max 10 MB) into their own open chat; needs the chat token
-//   GET  /api/livechat/files/:id/url  a file the team sent the patient: a short link, own chat only; needs the chat token
+//   GET  /api/livechat/files/:id/url  a file of the patient's own chat (theirs or the team's): a short link; needs the chat token
 //   POST /api/livechat/contact  the contact form: validates, checks the honeypot (and the AI-notice flag when the notice is on), registers the visitor and
 //                               returns the chat token that unlocks the chat sockets
 //
@@ -31,6 +31,7 @@ function create({ chat, loadSettings, isIpBlocked, files, env = process.env, lim
   const contactLimiter = limiters.contact || liveChatContactLimiter;
   const configLimiter = limiters.config || liveChatConfigLimiter;
   const uploadLimiter = limiters.upload || liveChatUploadLimiter;
+  const fileUrlLimiter = limiters.fileUrl || liveChatFileUrlLimiter;
 
   // One file, in memory. The parser stops one byte past the limit (it flags a file that reaches its limit as cut off);
   // fileService enforces the exact limit and checks the real type from the bytes.
@@ -88,14 +89,15 @@ function create({ chat, loadSettings, isIpBlocked, files, env = process.env, lim
     }
   );
 
-  // A patient opens a file the team sent them: their own chat's agent files only, a 5-minute link.
-  router.get("/files/:id/url", configLimiter, async (req, res, next) => {
+  // A patient opens or previews a file of their OWN chat (one they sent or one the team sent them): a 5-minute link.
+  //   ?purpose=preview   a thumbnail (not logged)   ?purpose=open (default)   ?purpose=download (saved, not shown)
+  router.get("/files/:id/url", fileUrlLimiter, async (req, res, next) => {
     try {
       res.set("Cache-Control", "no-store");
       const visitorId = verifyChatToken(bearer(req), env);
       if (!visitorId) return res.status(401).json({ ok: false, error: "unauthorized" });
       if (await isIpBlocked(getClientIp(req))) return res.status(403).json({ ok: false, error: "blocked" });
-      return res.json(await files.presignForPatient({ visitorId, fileId: req.params.id }));
+      return res.json(await files.presignForPatient({ visitorId, fileId: req.params.id, purpose: req.query.purpose }));
     } catch (err) {
       if (err instanceof FileError) return res.status(err.status).json({ ok: false, error: err.code });
       return next(err);

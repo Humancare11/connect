@@ -433,11 +433,17 @@ async function getAppointmentTree(_req, res) {
   }
 }
 
+// A category change (price, active flag, deletion) changes what a booking charges, so the live chat prices are read again.
+const refreshingLivePrices = (handler) => async (req, res, next) => {
+  res.once("finish", () => require("../services/liveChat/livePrices").invalidateLivePrices());
+  return handler(req, res, next);
+};
+
 module.exports = {
   listCategories,
-  createCategory,
-  updateCategory,
-  deleteCategory,
+  createCategory: refreshingLivePrices(createCategory),
+  updateCategory: refreshingLivePrices(updateCategory),
+  deleteCategory: refreshingLivePrices(deleteCategory),
   listSpecialties,
   createSpecialty,
   updateSpecialty,

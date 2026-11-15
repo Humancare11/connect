@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ContactForm from "./ContactForm";
 import DoctorGreeter from "./DoctorGreeter";
 import { DEFAULT_AI_NAME } from "./aiName";
 import { buildTimeline } from "./timeline";
+import { COMPOSER_MAX_PX, enterSends, fitTextarea, isCoarsePointer } from "./composerBox";
 import EndChatDialog from "./EndChatDialog";
+import FileBubble from "./FileBubble";
 import InviteBubble from "./InviteBubble";
 import QuickOptions from "./QuickOptions";
 import RatingCard from "./RatingCard";
@@ -24,7 +26,6 @@ const timeOf = (iso) => {
   }
 };
 
-const sizeOf = (bytes) => (bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
 const initialsOf = (name) => String(name || "").trim().slice(0, 2).toUpperCase() || "HS";
 
 // Buttons to real pages of this site (the server only sends pages from its own list). A plain click moves within the
@@ -65,21 +66,14 @@ function PageLinks({ links, onNavigate, onAgent, canRequestAgent }) {
   );
 }
 
-function Message({ message, aiName, onNavigate, onOpenFile, onAgent, canRequestAgent }) {
+function Message({ message, aiName, onNavigate, files, onAgent, canRequestAgent }) {
   if (message.sender === "system") {
     return <div className="lcw-sys">{message.text}</div>;
   }
   if (message.sender === "patient") {
     return (
       <div className="lcw-msg lcw-msg--right">
-        {message.file ? (
-          <span className="lcw-file">
-            <span aria-hidden="true">📄</span> {message.file.name}
-            <small> · {sizeOf(message.file.size)}</small>
-          </span>
-        ) : (
-          message.text
-        )}
+        {message.file ? <FileBubble file={message.file} getUrl={files.url} onOpen={files.open} onDownload={files.download} prefix="lcw" /> : message.text}
         <span className="lcw-meta">{timeOf(message.at)}</span>
       </div>
     );
@@ -91,19 +85,7 @@ function Message({ message, aiName, onNavigate, onOpenFile, onAgent, canRequestA
       <div className="lcw-bw">
         <span className="lcw-bn">{isAgent ? message.agentName || "Humancare Connect support" : aiName}</span>
         <div className="lcw-msg lcw-msg--left">
-          {message.file ? (
-            <span className="lcw-file">
-              <span aria-hidden="true">📄</span> {message.file.name}
-              <small> · {sizeOf(message.file.size)}</small>
-              {message.file.id && (
-                <button type="button" className="lcw-file-open" onClick={() => onOpenFile(message.file.id)}>
-                  Open
-                </button>
-              )}
-            </span>
-          ) : (
-            message.text
-          )}
+          {message.file ? <FileBubble file={message.file} getUrl={files.url} onOpen={files.open} onDownload={files.download} prefix="lcw" /> : message.text}
           <span className="lcw-meta">{timeOf(message.at)}</span>
         </div>
         <PageLinks links={message.links} onNavigate={onNavigate} onAgent={onAgent} canRequestAgent={canRequestAgent} />
@@ -144,6 +126,9 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
   const inputRef = useRef(null);
   const fileRef = useRef(null);
 
+  // What a file bubble needs from the chat: a link for the thumbnail, and what Open and Download do.
+  const fileActions = { url: chat.fileUrl, open: chat.openFile, download: chat.downloadFile };
+
   const mode = conversation?.mode;
   const waiting = mode === "queue";
   const withAgent = mode === "live";
@@ -181,8 +166,20 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
     if (stage === "intro" && (chat.unread > 0 || chat.invite)) setStage("compact");
   }, [stage, chat.unread, chat.invite]);
 
+  // The message box grows with the text (up to COMPOSER_MAX_PX, then it scrolls inside). A chat that was at the bottom
+  // stays at the bottom while the box grows (the list gets shorter) and when it shrinks back after sending.
+  useLayoutEffect(() => {
+    const box = inputRef.current;
+    if (!box) return;
+    const body = bodyRef.current;
+    const pinned = body ? body.scrollHeight - body.scrollTop - body.clientHeight < 80 : false;
+    const before = box.offsetHeight;
+    fitTextarea(box, COMPOSER_MAX_PX);
+    if (pinned && body && box.offsetHeight !== before) body.scrollTop = body.scrollHeight;
+  }, [draft, open, phase]);
+
   const submit = (event) => {
-    event.preventDefault();
+    event?.preventDefault?.();
     const text = draft.trim();
     if (!text || phase !== "chat" || !conversation) return;
     setDraft(""); // the message shows at once; if it is not sent it stays on screen with a retry
@@ -285,7 +282,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
               <>
                 {buildTimeline(conversation.messages, chat.outbox).map((item) => {
                   if (item.kind === "message") {
-                    return <Message key={item.key} message={item.message} aiName={aiName} onNavigate={afterNavigate} onOpenFile={chat.openFile} onAgent={chat.talkToAgent} canRequestAgent={Boolean(conversation?.canRequestAgent)} />;
+                    return <Message key={item.key} message={item.message} aiName={aiName} onNavigate={afterNavigate} files={fileActions} onAgent={chat.talkToAgent} canRequestAgent={Boolean(conversation?.canRequestAgent)} />;
                   }
                   const m = item.entry;
                   return m.status === "failed" ? (
@@ -358,14 +355,22 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
               >
                 📎
               </button>
-              <input
+              <textarea
                 ref={inputRef}
-                type="text"
+                rows={1}
                 value={draft}
                 maxLength={MAX_CHARS}
+                data-lenis-prevent
+                enterKeyHint="send"
                 onChange={(event) => {
                   setDraft(event.target.value);
                   if (event.target.value) chat.notifyTyping();
+                }}
+                onKeyDown={(event) => {
+                  // Enter sends, Shift+Enter is a new line; on a phone Enter is a new line and the arrow sends.
+                  if (!enterSends({ key: event.key, shiftKey: event.shiftKey, isComposing: event.nativeEvent?.isComposing }, isCoarsePointer())) return;
+                  event.preventDefault();
+                  submit();
                 }}
                 placeholder={ended && !canContinue ? "Chat is unavailable" : limitReached ? "Chat is unavailable today" : locked ? "Fill in the form to start" : "Type a message…"}
                 autoComplete="off"

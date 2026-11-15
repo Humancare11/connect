@@ -8,7 +8,7 @@ const QUICK_OPTIONS = [
     label: "Online Consultation with Prescription",
     icon: "stethoscope",
     reply:
-      "You can see a licensed US doctor online. A general consultation is $49, and if the doctor decides a prescription is appropriate it is issued during your online consultation. Book from Book Appointment, choose a category and pick a time.",
+      "You can see a licensed US doctor online. A general consultation is {price:general-consultation}. If the doctor decides a prescription is appropriate it is issued during your online consultation. Book from Book Appointment, choose a category and pick a time.",
   },
   {
     key: "refill",
@@ -16,7 +16,7 @@ const QUICK_OPTIONS = [
     label: "Prescription & Prescription refill",
     icon: "pill",
     reply:
-      "Prescription refills are $60. Go to Book Appointment, choose Prescription refill and a doctor will review your request.",
+      "Prescription refills are {price:prescription-refills}. Go to Book Appointment, choose Prescription refill and a doctor will review your request.",
   },
   {
     key: "second_opinion",
@@ -24,7 +24,7 @@ const QUICK_OPTIONS = [
     label: "Medical Advice/Second Opinion",
     icon: "clipboard",
     reply:
-      "A Second Medical Opinion is $60. A specialist reviews your reports and treatment plan. Book it from Book Appointment, then choose Second opinion.",
+      "A Second Medical Opinion is {price:second-opinion}. A specialist reviews your reports and treatment plan. Book it from Book Appointment, then choose Second opinion.",
   },
   {
     key: "sick_notes",
@@ -32,7 +32,7 @@ const QUICK_OPTIONS = [
     label: "Sick Notes",
     icon: "document",
     reply:
-      "Doctor notes and sick notes are $49. A doctor reviews your request and, where appropriate, issues the note. Book from Book Appointment, then choose Doctor notes.",
+      "Doctor notes and sick notes are {price:doctor-notes}. A doctor reviews your request and, where appropriate, issues the note. Book from Book Appointment, then choose Doctor notes.",
   },
   {
     key: "others",
@@ -43,6 +43,8 @@ const QUICK_OPTIONS = [
   { key: "live", label: "Talk to a live agent", icon: "agent", reply: "" },
 ];
 
+// LEGACY. The AI no longer reads this list: it quotes the Super Admin pricing (services/liveChat/livePrices.js). The stored list is
+// kept (nothing is deleted) only so scripts/liveChatPriceReport.js can compare it with the real prices.
 const PRICES = [
   { name: "General consultation", price: 49 },
   { name: "Mental health support", price: 49 },
@@ -53,6 +55,26 @@ const PRICES = [
   { name: "Second medical opinion", price: 60 },
   { name: "Fit to fly", price: 69 },
 ];
+
+// The earlier default quick-option replies (with the price typed in). A stored reply that is still exactly one of these is
+// the old default, not something an admin wrote: it is replaced by the current default, which takes the live price.
+const OLD_DEFAULT_QUICK_REPLIES = {
+  consultation:
+    "You can see a licensed US doctor online. A general consultation is $49, and if the doctor decides a prescription is appropriate it is issued during your online consultation. Book from Book Appointment, choose a category and pick a time.",
+  refill: "Prescription refills are $60. Go to Book Appointment, choose Prescription refill and a doctor will review your request.",
+  second_opinion:
+    "A Second Medical Opinion is $60. A specialist reviews your reports and treatment plan. Book it from Book Appointment, then choose Second opinion.",
+  sick_notes:
+    "Doctor notes and sick notes are $49. A doctor reviews your request and, where appropriate, issues the note. Book from Book Appointment, then choose Doctor notes.",
+};
+
+// The reply text of a stored quick option: the current default when it is still the old default text, else the admin's own.
+function quickReplyFor(option) {
+  if (OLD_DEFAULT_QUICK_REPLIES[option?.key] === option?.reply) {
+    return QUICK_OPTIONS.find((o) => o.key === option.key)?.reply || option.reply;
+  }
+  return option?.reply || "";
+}
 
 // Canned replies for agents (seeded once; {agentName} is replaced with the agent's display name when inserted).
 const CANNED_REPLIES = [
@@ -115,6 +137,8 @@ module.exports = {
   DEFAULT_AI_NAME,
   OLD_DEFAULT_GREETING,
   OLD_DEFAULT_UNAVAILABLE,
+  OLD_DEFAULT_QUICK_REPLIES,
+  quickReplyFor,
   aiNameOf,
   withAiName,
 };

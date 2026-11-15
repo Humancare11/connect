@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiBaseOf } from "./apiBase";
+import { claimChime, createChimeGate, installChimeUnlock, isChimeMessage, playWidgetChime } from "./chime";
 
 // Patient-side chat state. Talks to the server over Socket.IO (/livechat) with the chat token that the contact form
 // returns; without that token the server refuses every chat event.
@@ -30,7 +31,14 @@ const UPLOAD_ERRORS = {
   unauthorized: "Please fill in your details to start the chat.",
   blocked: "Chat is not available right now.",
   storage_failed: "We couldn't save that file. Please try again.",
+  storage_not_configured: "File sharing isn't available right now. Please email support@humancareconnect.co.",
 };
+
+// What the patient reads when a file link fails. A storage that is not set up is said plainly (and is not worth retrying).
+function linkProblem(err, verb) {
+  if (err?.code === "storage_not_configured") return UPLOAD_ERRORS.storage_not_configured;
+  return `We couldn't ${verb} that file. Please try again in a moment.`;
+}
 
 // Friendly check before uploading (the server is the real gatekeeper).
 function fileProblem(file) {
@@ -124,6 +132,25 @@ export function useLiveChat() {
     openRef.current = open;
   }, [open]);
 
+  // Notification sound: a chime for a new reply (never the patient's own message, never history). Always on.
+  const chimeGate = useRef(createChimeGate());
+  const chimedIds = useRef(new Set());
+  const conversationRef = useRef(null);
+  useEffect(() => {
+    conversationRef.current = conversation;
+  }, [conversation]);
+  useEffect(() => {
+    installChimeUnlock();
+  }, []);
+  // `key` identifies the event (a message id, or one id for a catch-up) so a second tab and a repeat are skipped.
+  const chime = useCallback((key) => {
+    if (chimedIds.current.has(key)) return;
+    chimedIds.current.add(key);
+    if (chimedIds.current.size > 200) chimedIds.current = new Set([...chimedIds.current].slice(-100));
+    if (!chimeGate.current.allow() || !claimChime(key)) return;
+    playWidgetChime();
+  }, []);
+
   const setOpen = useCallback((value) => {
     setOpenState(value);
     store.set(OPEN_KEY, value ? "1" : "0", "session");
@@ -146,7 +173,7 @@ export function useLiveChat() {
     []
   );
 
-  const resume = useCallback(async () => {
+  const resume = useCallback(async (announce = false) => {
     const res = await emit("chat:resume");
     if (res.needContact) {
       // The server does not know this contact (e.g. data was removed): ask again.
@@ -155,11 +182,18 @@ export function useLiveChat() {
       return;
     }
     if (res.ok) {
+      // After a reconnect: replies that arrived while offline give ONE chime (history on a first load never does).
+      const before = conversationRef.current;
+      if (announce && before && res.conversation?.conversationId === before.conversationId) {
+        const known = new Set(before.messages.map((m) => m.id));
+        const fresh = (res.conversation.messages || []).filter((m) => !known.has(m.id) && isChimeMessage(m));
+        if (fresh.length) chime(`resume-${fresh[fresh.length - 1].id}`);
+      }
       setFirstName(res.firstName || "");
       setConversation(res.conversation || null);
       setPhase("chat");
     }
-  }, [emit]);
+  }, [emit, chime]);
 
   const connect = useCallback(() => {
     if (socketRef.current) return connectingRef.current;
@@ -179,6 +213,8 @@ export function useLiveChat() {
       socketRef.current = socket;
 
       socket.on("chat:message", ({ conversationId, message }) => {
+        const shown = conversationRef.current;
+        if (shown && shown.conversationId === conversationId && !shown.messages.some((m) => m.id === message.id) && isChimeMessage(message)) chime(message.id);
         setConversation((current) => {
           if (!current || current.conversationId !== conversationId) return current;
           if (current.messages.some((m) => m.id === message.id)) return current;
@@ -196,7 +232,7 @@ export function useLiveChat() {
       let first = true;
       socket.on("connect", () => {
         setConnection("online");
-        if (!first) resume(); // reconnected: catch up on anything missed
+        if (!first) resume(true); // reconnected: catch up on anything missed
         first = false;
       });
       socket.on("disconnect", () => setConnection("offline"));
@@ -224,7 +260,7 @@ export function useLiveChat() {
       connectingRef.current = null;
     });
     return connectingRef.current;
-  }, [resume]);
+  }, [resume, chime]);
 
   // Returning visitor: restore the chat quietly once the widget is mounted.
   useEffect(() => {
@@ -429,24 +465,53 @@ export function useLiveChat() {
     }
   }, []);
 
-  // Opens a file the team sent us. The tab is opened on the click itself (browsers block pop-ups opened after a wait)
-  // and pointed at the short link once the server answers; its opener is cleared.
-  const openFile = useCallback(async (fileId) => {
-    const tab = window.open("", "_blank");
-    if (tab) tab.opener = null;
-    try {
-      const res = await fetch(`${API_BASE}/api/livechat/files/${encodeURIComponent(fileId)}/url`, {
-        headers: { authorization: `Bearer ${store.get(TOKEN_KEY)}` },
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok || !body.url) throw new Error("no link");
-      if (tab) tab.location.href = body.url;
-      else setNotice("Your browser blocked the new tab. Please allow pop-ups to open the file.");
-    } catch {
-      tab?.close();
-      setNotice("We couldn't open that file. Please try again in a moment.");
-    }
+  // A short link (5 minutes) to a file of this chat, the ones the patient sent and the ones the team sent. `purpose`:
+  // "preview" for a thumbnail (not logged), "open" and "download" (logged).
+  const fileUrl = useCallback(async (file, purpose = "open") => {
+    const res = await fetch(`${API_BASE}/api/livechat/files/${encodeURIComponent(file.id)}/url?purpose=${encodeURIComponent(purpose)}`, {
+      headers: { authorization: `Bearer ${store.get(TOKEN_KEY)}` },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok || !body.url) throw Object.assign(new Error("no link"), { code: body.error || "" });
+    return body.url;
   }, []);
+
+  // Opens a file. The tab is opened on the click itself (browsers block pop-ups opened after a wait) and pointed at the
+  // short link once the server answers; its opener is cleared.
+  const openFile = useCallback(
+    async (file) => {
+      const tab = window.open("", "_blank");
+      if (tab) tab.opener = null;
+      try {
+        const url = await fileUrl(file, "open");
+        if (tab) tab.location.href = url;
+        else setNotice("Your browser blocked the new tab. Please allow pop-ups to open the file.");
+      } catch (err) {
+        tab?.close();
+        setNotice(linkProblem(err, "open"));
+      }
+    },
+    [fileUrl]
+  );
+
+  // Saves a file: the link answers with "attachment", so the browser downloads it and the page stays where it is.
+  const downloadFile = useCallback(
+    async (file) => {
+      try {
+        const url = await fileUrl(file, "download");
+        const link = document.createElement("a");
+        link.href = url;
+        link.rel = "noopener";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (err) {
+        setNotice(linkProblem(err, "download"));
+      }
+    },
+    [fileUrl]
+  );
 
   const dismissInvite = useCallback(() => {
     setInvite((current) => {
@@ -514,7 +579,9 @@ export function useLiveChat() {
     endChat,
     rate,
     uploadFile,
+    fileUrl,
     openFile,
+    downloadFile,
     dismissInvite,
     notifyTyping,
     dismissNotice: () => setNotice(""),

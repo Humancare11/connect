@@ -731,7 +731,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await page.waitForSelector(".lcw-cform");
       await page.getByRole("button", { name: "Minimize chat" }).click();
       await page.locator(".lcw-launcher--round").waitFor();
-      await page.waitForFunction(() => document.querySelector(".lcw-gr-minif input")?.value === "Hello there"); // restored right after the window closes
+      await page.waitForFunction(() => document.querySelector(".lcw-gr-minif textarea")?.value === "Hello there"); // restored right after the window closes
       assert.equal(sentEvents("chat:message").length, 0);
     });
 
@@ -868,7 +868,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
         assert.ok(Math.abs(m.pill.top + m.pill.height / 2 - (m.slot.top + m.slot.height / 2)) <= 1, `${label}: the pill is centred on the button's row`);
       }
       await page.evaluate(() => document.documentElement.classList.remove("hc-cookie-open"));
-      assert.ok(Number.parseFloat(await page.locator(".lcw-gr-minif input").evaluate((el) => getComputedStyle(el).fontSize)) >= 16, "16px or more: iOS does not zoom on focus");
+      assert.ok(Number.parseFloat(await page.locator(".lcw-gr-minif textarea").evaluate((el) => getComputedStyle(el).fontSize)) >= 16, "16px or more: iOS does not zoom on focus");
       const pillBefore = await page.locator(".lcw-gr-minif").boundingBox();
       const slotBefore = await page.locator(".lcw-gr-slot").boundingBox();
       await freeze();
@@ -927,8 +927,8 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
           if (banner) assert.ok(m.button.bottom <= m.h - 190 + 1, `${label}: the bar sits above the cookie banner (${m.button.bottom} vs ${m.h - 190})`);
         }
         await page.evaluate(() => document.documentElement.classList.remove("hc-cookie-open"));
-        assert.ok(Number.parseFloat(await page.locator(".lcw-gr-minif input").evaluate((el) => getComputedStyle(el).fontSize)) >= 16);
-        assert.equal(await page.locator(".lcw-gr-minif input").getAttribute("placeholder"), "Write a message…");
+        assert.ok(Number.parseFloat(await page.locator(".lcw-gr-minif textarea").evaluate((el) => getComputedStyle(el).fontSize)) >= 16);
+        assert.equal(await page.locator(".lcw-gr-minif textarea").getAttribute("placeholder"), "Write a message…");
         const input = page.getByLabel("Write a message");
         await input.fill("I need a refill");
         await realWait(300);
@@ -950,7 +950,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await load();
       await introPill().waitFor({ timeout: 8000 });
       await freeze();
-      await page.locator(".lcw-gr-minif input").focus();
+      await page.locator(".lcw-gr-minif textarea").focus();
       await tick(30_000);
       assert.equal(await page.locator(".lcw-gr-doc").count(), 1, "the doctor stays while the pill is focused");
       // a keyboard of 300px: the visual viewport shrinks, the layout viewport does not (iOS Safari)
@@ -962,7 +962,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       assert.equal(await page.evaluate(() => document.documentElement.style.getPropertyValue("--lcw-kb")), "300px");
       const lifted = await page.locator(".lcw-gr-minif").boundingBox();
       assert.ok(lifted.y + lifted.height <= 844 - 300, `the pill sits above the keyboard (bottom ${lifted.y + lifted.height})`);
-      await page.locator(".lcw-gr-minif input").blur();
+      await page.locator(".lcw-gr-minif textarea").blur();
       assert.equal(await page.evaluate(() => document.documentElement.style.getPropertyValue("--lcw-kb")), "", "the lift is removed when the pill loses focus");
       await tick(10_500);
       await tick(1000);
@@ -990,6 +990,382 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await page.keyboard.press("Enter");
       await page.getByText("Hello, this is Sam.").waitFor();
       assert.equal(await page.locator(".lcw-badge").count(), 0, "opening clears the badge");
+    });
+  });
+
+  describe("notification sound", () => {
+    // A fake audio context that counts the notes played: a chime is two oscillators.
+    const stubAudio = () =>
+      page.addInitScript(() => {
+        window.__osc = 0;
+        class FakeContext {
+          constructor() {
+            this.state = "running";
+            this.currentTime = 0;
+            this.destination = {};
+          }
+          resume() {
+            return Promise.resolve();
+          }
+          createOscillator() {
+            window.__osc += 1;
+            return { type: "", frequency: { value: 0 }, connect: (node) => node, start() {}, stop() {} };
+          }
+          createGain() {
+            return { gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect: (node) => node };
+          }
+        }
+        window.AudioContext = FakeContext;
+      });
+    const notes = () => page.evaluate(() => window.__osc);
+    const settle = (ms = 500) => new Promise((resolve) => setTimeout(resolve, ms));
+    const reply = (message) =>
+      io.of("/livechat").emit("chat:message", {
+        conversationId: mock.conversation.conversationId,
+        message: { at: new Date().toISOString(), ...message },
+      });
+    const ready = async () => {
+      for (let i = 0; i < 50 && !sentEvents("chat:resume").length; i += 1) await settle(100);
+    };
+
+    test("an AI reply and an agent message chime once the patient has interacted; their own message and the history do not", async () => {
+      await stubAudio();
+      await openAsReturningVisitor();
+      await ready();
+      assert.equal(await notes(), 0, "chat history is silent");
+      await page.locator(".lcw-body").click(); // the patient interacts: the audio unlocks
+      await page.getByLabel("Your message").fill("hello there");
+      await page.getByLabel("Your message").press("Enter");
+      await page.locator(".lcw-msg--right", { hasText: "hello there" }).waitFor();
+      await settle();
+      assert.equal(await notes(), 0, "the patient's own message is silent");
+      reply({ id: "a1", sender: "ai", text: "Happy to help." });
+      await page.getByText("Happy to help.").waitFor();
+      await page.waitForFunction(() => window.__osc === 2);
+      await settle(1700); // past the burst gate
+      reply({ id: "a2", sender: "agent", agentName: "Sam", text: "Sam here." });
+      await page.getByText("Sam here.").waitFor();
+      await page.waitForFunction(() => window.__osc === 4);
+    });
+
+    test("nothing plays before the patient has interacted with the page", async () => {
+      await stubAudio();
+      await openAsReturningVisitor();
+      await ready();
+      reply({ id: "a1", sender: "ai", text: "Early reply." });
+      await page.getByText("Early reply.").waitFor();
+      await settle();
+      assert.equal(await notes(), 0);
+    });
+
+    test("a burst of replies gives one chime (1.5 s gate)", async () => {
+      await stubAudio();
+      await openAsReturningVisitor();
+      await ready();
+      await page.locator(".lcw-body").click();
+      reply({ id: "b1", sender: "ai", text: "First part." });
+      reply({ id: "b2", sender: "ai", text: "Second part." });
+      reply({ id: "b3", sender: "ai", text: "Third part." });
+      await page.getByText("Third part.").waitFor();
+      await settle();
+      assert.equal(await notes(), 2);
+    });
+
+    test("only 'joined the chat' and 'Chat resolved' system lines chime", async () => {
+      await stubAudio();
+      await openAsReturningVisitor();
+      await ready();
+      await page.locator(".lcw-body").click();
+      reply({ id: "s1", sender: "system", text: "You're now chatting with Connect AI." });
+      await page.getByText("You're now chatting with Connect AI.").waitFor();
+      await settle();
+      assert.equal(await notes(), 0);
+      reply({ id: "s2", sender: "system", text: "Sam joined the chat" });
+      await page.getByText("Sam joined the chat").waitFor();
+      await page.waitForFunction(() => window.__osc === 2);
+      await settle(1700);
+      reply({ id: "s3", sender: "system", text: "Chat resolved" });
+      await page.getByText("Chat resolved").waitFor();
+      await page.waitForFunction(() => window.__osc === 4);
+    });
+
+    test("there is no mute button, and an old stored 'off' is ignored: the reply still chimes", async () => {
+      await stubAudio();
+      await context.addInitScript(() => localStorage.setItem("hcLiveChatWidgetSound", "off"));
+      await openAsReturningVisitor();
+      await ready();
+      await page.locator(".lcw-body").click();
+      assert.equal(await page.locator(".lcw-sound").count(), 0);
+      assert.equal(await page.getByRole("button", { name: /message sound/i }).count(), 0);
+      reply({ id: "always1", sender: "ai", text: "Still audible." });
+      await page.getByText("Still audible.").waitFor();
+      await page.waitForFunction(() => window.__osc === 2);
+    });
+
+    test("replies that arrived while offline give ONE chime when the chat reconnects", async () => {
+      await stubAudio();
+      await openAsReturningVisitor();
+      await ready();
+      await page.locator(".lcw-body").click();
+      mock.conversation.messages.push(
+        { id: "o1", sender: "ai", text: "Missed one.", at: new Date().toISOString() },
+        { id: "o2", sender: "agent", agentName: "Sam", text: "Missed two.", at: new Date().toISOString() }
+      );
+      mock.events.length = 0;
+      io.of("/livechat").sockets.forEach((client) => client.conn.close()); // a dropped connection (not a server kick): the client reconnects by itself
+      await page.getByText("Missed two.").waitFor({ timeout: 15_000 });
+      await settle(800);
+      assert.equal(await notes(), 2, "one chime, not one per message");
+    });
+  });
+
+  describe("growing message box", () => {
+    const box = () => page.getByLabel("Your message");
+    const heightOf = (locator) => locator.evaluate((el) => Math.round(el.getBoundingClientRect().height));
+    const manyLines = (n) => Array.from({ length: n }, (_, i) => `line ${i + 1}`);
+    const typeLines = async (target, lines) => {
+      await target.focus();
+      for (let i = 0; i < lines.length; i += 1) {
+        await page.keyboard.type(lines[i]);
+        if (i < lines.length - 1) await page.keyboard.press("Shift+Enter");
+      }
+    };
+
+    test("grows upward from one line to the cap, then scrolls inside; the buttons stay on the bottom line", async () => {
+      await openAsReturningVisitor();
+      const one = await heightOf(box());
+      const bottomBefore = await box().evaluate((el) => Math.round(el.getBoundingClientRect().bottom));
+      assert.ok(one >= 38 && one <= 48, `one line is ${one}px`);
+      await typeLines(box(), manyLines(3));
+      const three = await heightOf(box());
+      assert.ok(three > one, "grew");
+      await typeLines(box(), manyLines(12));
+      const capped = await heightOf(box());
+      assert.ok(capped <= 120 && capped >= 100, `capped at ${capped}px`);
+      assert.equal(await box().evaluate((el) => getComputedStyle(el).overflowY), "auto", "scrolls inside once capped");
+      assert.equal(await box().evaluate((el) => el.scrollHeight > el.clientHeight), true);
+      const bottomAfter = await box().evaluate((el) => Math.round(el.getBoundingClientRect().bottom));
+      assert.equal(bottomAfter, bottomBefore, "the bottom edge did not move: it grew upward");
+      const sendBottom = await page.getByRole("button", { name: "Send" }).evaluate((el) => Math.round(el.getBoundingClientRect().bottom));
+      assert.ok(Math.abs(sendBottom - bottomAfter) <= 2, "the send button stays on the bottom line");
+      assert.equal(await box().evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 16, "16px keeps iOS from zooming");
+    });
+
+    test("Enter sends, Shift+Enter is a new line, and the box returns to one line after sending", async () => {
+      await openAsReturningVisitor();
+      await typeLines(box(), ["first line", "second line"]);
+      assert.equal(sentEvents("chat:message").length, 0, "Shift+Enter did not send");
+      const grown = await heightOf(box());
+      await box().press("Enter");
+      await page.locator(".lcw-msg--right", { hasText: "second line" }).waitFor();
+      assert.deepEqual(sentEvents("chat:message"), [{ text: "first line\nsecond line" }]);
+      assert.equal(await box().inputValue(), "");
+      assert.ok((await heightOf(box())) < grown, "back to one line");
+    });
+
+    test("the message list stays scrolled to the bottom while the box grows", async () => {
+      mock.conversation = freshConversation();
+      for (let i = 0; i < 25; i += 1) mock.conversation.messages.push({ id: `h${i}`, sender: "ai", text: `Earlier message ${i}`, at: new Date().toISOString() });
+      await openAsReturningVisitor();
+      const gap = () => page.locator(".lcw-body").evaluate((el) => Math.round(el.scrollHeight - el.scrollTop - el.clientHeight));
+      await page.waitForFunction(() => { const el = document.querySelector(".lcw-body"); return el.scrollHeight - el.scrollTop - el.clientHeight < 5; });
+      await typeLines(box(), manyLines(6));
+      assert.ok((await gap()) < 5, `still at the bottom (gap ${await gap()}px)`);
+    });
+
+    test("the 1000 character limit still holds and the box does not run away with a long paragraph", async () => {
+      await openAsReturningVisitor();
+      await box().fill("x".repeat(1200));
+      assert.equal((await box().inputValue()).length, 1000);
+      assert.ok((await heightOf(box())) <= 120);
+    });
+
+    test("on a phone (touch keyboard) Enter is a new line and the send button sends", async () => {
+      await context.close();
+      context = await browser.newContext({ viewport: { width: 400, height: 800 }, hasTouch: true, isMobile: true, reducedMotion: "reduce" });
+      page = await context.newPage();
+      await openAsReturningVisitor();
+      assert.equal(await page.evaluate(() => matchMedia("(pointer: coarse)").matches), true);
+      await box().focus();
+      await page.keyboard.type("hello");
+      await page.keyboard.press("Enter");
+      await page.keyboard.type("world");
+      assert.equal(sentEvents("chat:message").length, 0, "Enter did not send");
+      assert.equal(await box().inputValue(), "hello\nworld");
+      await page.getByRole("button", { name: "Send" }).click();
+      await page.locator(".lcw-msg--right", { hasText: "world" }).waitFor();
+      assert.deepEqual(sentEvents("chat:message"), [{ text: "hello\nworld" }]);
+    });
+
+    test("a multi-line message typed in the greeter pill opens the chat and is sent as one message", async () => {
+      await context.close();
+      context = await browser.newContext({ viewport: { width: 900, height: 800 }, reducedMotion: "reduce" });
+      page = await context.newPage();
+      await page.addInitScript(
+        ([token, visitor]) => {
+          localStorage.setItem("hcLiveChatToken", token);
+          localStorage.setItem("hcLiveChatVisitorId", visitor);
+        },
+        [TOKEN, VISITOR]
+      );
+      await page.goto(`${viteUrl}/tests/e2e/harness/index.html`);
+      const pill = page.getByLabel("Write a message");
+      await pill.waitFor();
+      const oneLine = await heightOf(page.locator(".lcw-gr-minif"));
+      const bottom = await page.locator(".lcw-gr-minif").evaluate((el) => Math.round(el.getBoundingClientRect().bottom));
+      await typeLines(pill, manyLines(4));
+      assert.ok((await heightOf(page.locator(".lcw-gr-minif"))) > oneLine, "the pill grew");
+      assert.equal(await page.locator(".lcw-gr-minif").evaluate((el) => Math.round(el.getBoundingClientRect().bottom)), bottom, "upward");
+      assert.equal(sentEvents("chat:message").length, 0, "Shift+Enter in the pill does not open or send");
+      await pill.press("Enter");
+      await page.waitForSelector(".lcw-window");
+      await page.locator(".lcw-msg--right", { hasText: "line 4" }).waitFor();
+      assert.deepEqual(sentEvents("chat:message"), [{ text: "line 1\nline 2\nline 3\nline 4" }]);
+    });
+
+    test("the pill keeps its 500 character limit", async () => {
+      await context.close();
+      context = await browser.newContext({ viewport: { width: 900, height: 800 }, reducedMotion: "reduce" });
+      page = await context.newPage();
+      await page.goto(`${viteUrl}/tests/e2e/harness/index.html`);
+      const pill = page.getByLabel("Write a message");
+      await pill.fill("y".repeat(700));
+      assert.equal((await pill.inputValue()).length, 500);
+      assert.ok((await heightOf(page.locator(".lcw-gr-minif"))) <= 132 + 4);
+    });
+  });
+
+  describe("file bubbles", () => {
+    const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64");
+    const settle = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms));
+    const image = (id, name = "Scan.png") => ({ id: `msg-${id}`, sender: "patient", text: name, at: new Date().toISOString(), file: { id, name, mime: "image/png", size: 2048 } });
+    const pdf = (id, sender = "agent", name = "Care plan.pdf") => ({ id: `msg-${id}`, sender, agentName: "Sam", text: name, at: new Date().toISOString(), file: { id, name, mime: "application/pdf", size: 1536 * 1024 } });
+    let asked; // the link requests the widget made: { id, purpose }
+    let failFirstPreview = false;
+    let failAllPreviews = false;
+
+    beforeEach(async () => {
+      asked = [];
+      failFirstPreview = false;
+      failAllPreviews = false;
+      await context.route("**/api/livechat/files/*/url*", async (route) => {
+        const url = new URL(route.request().url());
+        const id = url.pathname.split("/").at(-2);
+        const purpose = url.searchParams.get("purpose");
+        asked.push({ id, purpose, auth: route.request().headers().authorization });
+        const n = asked.filter((a) => a.id === id && a.purpose === purpose).length;
+        const broken = purpose === "preview" && (failAllPreviews || (failFirstPreview && n === 1));
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: { "access-control-allow-origin": "*" },
+          body: JSON.stringify({ ok: true, url: `https://files.test/${broken ? "broken" : "ok"}/${id}-${purpose}-${n}` }),
+        });
+      });
+      await context.route("https://files.test/**", async (route) => {
+        const target = route.request().url();
+        if (target.includes("/broken/")) return route.abort("failed");
+        if (target.includes("-download-")) return route.fulfill({ status: 200, contentType: "application/octet-stream", headers: { "content-disposition": 'attachment; filename="x.png"' }, body: PNG });
+        // (headless Chromium cannot show a PDF, so the stand-in for a PDF is a small page)
+        if (target.includes("pdf")) return route.fulfill({ status: 200, contentType: "text/html", body: "<p>a PDF</p>" });
+        return route.fulfill({ status: 200, contentType: "image/png", body: PNG });
+      });
+    });
+
+    test("the patient sees their own picture as a thumbnail; a click opens it, Download saves it, and a thumbnail is only a 'preview' request", async () => {
+      mock.conversation.messages.push(image("img1"));
+      await openAsReturningVisitor();
+      const thumb = page.locator(".lcw-fb-thumb img");
+      await thumb.waitFor();
+      await page.waitForFunction(() => document.querySelector(".lcw-fb-thumb img")?.naturalWidth > 0);
+      assert.deepEqual(asked.map((a) => a.purpose), ["preview"], "a thumbnail asks for a preview link only");
+      assert.match(asked[0].auth, /^Bearer /, "with the chat token");
+      assert.match(await page.locator(".lcw-fb-caption").innerText(), /Scan\.png\s+PNG · 2 KB/);
+      assert.equal(await thumb.getAttribute("alt"), "Image attachment", "the file name is not the alt text");
+
+      const popup = page.waitForEvent("popup");
+      await page.locator(".lcw-fb-thumb").click();
+      const tab = await popup;
+      await tab.waitForURL(/files\.test\/ok\/img1-open-1/);
+      assert.deepEqual(asked.map((a) => a.purpose), ["preview", "open"]);
+
+      const download = page.waitForEvent("download");
+      await page.getByRole("button", { name: "Download" }).click();
+      await download;
+      assert.deepEqual(asked.map((a) => a.purpose), ["preview", "open", "download"]);
+    });
+
+    test("a PDF from the team is a card with its name, type, size, Open and Download; no thumbnail request", async () => {
+      mock.conversation.messages.push(pdf("pdf1"));
+      await openAsReturningVisitor();
+      const card = page.locator(".lcw-fb--card");
+      await card.waitFor();
+      assert.match(await card.innerText(), /Care plan\.pdf/);
+      assert.match(await card.innerText(), /PDF · 1\.5 MB/);
+      await settle();
+      assert.equal(asked.length, 0, "nothing is requested until someone clicks");
+      const popup = page.waitForEvent("popup");
+      await card.getByRole("button", { name: "Open" }).click();
+      await (await popup).waitForURL(/files\.test\/ok\/pdf1-open-1/);
+      const download = page.waitForEvent("download");
+      await card.getByRole("button", { name: "Download" }).click();
+      await download;
+      assert.deepEqual(asked.map((a) => a.purpose), ["open", "download"]);
+    });
+
+    test("a picture that is far off screen is not requested until the patient scrolls to it", async () => {
+      mock.conversation.messages.push(image("far1"));
+      for (let i = 0; i < 30; i += 1) mock.conversation.messages.push({ id: `t${i}`, sender: "ai", text: `Reply number ${i} with some words to take up room.`, at: new Date().toISOString() });
+      await openAsReturningVisitor();
+      await page.waitForFunction(() => {
+        const el = document.querySelector(".lcw-body");
+        return el.scrollHeight - el.scrollTop - el.clientHeight < 5;
+      });
+      await settle(600);
+      assert.equal(asked.length, 0, "the picture is above the visible area: no link requested");
+      await page.locator(".lcw-body").evaluate((el) => {
+        el.scrollTop = 0;
+      });
+      await page.waitForFunction(() => document.querySelector(".lcw-fb-thumb img")?.naturalWidth > 0);
+      assert.deepEqual(asked.map((a) => a.purpose), ["preview"]);
+    });
+
+    test("an expired thumbnail link is replaced once; if that fails too, the card shows instead", async () => {
+      failFirstPreview = true;
+      mock.conversation.messages.push(image("exp1"));
+      await openAsReturningVisitor();
+      await page.waitForFunction(() => document.querySelector(".lcw-fb-thumb img")?.naturalWidth > 0);
+      assert.deepEqual(asked.map((a) => a.purpose), ["preview", "preview"], "one new link after the first failed to load");
+
+      failAllPreviews = true;
+      io.of("/livechat").emit("chat:message", { conversationId: mock.conversation.conversationId, message: image("exp2", "Second.png") });
+      await page.locator(".lcw-fb--card", { hasText: "Second.png" }).waitFor();
+      assert.equal(await page.locator(".lcw-fb--card", { hasText: "Second.png" }).getByRole("button", { name: "Open" }).count(), 1, "never a dead end: Open still works");
+    });
+
+    test("a file that arrives live from the team shows at once, the same way", async () => {
+      await openAsReturningVisitor();
+      io.of("/livechat").emit("chat:message", { conversationId: mock.conversation.conversationId, message: { ...image("live1", "From Sam.png"), sender: "agent", agentName: "Sam" } });
+      await page.waitForFunction(() => document.querySelector(".lcw-fb-thumb img")?.naturalWidth > 0);
+      assert.match(await page.locator(".lcw-bn").last().innerText(), /Sam/);
+      assert.equal(await page.locator(".lcw-fb-caption .lcw-fb-name").innerText(), "From Sam.png");
+    });
+
+    test("when the storage is not set up, Download says so plainly instead of 'try again'", async () => {
+      mock.conversation.messages.push(image("nostore1", "Day03_Cover.png"));
+      await openAsReturningVisitor();
+      await context.route("**/api/livechat/files/*/url*", (route) =>
+        route.fulfill({ status: 503, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ ok: false, error: "storage_not_configured" }) })
+      );
+      await page.getByRole("button", { name: "Download" }).click();
+      await page.getByText(/File sharing isn't available right now/).waitFor();
+      assert.equal(await page.getByText(/couldn't download that file/).count(), 0);
+    });
+
+    test("a file with an unreadable name (the server sends 'attachment') still shows as a card", async () => {
+      mock.conversation.messages.push(pdf("pdf2", "patient", "attachment"));
+      await openAsReturningVisitor();
+      assert.equal(await page.locator(".lcw-fb-name").innerText(), "attachment");
     });
   });
 });

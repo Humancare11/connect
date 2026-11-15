@@ -164,7 +164,7 @@ describe("live chat: composer (Suggest redaction, reply translation, sending a f
       chat.socket.close();
     });
 
-    test("another visitor, a bad token and a patient's own upload cannot use the patient link", async () => {
+    test("another visitor and a bad token cannot use the patient link; the patient's own upload can be opened", async () => {
       const chat = await liveChat();
       const other = await liveChat(AGENT_B);
       const sent = await sendFile(chat.id);
@@ -179,7 +179,8 @@ describe("live chat: composer (Suggest redaction, reply translation, sending a f
       const own = await lc.upload(chat.token, { name: "Mine.pdf", buffer: FILES.pdf });
       assert.equal(own.status, 200);
       const ownFile = await lc.models.LcFile.findOne({ conversationId: chat.id, sender: "patient" }).lean();
-      assert.equal((await patientLink(chat.token, String(ownFile._id))).status, 404, "only files the team sent");
+      assert.equal((await patientLink(chat.token, String(ownFile._id))).status, 200, "a patient opens their own file");
+      assert.equal((await patientLink(other.token, String(ownFile._id))).status, 404, "but never another visitor's");
       chat.socket.close();
       other.socket.close();
     });

@@ -291,11 +291,11 @@ describe("live chat: end to end, a medical message gets the matching page card a
     socket.close();
   });
 
-  test("a price question gets no health-topic page, and only Pricing", async () => {
+  test("a price question gets no health-topic page, and never the generic Pricing blog: the booking page instead", async () => {
     lc.ai.queue.push(reply("A general consultation is $49.", { topic: "pricing", links: [{ title: "Pricing", url: "/telemedicine-cost-usa" }] }));
     const socket = await openChat();
     await lc.call(socket, "chat:message", { text: "how much is a consultation?" });
-    assert.deepEqual((await lastAi(socket)).links.map((l) => l.url), ["/telemedicine-cost-usa"]);
+    assert.deepEqual((await lastAi(socket)).links.map((l) => l.url), ["/appointment-booking"]);
     socket.close();
   });
 

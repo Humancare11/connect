@@ -194,7 +194,8 @@ describe("live chat: widget scrolling rules", () => {
 
   test("the site's smooth scroller (Lenis) is told to leave the widget alone", () => {
     const widget = read(FEATURE, "LiveChatWidget.jsx");
-    assert.equal((widget.match(/data-lenis-prevent/g) || []).length, 2, "window and message area");
+    // the window, the message area, and the message box (it scrolls inside once it reaches its height cap)
+    assert.equal((widget.match(/data-lenis-prevent/g) || []).length, 3, "window, message area and message box");
   });
 
   test("no wheel / touch handler in the widget blocks scrolling", () => {

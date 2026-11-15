@@ -171,7 +171,7 @@ describe("200-character reply rule (links do not count)", () => {
   });
 
   test("the prompt states the 200-character rule, excluding links, and the price rule", () => {
-    const prompt = buildSystemPrompt(DEFAULT_SETTINGS);
+    const prompt = buildSystemPrompt(DEFAULT_SETTINGS, [], { prices: { currency: "USD", items: [{ name: "General consultation", text: "$49" }, { name: "Fit to fly", text: "$69" }, { name: "Prescription refills", text: "$60" }] } });
     assert.match(prompt, /at most 200 characters, not counting links or URLs/);
     assert.match(prompt, /2-3 key prices/);
     const withPages = buildSystemPrompt(DEFAULT_SETTINGS, [{ title: "Pricing", url: "/telemedicine-cost-usa" }]);
