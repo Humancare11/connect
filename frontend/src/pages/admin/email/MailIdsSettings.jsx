@@ -37,7 +37,6 @@ function AddModal({ domain, onClose, onAdded }) {
   const [displayName, setDisplayName] = useState("");
   const [color, setColor] = useState(DEFAULT_COLOR);
   const [signature, setSignature] = useState(DEFAULT_FOOTER);
-  const [trackOpensDefault, setTrackOpensDefault] = useState(true);
   const [error, setError] = useState("");
   // The address that passed the check. Editing the field invalidates it.
   const [checked, setChecked] = useState("");
@@ -61,7 +60,7 @@ function AddModal({ domain, onClose, onAdded }) {
   });
 
   const add = useMutation({
-    mutationFn: () => mailIdsApi.add({ address: typed, displayName: displayName.trim(), color, signature, trackOpensDefault }),
+    mutationFn: () => mailIdsApi.add({ address: typed, displayName: displayName.trim(), color, signature }),
     onSuccess: (res) => onAdded(res.mailbox),
     onError: (err) => setError(apiMessage(err)),
   });
@@ -119,11 +118,6 @@ function AddModal({ domain, onClose, onAdded }) {
         <label htmlFor="mi-footer">Footer (added under every mail sent from this ID)</label>
         <textarea id="mi-footer" rows={3} maxLength={500} value={signature} onChange={(e) => setSignature(e.target.value)} />
 
-        <label className="mi-check">
-          <input type="checkbox" checked={trackOpensDefault} onChange={(e) => setTrackOpensDefault(e.target.checked)} />
-          Track opens by default for mail sent from this ID
-        </label>
-
         {error && <div className="mi-error" role="alert">{error}</div>}
         <p className="em-sub">After saving, mail from the last 30 days is imported automatically within about a minute.</p>
         <div className="mi-actions">
@@ -141,11 +135,10 @@ function EditModal({ mailbox, onClose, onSaved }) {
   const [displayName, setDisplayName] = useState(mailbox.displayName);
   const [color, setColor] = useState(mailbox.color);
   const [signature, setSignature] = useState(mailbox.signature || "");
-  const [trackOpensDefault, setTrackOpensDefault] = useState(mailbox.trackOpensDefault !== false);
   const [error, setError] = useState("");
 
   const save = useMutation({
-    mutationFn: () => mailIdsApi.update(mailbox.id, { displayName: displayName.trim(), color, signature, trackOpensDefault }),
+    mutationFn: () => mailIdsApi.update(mailbox.id, { displayName: displayName.trim(), color, signature }),
     onSuccess: (res) => onSaved(res.mailbox),
     onError: (err) => setError(apiMessage(err)),
   });
@@ -174,11 +167,6 @@ function EditModal({ mailbox, onClose, onSaved }) {
         <label htmlFor="mi-footer">Footer</label>
         <textarea id="mi-footer" rows={3} maxLength={500} value={signature} onChange={(e) => setSignature(e.target.value)} />
 
-        <label className="mi-check">
-          <input type="checkbox" checked={trackOpensDefault} onChange={(e) => setTrackOpensDefault(e.target.checked)} />
-          Track opens by default for mail sent from this ID
-        </label>
-        <p className="em-sub">Only has an effect while open tracking is switched on below. Admins can still change it for each mail.</p>
 
         {error && <div className="mi-error" role="alert">{error}</div>}
         <div className="mi-actions">
@@ -300,7 +288,6 @@ export default function MailIdsSettings() {
                   <span>
                     <b>{m.displayName}</b>
                     <small>{m.address}</small>
-                    {m.trackOpensDefault === false && <small className="mi-note">Open tracking off by default</small>}
                   </span>
                 </span>
                 <span role="cell">

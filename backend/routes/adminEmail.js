@@ -102,13 +102,8 @@ function createAdminEmailRouter({
     });
 
   const textField = (req, name) => (typeof req.body?.[name] === "string" ? req.body[name] : "");
-  // The compose form's "Track opens" box: "1" / "0", or absent → the mailbox default.
-  const trackOpensField = (req) => {
-    const v = textField(req, "trackOpens");
-    return v === "1" ? true : v === "0" ? false : undefined;
-  };
-  // The "Request read receipt" box: "1" asks for one; anything else does not (default off).
-  const requestReceiptField = (req) => textField(req, "requestReceipt") === "1";
+  // Open tracking is always on and read receipts are never requested: any "trackOpens" or
+  // "requestReceipt" field an old client still sends is ignored.
   // The "Send attachments as secure links" box: "1" asks for it; anything else does not (default off).
   const secureLinksField = (req) => textField(req, "secureLinks") === "1";
   // The "Add my signature" box: "1" adds MY signature image (the server finds it by the session); anything else does not.
@@ -160,7 +155,7 @@ function createAdminEmailRouter({
     res.json({
       mailboxes: mailboxes.map((m) => ({ ...serializeMailbox(m), unread: unread.get(String(m._id)) || 0, spam: spamBy.get(String(m._id)) || 0 })),
       counts: { received, spam },
-      tracking: { available: Boolean(tracking.active), disclosure: Boolean(tracking.active && tracking.disclosureEnabled), trackInternal: tracking.trackInternalRecipients !== false, companyDomain: EMAIL_DOMAIN, secureLinks: Boolean(tracking.secureLinksActive), secureLinkDays: tracking.secureLinkDays },
+      tracking: { available: Boolean(tracking.active), trackInternal: tracking.trackInternalRecipients !== false, companyDomain: EMAIL_DOMAIN, secureLinks: Boolean(tracking.secureLinksActive), secureLinkDays: tracking.secureLinkDays },
     });
   }));
 
@@ -300,8 +295,6 @@ function createAdminEmailRouter({
       clientRequestId: textField(req, "clientRequestId"),
       gmail: lazyGmail(mailbox),
       store,
-      trackOpens: trackOpensField(req),
-      requestReceipt: requestReceiptField(req),
       secureLinks: secureLinksField(req),
       useSignature: signatureField(req),
       trackingState: await trackingState(),
@@ -340,8 +333,6 @@ function createAdminEmailRouter({
       confirm: textField(req, "confirm") === "1",
       gmail: lazyGmail(mailbox),
       store,
-      trackOpens: trackOpensField(req),
-      requestReceipt: requestReceiptField(req),
       secureLinks: secureLinksField(req),
       useSignature: signatureField(req),
       trackingState: await trackingState(),

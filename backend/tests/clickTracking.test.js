@@ -244,10 +244,10 @@ describe("sending, recording and redirecting", () => {
     assert.ok(!/api\/l\//.test(gmail.sent[0]));
   });
 
-  test("a mail with 'Track opens' unticked has no tracked links either", async () => {
+  test("an old client's trackOpens=0 is ignored: the mail is still tracked, links included", async () => {
     await send({ trackOpens: "0" });
-    assert.equal(await EmailLink.countDocuments(), 0);
-    assert.ok(!/api\/l\//.test(gmail.sent[0]));
+    assert.ok((await EmailLink.countDocuments()) > 0);
+    assert.ok(/api\/l\//.test(gmail.sent[0]));
   });
 
   test("a mail to an opted-out recipient has no tracked links", async () => {

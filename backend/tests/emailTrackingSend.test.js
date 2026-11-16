@@ -186,7 +186,7 @@ describe("planTracking decides per mail", () => {
     assert.ok(isTokenShape(p.token));
     assert.equal(p.hash, hashToken(p.token));
     assert.equal(p.imageUrl, trackingUrl(BASE, p.token));
-    assert.equal(p.disclosure, "We may track opens.");
+    assert.equal(p.disclosure, undefined, "the plan never carries a footer notice");
   });
   test("each mail gets its own token", async () => {
     assert.notEqual((await plan()).token, (await plan()).token);
@@ -194,14 +194,14 @@ describe("planTracking decides per mail", () => {
   test("global off → tracking_off", async () => {
     assert.deepEqual(await plan({ state: { ...ACTIVE, active: false } }), { enabled: false, reason: "tracking_off" });
   });
-  test("the Track opens box: unticked → mail_off; absent → mailbox default", async () => {
-    assert.equal((await plan({ requested: false })).reason, "mail_off");
+  test("always tracked: the mailbox default is ignored; only a server-side caller can pass requested:false", async () => {
+    assert.equal((await plan({ requested: undefined })).enabled, true);
     assert.equal((await plan({ requested: true })).enabled, true);
-    assert.equal((await plan({ mailbox: { ...mailbox, trackOpensDefault: false } })).reason, "mail_off");
-    assert.equal((await plan({ mailbox: { ...mailbox, trackOpensDefault: false }, requested: true })).enabled, true);
+    assert.equal((await plan({ mailbox: { ...mailbox, trackOpensDefault: false } })).enabled, true);
+    assert.equal((await plan({ requested: false })).reason, "mail_off");
   });
-  test("disclosure line is empty when the Super Admin turned it off", async () => {
-    assert.equal((await plan({ state: { ...ACTIVE, disclosureEnabled: false } })).disclosure, "");
+  test("a footer notice is never planned, whatever the old setting says", async () => {
+    assert.equal((await plan({ state: { ...ACTIVE, disclosureEnabled: true, disclosureText: "We may track." } })).disclosure, undefined);
   });
   test("company-domain recipients are tracked by default and flagged, To or Cc", async () => {
     const a = await plan({ to: [{ address: "x@humancareconnect.co" }] });
@@ -246,8 +246,7 @@ describe("planTracking decides per mail", () => {
     assert.equal((await getTrackingState({ env: { ...env, EMAIL_TRACKING_ENABLED: "false" } })).active, false);
     assert.equal((await getTrackingState({ env: { ...env, PUBLIC_TRACKING_BASE_URL: "http://insecure.example.com" } })).active, false);
     const s = await getTrackingState({ env });
-    assert.equal(s.disclosureEnabled, false, "the footer notice is OFF by default");
-    assert.equal(s.disclosureText, "", "the stored default line is blank");
+    assert.equal(s.disclosureEnabled, undefined, "the footer notice is gone from the state");
   });
 });
 
@@ -307,7 +306,7 @@ describe("sending: tracked and untracked mail", () => {
     const content = row.getContent();
     assert.equal(content.html, "");
     assert.ok(!content.text.includes("/api/e/"));
-    assert.ok(content.text.includes("We may track opens."), "disclosure shows in the stored copy too");
+    assert.ok(!content.text.includes("We may track opens."), "no footer notice in the stored copy either");
   });
 
   test("the API response never exposes the token or its hash", async () => {
@@ -315,13 +314,12 @@ describe("sending: tracked and untracked mail", () => {
     assert.ok(!/tokenHash|"token"|\/api\/e\//.test(JSON.stringify(body)));
   });
 
-  test("unticking Track opens sends plain text with no image and records why", async () => {
+  test("an old client's trackOpens=0 is ignored: the mail is tracked", async () => {
     const { body } = await send({ trackOpens: "0" });
     const row = await EmailMessage.findById(body.message.id);
-    assert.deepEqual([row.tracking.enabled, row.tracking.status, row.tracking.unavailableReason], [false, "unavailable", "mail_off"]);
-    assert.equal(row.tracking.tokenHash, undefined);
-    assert.ok(!/multipart|text\/html|\/api\/e\//i.test(gmail.sent[0]));
-    assert.ok(!row.getContent().text.includes("We may track opens."), "no disclosure on an untracked mail");
+    assert.deepEqual([row.tracking.enabled, row.tracking.status], [true, "pending"]);
+    assert.ok(row.tracking.tokenHash);
+    assert.match(gmail.sent[0], /\/api\/e\//);
   });
 
   test("tracking switched off globally: plain text, reason tracking_off, even if the form says 1", async () => {
@@ -332,10 +330,9 @@ describe("sending: tracked and untracked mail", () => {
     assert.ok(!/multipart|\/api\/e\//i.test(gmail.sent[0]));
   });
 
-  test("mailbox default off applies when the form says nothing, and the box can still override", async () => {
+  test("a mailbox whose old trackOpensDefault is false is tracked all the same", async () => {
     await Mailbox.updateOne({ _id: support._id }, { trackOpensDefault: false });
-    assert.equal((await EmailMessage.findById((await send()).body.message.id)).tracking.unavailableReason, "mail_off");
-    assert.equal((await EmailMessage.findById((await send({ trackOpens: "1" })).body.message.id)).tracking.enabled, true);
+    assert.equal((await EmailMessage.findById((await send()).body.message.id)).tracking.enabled, true);
   });
 
   test("an opted-out recipient gets no image", async () => {
@@ -368,58 +365,28 @@ describe("sending: tracked and untracked mail", () => {
     assert.equal((await EmailMessage.findOne({})).status, "failed");
   });
 
-  test("/mailboxes tells the compose form whether tracking is available, and each mailbox's default", async () => {
+  test("/mailboxes tells the compose form whether tracking is available (no per-mailbox default any more)", async () => {
     const get = async () => (await fetch(`${base}/mailboxes`, { headers: { "x-test-admin": String(priya._id) } })).json();
     let r = await get();
-    assert.deepEqual(r.tracking, { available: true, disclosure: true, trackInternal: true, companyDomain: "humancareconnect.co", secureLinks: false });
-    assert.equal(r.mailboxes[0].trackOpensDefault, true);
+    assert.deepEqual(r.tracking, { available: true, trackInternal: true, companyDomain: "humancareconnect.co", secureLinks: false });
+    assert.equal(r.mailboxes[0].trackOpensDefault, undefined);
     state = { ...ACTIVE, active: false };
     r = await get();
-    assert.deepEqual(r.tracking, { available: false, disclosure: false, trackInternal: true, companyDomain: "humancareconnect.co", secureLinks: false });
+    assert.deepEqual(r.tracking, { available: false, trackInternal: true, companyDomain: "humancareconnect.co", secureLinks: false });
   });
 
-  describe("read receipt request", () => {
-    const header = /^Disposition-Notification-To: support@humancareconnect\.co\r?$/m;
+  describe("read receipts are never requested", () => {
+    const RECEIPT = /Disposition-Notification-To|Return-Receipt-To|Return-Receipt-Requested/i;
 
-    test("off by default: no header, nothing recorded", async () => {
-      const { body } = await send();
-      assert.ok(!/Disposition-Notification-To/i.test(gmail.sent[0]));
-      assert.equal((await EmailMessage.findById(body.message.id)).tracking.receiptRequested, false);
+    test("no header and nothing recorded, with or without the old flag", async () => {
+      for (const fields of [{}, { requestReceipt: "1" }, { requestReceipt: "1", trackOpens: "0" }]) {
+        const { body } = await send(fields);
+        assert.ok(!RECEIPT.test(gmail.sent.at(-1)), JSON.stringify(fields));
+        assert.notEqual((await EmailMessage.findById(body.message.id)).tracking.receiptRequested, true);
+      }
     });
 
-    test("ticked: the header is added and the mail remembers it asked", async () => {
-      const { body } = await send({ requestReceipt: "1" });
-      assert.match(gmail.sent[0], header);
-      assert.equal((await EmailMessage.findById(body.message.id)).tracking.receiptRequested, true);
-    });
-
-    test("it is its own box: works with 'Track opens' unticked, and then no image or link is added", async () => {
-      const { body } = await send({ requestReceipt: "1", trackOpens: "0" });
-      assert.match(gmail.sent[0], header);
-      assert.ok(!/\/api\/(e|l)\//.test(gmail.sent[0]));
-      const row = await EmailMessage.findById(body.message.id);
-      assert.deepEqual([row.tracking.enabled, row.tracking.receiptRequested], [false, true]);
-    });
-
-    test("no request when tracking is off, or for an opted-out recipient", async () => {
-      state = { ...ACTIVE, active: false };
-      let r = await send({ requestReceipt: "1" });
-      assert.ok(!/Disposition-Notification-To/i.test(gmail.sent[0]));
-      assert.equal((await EmailMessage.findById(r.body.message.id)).tracking.receiptRequested, false);
-
-      state = { ...ACTIVE };
-      await EmailTrackingOptOut.create({ address: "optout@gmail.com" });
-      r = await send({ requestReceipt: "1", to: "optout@gmail.com" });
-      assert.ok(!/Disposition-Notification-To/i.test(gmail.sent[1]));
-      assert.equal((await EmailMessage.findById(r.body.message.id)).tracking.receiptRequested, false);
-    });
-
-    test("anything other than '1' does not ask", async () => {
-      await send({ requestReceipt: "true" });
-      assert.ok(!/Disposition-Notification-To/i.test(gmail.sent[0]));
-    });
-
-    test("a reply can ask too", async () => {
+    test("a reply from an old client cannot ask either", async () => {
       const inbound = new EmailMessage({ mailbox: support._id, direction: "in", status: "received", gmailMessageId: "gr", gmailThreadId: "tr", rfcMessageId: "<r@x>", from: { address: "client@gmail.com" }, to: [{ address: support.address }], subject: "Q", messageDate: new Date() });
       inbound.setContent({ text: "hi", html: "", snippet: "hi" });
       await inbound.save();
@@ -429,7 +396,7 @@ describe("sending: tracked and untracked mail", () => {
       fd.set("requestReceipt", "1");
       const res = await fetch(`${base}/messages/${inbound._id}/reply`, { method: "POST", headers: { "x-test-admin": String(priya._id) }, body: fd });
       assert.equal(res.status, 201);
-      assert.match(gmail.sent[0], header);
+      assert.ok(!RECEIPT.test(gmail.sent[0]));
     });
   });
 

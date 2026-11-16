@@ -13,15 +13,16 @@ const domainOf = (address) => String(address || "").toLowerCase().split("@").pop
 // Decides whether ONE outgoing mail carries a tracking image.
 //   requested  true / false from the compose form's "Track opens" box; undefined → the mailbox default
 //   state      override for tests (see getTrackingState)
-// → { enabled: true, token, hash, imageUrl, disclosure, includesInternal, allRecipientsApple }
+// → { enabled: true, token, hash, imageUrl, includesInternal, allRecipientsApple }
 //   { enabled: false, reason }   reason ∈ tracking_off | mail_off | internal_recipients | opted_out
 //   internal_recipients only when the Super Admin switched "Track mail to company addresses" off.
 async function planTracking({ mailbox, to = [], cc = [], requested, state } = {}) {
   const s = state || (await getTrackingState());
   if (!s.active) return { enabled: false, reason: "tracking_off" };
 
-  const wanted = requested === undefined ? mailbox?.trackOpensDefault !== false : Boolean(requested);
-  if (!wanted) return { enabled: false, reason: "mail_off" };
+  // Every mail sent from the dashboard is tracked: there is no per-mail or per-mailbox choice.
+  // Only a server-side caller can pass `requested: false` (the patient follow-up email does).
+  if (requested === false) return { enabled: false, reason: "mail_off" };
 
   const addresses = [...to, ...cc].map((a) => String(a.address || "").toLowerCase()).filter(Boolean);
   // One pixel is shared by every recipient, so an open by our own staff can look like
@@ -40,7 +41,6 @@ async function planTracking({ mailbox, to = [], cc = [], requested, state } = {}
     token,
     hash,
     imageUrl: trackingUrl(s.baseUrl, token),
-    disclosure: s.disclosureEnabled ? s.disclosureText : "",
     includesInternal,
     allRecipientsApple,
     // Click tracking is decided here too, so opt-outs and the per-mail box cover it as well.
@@ -49,26 +49,6 @@ async function planTracking({ mailbox, to = [], cc = [], requested, state } = {}
   };
 }
 
-// Decides whether ONE outgoing mail asks for a read receipt (Disposition-Notification-To).
-//   requested  true only when the compose form's "Request read receipt" box was ticked
-// → { enabled: true } | { enabled: false, reason }
-//   reason ∈ not_requested | tracking_off | internal_recipients | opted_out
-// It follows the same switches and recipient rules as open tracking, but is its own box:
-// a receipt needs no image, so it works for mail sent with "Track opens" unticked.
-async function planReceipt({ to = [], cc = [], requested, state } = {}) {
-  if (!requested) return { enabled: false, reason: "not_requested" };
-  const s = state || (await getTrackingState());
-  if (!s.active) return { enabled: false, reason: "tracking_off" };
-
-  const addresses = [...to, ...cc].map((a) => String(a.address || "").toLowerCase()).filter(Boolean);
-  if (addresses.some((a) => domainOf(a) === EMAIL_DOMAIN) && s.trackInternalRecipients === false) {
-    return { enabled: false, reason: "internal_recipients" };
-  }
-  if (addresses.length && (await EmailTrackingOptOut.exists({ address: { $in: addresses } }))) {
-    return { enabled: false, reason: "opted_out" };
-  }
-  return { enabled: true };
-}
 
 // Decides whether ONE outgoing mail sends its attachments as secure download links.
 //   requested  true only when the compose form's box was ticked (default off)
@@ -84,4 +64,4 @@ async function planSecureLinks({ requested, fileCount = 0, state } = {}) {
   return { enabled: true, days: s.secureLinkDays, baseUrl: s.baseUrl };
 }
 
-module.exports = { planTracking, planReceipt, planSecureLinks, APPLE_DOMAINS };
+module.exports = { planTracking, planSecureLinks, APPLE_DOMAINS };

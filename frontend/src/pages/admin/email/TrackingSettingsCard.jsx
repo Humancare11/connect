@@ -15,12 +15,6 @@ export default function TrackingSettingsCard() {
 
   const [error, setError] = useState("");
   const [confirmOn, setConfirmOn] = useState(false);
-  // Unsaved edits of the footer notice; null = showing what the server has.
-  const [draft, setDraft] = useState(null);
-  const disclosureText = draft?.text ?? t?.disclosureText ?? "";
-  const disclosureEnabled = draft?.enabled ?? t?.disclosureEnabled ?? false;
-  const setDisclosureText = (text) => setDraft({ text, enabled: disclosureEnabled });
-  const setDisclosureEnabled = (enabled) => setDraft({ text: disclosureText, enabled });
   // Unsaved edit of the secure-link expiry; null = showing what the server has.
   const [daysDraft, setDaysDraft] = useState(null);
   const [optAddress, setOptAddress] = useState("");
@@ -35,7 +29,6 @@ export default function TrackingSettingsCard() {
     mutationFn: (patch) => trackingSettingsApi.update(patch),
     onSuccess: (data) => {
       accept(data);
-      setDraft(null);
       setConfirmOn(false);
     },
     onError: (err) => {
@@ -58,8 +51,6 @@ export default function TrackingSettingsCard() {
     onError: (err) => setError(apiMessage(err)),
   });
 
-  const disclosureDirty = t && (disclosureText.trim() !== t.disclosureText || disclosureEnabled !== t.disclosureEnabled);
-
   return (
     <section className="mi-section" aria-labelledby="mi-trk-h">
       <h2 id="mi-trk-h">Open tracking</h2>
@@ -77,7 +68,7 @@ export default function TrackingSettingsCard() {
               <span className={`em-tag ${t.active ? "mi-on" : "mi-off"}`}>{t.active ? "Active" : "Not active"}</span>
               <span className="em-sub">
                 {t.active
-                  ? "New mail carries the tracking image unless an admin unticks “Track opens”."
+                  ? "Every new mail carries the tracking image."
                   : "No mail carries the tracking image and nothing is recorded."}
               </span>
             </div>
@@ -209,62 +200,6 @@ export default function TrackingSettingsCard() {
             </div>
 
             <div className="mi-sep">
-              <h3>Tracking notice in the footer</h3>
-              <label className="mi-check" style={{ margin: 0 }}>
-                <input type="checkbox" checked={disclosureEnabled} onChange={(e) => setDisclosureEnabled(e.target.checked)} />
-                Add a tracking notice to the footer
-              </label>
-              <p className="em-sub">
-                {disclosureEnabled
-                  ? "Every mail that is tracked in any way carries a notice. It is written for you and names exactly what that mail does: opens, links, download links, read receipt. Mail that is not tracked gets none."
-                  : "Off: mail carries no notice and recipients are not told in the mail itself. Make sure your Privacy Policy covers email tracking. The wording below is what would be added if you switch this on."}
-              </p>
-              <label className="em-sub" htmlFor="mi-notice-custom">Your own wording (optional)</label>
-              <textarea
-                id="mi-notice-custom"
-                aria-label="Custom footer notice"
-                rows={2}
-                maxLength={300}
-                placeholder="Leave empty to use the automatic wording."
-                value={disclosureText}
-                disabled={!disclosureEnabled}
-                onChange={(e) => setDisclosureText(e.target.value)}
-              />
-              {disclosureText.trim() && (
-                <p className="em-sub">
-                  Your wording replaces the automatic notice on every tracked mail, so it must cover opens, links, download links and
-                  read receipts.
-                </p>
-              )}
-              <div className="mi-actions" style={{ justifyContent: "flex-start", marginTop: 0 }}>
-                <button
-                  type="button"
-                  className="em-btn em-btn-primary"
-                  disabled={!disclosureDirty || update.isPending}
-                  onClick={() => update.mutate({ disclosureEnabled, disclosureText: disclosureText.trim() })}
-                >
-                  Save notice
-                </button>
-                <button type="button" className="em-btn em-btn-ghost" disabled={disclosureText === t.defaultDisclosure} onClick={() => setDisclosureText(t.defaultDisclosure)}>
-                  Use the automatic wording
-                </button>
-              </div>
-              <details>
-                <summary className="em-sub" style={{ cursor: "pointer" }}>See the automatic wording for each case</summary>
-                <ul className="mi-optlist">
-                  {(t.disclosureExamples || []).map((e) => (
-                    <li key={e.label}>
-                      <span className="mi-opt-main">
-                        <b>{e.label}</b>
-                        <small>{e.text}</small>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            </div>
-
-            <div className="mi-sep">
               <h3>Never track these recipients</h3>
               <p className="em-sub">
                 If any To or Cc address is on this list, that mail is sent without the tracking image.
@@ -312,9 +247,7 @@ export default function TrackingSettingsCard() {
           <div className="mi-form">
             <p>
               Mail sent from the dashboard will carry a tiny tracking image.
-              {t?.disclosureEnabled
-                ? " A notice line is added to the footer."
-                : " No notice is added to the mail (the footer notice is switched off), so recipients are not told in the mail itself."}{" "}
+              {" "}No notice is added to the mail, so recipients are not told in the mail itself.{" "}
               Please make sure your Privacy Policy and compliance review are complete before using this with real recipients.
             </p>
             <div className="mi-actions">

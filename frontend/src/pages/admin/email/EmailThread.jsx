@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
-import { AttachmentList, Avatar, GmailMark, Icon, MailboxChip, ReceiptToggle, SecureLinksToggle, SignatureStrip, TrackOpensToggle, TrackingNote } from "./EmailParts";
+import { AttachmentList, Avatar, GmailMark, Icon, MailboxChip, SecureLinksToggle, SignatureStrip, TrackingNote } from "./EmailParts";
 import { messageOf } from "./signatureUtils";
 import { SentSignatureImage } from "./SignatureView";
 import { useSignatureChoice } from "./useSignatureChoice";
@@ -152,9 +152,6 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
   const bodyRef = useRef(null);
   // My signature image is added by the server when the box under the reply is ticked.
   const signature = useSignatureChoice();
-  const [trackChoice, setTrackChoice] = useState(null);
-  const trackOpens = trackChoice ?? message.mailbox?.trackOpensDefault !== false;
-  const [receipt, setReceipt] = useState(false);
   const [secure, setSecure] = useState(false);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
@@ -170,8 +167,6 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
       if (signature.use) fd.append("signature", "1");
       fd.append("clientRequestId", requestId.current);
       if (confirm) fd.append("confirm", "1");
-      if (tracking?.available) fd.append("trackOpens", trackOpens ? "1" : "0");
-      if (tracking?.available && receipt) fd.append("requestReceipt", "1");
       if (tracking?.secureLinks && secure && files.length) fd.append("secureLinks", "1");
       files.forEach((f) => fd.append("files", f));
       return emailApi.reply(message.id, fd);
@@ -246,15 +241,9 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
           <input type="file" multiple accept={ACCEPT_ATTR} onChange={onFiles} aria-label="Attach files to reply" />
           <Icon name="clip" />
         </label>
-        {tracking?.available && (
-          <TrackOpensToggle
-            checked={trackOpens}
-            onChange={setTrackChoice}
-            disclosure={tracking.disclosure}
-            caveat={internalCaveat([message.from?.address], tracking)}
-          />
-        )}
-        {tracking?.available && <ReceiptToggle checked={receipt} onChange={setReceipt} />}
+        {tracking?.available && internalCaveat([message.from?.address], tracking) ? (
+          <small className="em-trkwarn">{internalCaveat([message.from?.address], tracking)}</small>
+        ) : null}
         {tracking?.secureLinks && files.length > 0 && <SecureLinksToggle checked={secure} onChange={setSecure} days={tracking.secureLinkDays} />}
         {error && <span className="em-errtext" role="alert">{error}</span>}
         <span style={{ flex: 1 }} />

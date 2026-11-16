@@ -45,9 +45,9 @@ export default function EmailLayout() {
   });
   const mailboxes = useMemo(() => mailboxesQ.data?.mailboxes || [], [mailboxesQ.data]);
   const counts = mailboxesQ.data?.counts || { received: 0, spam: 0 };
-  // Whether open tracking is switched on (the compose forms show "Track opens" only then).
+  // Whether open tracking is switched on (the compose forms show the company-address note only then).
   const trackingData = mailboxesQ.data?.tracking;
-  const tracking = useMemo(() => trackingData || { available: false, disclosure: false }, [trackingData]);
+  const tracking = useMemo(() => trackingData || { available: false }, [trackingData]);
 
   const showToast = useCallback((message) => {
     setToast(message);

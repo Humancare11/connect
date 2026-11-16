@@ -65,19 +65,16 @@ const clearSettingsCache = () => {
   cache = null;
 };
 
-// → { active, envEnabled, baseUrl, baseUrlOk, switchOn, disclosureEnabled, disclosureText, ... }
+// → { active, envEnabled, baseUrl, baseUrlOk, switchOn, ... }
 // Without `full`, a deployment whose env gate is closed never touches the database.
 async function getTrackingState({ env = process.env, now, full = false } = {}) {
   const e = trackingEnv(env);
   const gated = e.envEnabled && Boolean(e.baseUrl);
-  const s = gated || full ? await loadSettings({ now }) : { trackingEnabled: false, footerNoticeEnabled: false, disclosureText: "", trackInternalRecipients: true, trackClicks: false, secureLinksEnabled: false, secureLinkDays: 7 };
+  const s = gated || full ? await loadSettings({ now }) : { trackingEnabled: false, trackInternalRecipients: true, trackClicks: false, secureLinksEnabled: false, secureLinkDays: 7 };
   return {
     ...e,
     baseUrlOk: Boolean(e.baseUrl),
     switchOn: Boolean(s.trackingEnabled),
-    // Only an explicit switch-on adds a notice; the default is none.
-    disclosureEnabled: Boolean(s.footerNoticeEnabled),
-    disclosureText: s.disclosureText || "",
     // Default ON: mail to company addresses is tracked too, with a caveat (see emailTracking.js).
     trackInternalRecipients: s.trackInternalRecipients !== false,
     trackClicks: Boolean(s.trackClicks),

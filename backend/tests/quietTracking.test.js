@@ -25,47 +25,6 @@ const decodeQP = (s) => s.replace(/=\r?\n/g, "").replace(/=([0-9A-F]{2})/g, (_, 
 // Words that would tell a reader the mail is tracked, in anything a recipient can read.
 const GIVEAWAY = /track|record|monitor|analytic|beacon|pixel|telemetry|receipt|secure|opened|clicked|do not track/i;
 
-describe("the notice switch: off unless a Super Admin switches it on", () => {
-  let mongod;
-  before(async () => {
-    mongod = await MongoMemoryServer.create();
-    await mongoose.connect(mongod.getUri());
-    await EmailSettings.init();
-  });
-  after(async () => {
-    await mongoose.disconnect();
-    await mongod.stop();
-  });
-  beforeEach(async () => {
-    await EmailSettings.deleteMany({});
-    clearSettingsCache();
-  });
-  const env = { EMAIL_TRACKING_ENABLED: "true", PUBLIC_TRACKING_BASE_URL: BASE };
-
-  test("a fresh settings document has the notice off", async () => {
-    const s = await getTrackingState({ env, full: true });
-    assert.equal(s.disclosureEnabled, false);
-    assert.equal((await EmailSettings.findOne({ key: "email" })).footerNoticeEnabled, false);
-  });
-
-  test("the gate being closed also means off", async () => {
-    assert.equal((await getTrackingState({ env: {} })).disclosureEnabled, false);
-  });
-
-  test("an older document that still carries the previous default 'on' is NOT read as switched on", async () => {
-    await EmailSettings.collection.insertOne({ key: "email", trackingEnabled: true, disclosureEnabled: true, disclosureText: "Old line." });
-    const s = await getTrackingState({ env, full: true });
-    assert.equal(s.disclosureEnabled, false);
-    assert.equal(s.active, true, "tracking itself is unaffected");
-  });
-
-  test("only an explicit switch-on turns it on", async () => {
-    await EmailSettings.create({ key: "email", trackingEnabled: true, footerNoticeEnabled: true });
-    clearSettingsCache();
-    assert.equal((await getTrackingState({ env, full: true })).disclosureEnabled, true);
-  });
-});
-
 describe("what a recipient can see", () => {
   let mongod, server, base, gmail, state, support, priya;
   const store = { async put() {}, async get() { return Buffer.from("x"); }, async remove() {} };
@@ -127,10 +86,10 @@ describe("what a recipient can see", () => {
     assert.ok(!GIVEAWAY.test(readable(m.html)), readable(m.html));
   });
 
-  test("the only header that gives the receipt request away is the one the mail app acts on", async () => {
+  test("no receipt header, even if an old client asks, and no giveaway headers", async () => {
     const headers = (mime) => mime.split(/\r?\n\r?\n/)[0];
-    const withReceipt = await send({ requestReceipt: "1" });
-    assert.match(headers(withReceipt.mime), /^Disposition-Notification-To: support@humancareconnect\.co\r?$/m);
+    const asked = await send({ requestReceipt: "1" });
+    assert.ok(!/Disposition-Notification-To|Return-Receipt-To|Return-Receipt-Requested/i.test(headers(asked.mime)));
     const plain = await send({});
     assert.ok(!/^X-/im.test(headers(plain.mime)), "no X- headers");
     assert.ok(!/Disposition-Notification-To/i.test(headers(plain.mime)));
@@ -190,12 +149,9 @@ describe("what a recipient can see", () => {
     assert.ok(!/<title|data-/i.test(html));
   });
 
-  test("with the notice switched ON, the automatic wording is in both parts", async () => {
-    state = { ...ON, disclosureEnabled: true };
-    const m = await send({ requestReceipt: "1" });
-    for (const part of [m.text, m.html]) {
-      assert.ok(part.includes("This email may include technology that records whether it was opened and which links in it were clicked."), part);
-      assert.ok(part.includes("It also asks your mail app to send a read receipt"));
-    }
+  test("the footer notice never appears, even when the old setting is on in the state", async () => {
+    state = { ...ON, disclosureEnabled: true, disclosureText: "This email may include technology that records whether it was opened." };
+    const m = await send({ secureLinks: "1" }, [["report.pdf", PDF]]);
+    for (const part of [m.text, m.html]) assert.ok(!/technology that records|This email may/i.test(part), part);
   });
 });

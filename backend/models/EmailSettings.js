@@ -11,11 +11,8 @@ const emailSettingsSchema = new mongoose.Schema(
   {
     key: { type: String, default: "email", unique: true, immutable: true },
     trackingEnabled: { type: Boolean, default: false },
-    // A tracking notice in the footer of tracked mail. OFF by default: recipients see no
-    // notice unless a Super Admin explicitly switches this on (the Privacy Policy is what
-    // informs them). It is a new field on purpose: an older document that still carries the
-    // previous "disclosureEnabled: true" default is NOT read as switched on. Exposed to the
-    // API and the sender as `disclosureEnabled` (see services/email/emailSettings.js).
+    // No longer used: mail never carries a tracking notice and the setting was removed from
+    // the screen. The field stays in the database.
     footerNoticeEnabled: { type: Boolean, default: false },
     // Track mail that has @humancareconnect.co recipients. One pixel is shared by all
     // recipients, so an open by our own staff can look like the client's: the screens say so.

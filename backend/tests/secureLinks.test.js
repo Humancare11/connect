@@ -202,8 +202,9 @@ describe("secure attachment links: sending, downloading, recording", () => {
     assert.match(gmail.sent[0], /Content-Disposition: attachment/i);
   });
 
-  test("works without 'Track opens': plain-text mail with the links", async () => {
-    await send({ secureLinks: "1", trackOpens: "0" });
+  test("works while open tracking is off: plain-text mail with the links", async () => {
+    state = { ...ON, active: false };
+    await send({ secureLinks: "1" });
     assert.ok(!/multipart\/alternative/i.test(gmail.sent[0]));
     assert.equal(tokensIn(gmail.sent[0]).length, 1);
   });
@@ -443,7 +444,7 @@ describe("secure link settings", () => {
   });
 
   test("three gates: open tracking, the server switch and the Super Admin switch", async () => {
-    await call("PATCH", "/", { trackingEnabled: true, disclosureText: "We may track." });
+    await call("PATCH", "/", { trackingEnabled: true });
     let r = await call("PATCH", "/", { secureLinksEnabled: true });
     assert.equal(r.body.tracking.secureLinksActive, true);
     env = { ...env, EMAIL_SECURE_LINKS_ENABLED: "false" };

@@ -69,14 +69,14 @@ describe("superadmin email settings (open tracking switches, opt-outs)", () => {
     assert.equal(second.handle, superAdminOnly);
   });
 
-  test("starts OFF everywhere, with the disclosure line ON by default", async () => {
+  test("starts OFF everywhere, and the screen has no footer-notice setting", async () => {
     const { body } = await call("GET", "/settings");
     assert.equal(body.tracking.switchOn, false);
     assert.equal(body.tracking.active, false);
     assert.equal(body.tracking.envEnabled, false);
-    assert.equal(body.tracking.disclosureEnabled, false, "no notice unless a Super Admin switches it on");
-    assert.equal(body.tracking.disclosureText, "", "no custom line by default: the automatic wording is used");
-    assert.equal(body.tracking.disclosureCustom, false);
+    for (const key of ["disclosureEnabled", "disclosureText", "disclosureCustom", "defaultDisclosure", "disclosureExamples"]) {
+      assert.equal(body.tracking[key], undefined, key);
+    }
     assert.deepEqual(body.optOuts, []);
   });
 
@@ -95,37 +95,22 @@ describe("superadmin email settings (open tracking switches, opt-outs)", () => {
 
   test("switching off takes effect at once (settings cache is cleared)", async () => {
     env = { ...ENV_ON };
-    await call("PATCH", "/settings", { trackingEnabled: true, disclosureText: DISCLOSURE });
+    await call("PATCH", "/settings", { trackingEnabled: true });
     assert.equal((await getTrackingState({ env })).active, true);
     await call("PATCH", "/settings", { trackingEnabled: false });
     assert.equal((await getTrackingState({ env })).active, false);
   });
 
   test("records who changed it", async () => {
-    await call("PATCH", "/settings", { trackingEnabled: true, disclosureText: DISCLOSURE });
+    await call("PATCH", "/settings", { trackingEnabled: true });
     assert.equal(String((await EmailSettings.findOne({ key: "email" })).updatedBy), String(root._id));
   });
 
-  test("custom notice: optional, single line, length-limited; empty means the automatic wording", async () => {
-    let r = await call("PATCH", "/settings", { disclosureText: "  Line one\nline two\t\u0000  " });
-    assert.equal(r.status, 200);
-    assert.equal(r.body.tracking.disclosureText, "Line one line two");
-    assert.equal(r.body.tracking.disclosureCustom, true);
-    assert.equal((await call("PATCH", "/settings", { disclosureText: "x".repeat(301) })).status, 400);
-    r = await call("PATCH", "/settings", { disclosureText: "" });
-    assert.equal(r.status, 200, "empty is fine: automatic wording");
-    assert.equal(r.body.tracking.disclosureCustom, false);
-    r = await call("PATCH", "/settings", { disclosureEnabled: false });
-    assert.equal(r.status, 200);
-    assert.equal(r.body.tracking.disclosureEnabled, false);
-  });
-
-  test("the page gets every automatic notice, one per combination", async () => {
-    const { body } = await call("GET", "/settings");
-    const ex = body.tracking.disclosureExamples;
-    assert.equal(ex.length, 15);
-    assert.ok(ex.every((e) => /Do not track/.test(e.text)));
-    assert.equal(new Set(ex.map((e) => e.text)).size, 15, "all different");
+  test("the footer notice cannot be edited any more", async () => {
+    for (const patch of [{ disclosureEnabled: true }, { disclosureText: "We may track." }]) {
+      const r = await call("PATCH", "/settings", patch);
+      assert.equal(r.status, 400, JSON.stringify(patch));
+    }
   });
 
   test("'Track mail to company addresses' defaults ON, can be switched off, and is honoured by the sender state", async () => {
@@ -142,8 +127,6 @@ describe("superadmin email settings (open tracking switches, opt-outs)", () => {
 
   test("validation: types, unknown fields, empty body", async () => {
     assert.equal((await call("PATCH", "/settings", { trackingEnabled: "yes" })).status, 400);
-    assert.equal((await call("PATCH", "/settings", { disclosureEnabled: 1 })).status, 400);
-    assert.equal((await call("PATCH", "/settings", { disclosureText: 5 })).status, 400);
     assert.equal((await call("PATCH", "/settings", { key: "other" })).status, 400);
     assert.equal((await call("PATCH", "/settings", { updatedBy: "x" })).status, 400);
     assert.equal((await call("PATCH", "/settings", {})).status, 400);
@@ -171,25 +154,15 @@ describe("superadmin email settings (open tracking switches, opt-outs)", () => {
     });
   });
 
-  describe("per-mailbox default (Mail IDs)", () => {
-    test("defaults to on, can be switched per mailbox on create and edit, and shows in the list", async () => {
-      let r = await call("POST", "/mailboxes", { address: "hr@humancareconnect.co", displayName: "HR", trackOpensDefault: false });
+  describe("per-mailbox default (Mail IDs): removed", () => {
+    test("the mailbox API no longer has trackOpensDefault, and it cannot be edited", async () => {
+      let r = await call("POST", "/mailboxes", { address: "accounts@humancareconnect.co", displayName: "Accounts" });
       assert.equal(r.status, 201);
-      assert.equal(r.body.mailbox.trackOpensDefault, false);
-      r = await call("POST", "/mailboxes", { address: "accounts@humancareconnect.co", displayName: "Accounts" });
-      assert.equal(r.body.mailbox.trackOpensDefault, true);
-      const id = r.body.mailbox.id;
-      r = await call("PATCH", `/mailboxes/${id}`, { trackOpensDefault: false });
-      assert.equal(r.status, 200);
-      assert.equal((await Mailbox.findById(id)).trackOpensDefault, false);
-      assert.equal((await call("PATCH", `/mailboxes/${id}`, { trackOpensDefault: "no" })).status, 400);
+      assert.equal(r.body.mailbox.trackOpensDefault, undefined);
+      r = await call("PATCH", `/mailboxes/${r.body.mailbox.id}`, { trackOpensDefault: false });
+      assert.equal(r.status, 400);
       const list = await call("GET", "/mailboxes");
-      assert.deepEqual(list.body.mailboxes.map((m) => m.trackOpensDefault), [false, false]);
-    });
-    test("mail IDs that existed before this setting count as on", async () => {
-      await Mailbox.collection.insertOne({ address: "old@humancareconnect.co", displayName: "Old", color: "#0d7a6f", sortOrder: 0, isActive: true, signature: "x", allowedAdmins: [] });
-      const list = await call("GET", "/mailboxes");
-      assert.equal(list.body.mailboxes[0].trackOpensDefault, true);
+      assert.ok(list.body.mailboxes.every((m) => m.trackOpensDefault === undefined));
     });
   });
 });

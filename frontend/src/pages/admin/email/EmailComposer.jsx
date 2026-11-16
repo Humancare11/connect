@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
-import { AttachmentList, Icon, ReceiptToggle, SecureLinksToggle, SignatureStrip, TrackOpensToggle } from "./EmailParts";
+import { AttachmentList, Icon, SecureLinksToggle, SignatureStrip } from "./EmailParts";
 import { messageOf } from "./signatureUtils";
 import { useSignatureChoice } from "./useSignatureChoice";
 import { ACCEPT_ATTR, EMAIL_RE, addFiles, internalCaveat, newRequestId } from "./emailUtils";
@@ -14,11 +14,6 @@ import { useConfirm } from "../../../components/ui/ConfirmDialog";
 export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, adminName, onClose, onSent }) {
   const confirm = useConfirm();
   const [from, setFrom] = useState(defaultMailboxId || mailboxes[0]?.id || "");
-  // "Track opens" starts as the chosen mailbox's default until the admin touches the box.
-  const [trackChoice, setTrackChoice] = useState(null);
-  const mailboxDefault = mailboxes.find((m) => m.id === from)?.trackOpensDefault !== false;
-  const trackOpens = trackChoice ?? mailboxDefault;
-  const [receipt, setReceipt] = useState(false);
   const [secure, setSecure] = useState(false);
   const [to, setTo] = useState("");
   const [cc, setCc] = useState("");
@@ -77,8 +72,6 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
       // Only "add mine": the server finds my image from the session, never from the request.
       if (signature.use) fd.append("signature", "1");
       fd.append("clientRequestId", requestId.current);
-      if (tracking?.available) fd.append("trackOpens", trackOpens ? "1" : "0");
-      if (tracking?.available && receipt) fd.append("requestReceipt", "1");
       if (tracking?.secureLinks && secure && files.length) fd.append("secureLinks", "1");
       files.forEach((f) => fd.append("files", f));
       return emailApi.send(fd);
@@ -158,15 +151,9 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
             <span className="em-hint">
               Sent by <b>{adminName}</b>
             </span>
-            {tracking?.available && (
-              <TrackOpensToggle
-                checked={trackOpens}
-                onChange={setTrackChoice}
-                disclosure={tracking.disclosure}
-                caveat={internalCaveat(`${to},${cc}`.split(/[,;\s]+/), tracking)}
-              />
-            )}
-            {tracking?.available && <ReceiptToggle checked={receipt} onChange={setReceipt} />}
+            {tracking?.available && internalCaveat(`${to},${cc}`.split(/[,;\s]+/), tracking) ? (
+              <small className="em-trkwarn">{internalCaveat(`${to},${cc}`.split(/[,;\s]+/), tracking)}</small>
+            ) : null}
             {tracking?.secureLinks && files.length > 0 && <SecureLinksToggle checked={secure} onChange={setSecure} days={tracking.secureLinkDays} />}
             {error && <div className="em-errtext" role="alert">{error}</div>}
           </div>

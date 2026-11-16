@@ -13,7 +13,6 @@ const adminEmail = require("../routes/adminEmail");
 const { parseGmailMessage, parseDispositionNotification } = require("../services/gmail/mimeParser");
 const { ingestParsed } = require("../services/gmail/syncMailbox");
 const { buildRawMessage } = require("../services/gmail/mimeBuilder");
-const { planReceipt } = require("../services/email/emailTracking");
 const { computeReadStatus } = require("../services/email/readStatus");
 
 const b64 = (s) => Buffer.from(s).toString("base64url");
@@ -221,54 +220,19 @@ describe("read receipts in the sync and the screens", () => {
   });
 });
 
-describe("asking for a read receipt", () => {
+describe("read receipts are never requested", () => {
   const mailbox = { _id: new mongoose.Types.ObjectId(), address: "support@humancareconnect.co", isActive: true, signature: "Human Care Connect" };
   const to = [{ name: "", address: "anita@gmail.com" }];
+  const RECEIPT_HEADERS = /Disposition-Notification-To|Return-Receipt-To|Return-Receipt-Requested|X-Confirm-Reading-To/i;
 
-  test("the header names our own mailbox, only when asked", async () => {
-    const withIt = (await buildRawMessage({ mailbox, to, subject: "Hi", body: "x", requestReceipt: true })).raw.toString();
-    assert.match(withIt, /^Disposition-Notification-To: support@humancareconnect\.co\r?$/m);
-    const without = (await buildRawMessage({ mailbox, to, subject: "Hi", body: "x" })).raw.toString();
-    assert.ok(!/Disposition-Notification-To/i.test(without));
+  test("no receipt header on any kind of mail, even if a caller still passes the old flag", async () => {
+    for (const extra of [{}, { requestReceipt: true }, { tracking: { imageUrl: "https://uat.example.com/api/e/x.gif", disclosure: "" } }]) {
+      const raw = (await buildRawMessage({ mailbox, to, subject: "Hi", body: "x", ...extra })).raw.toString();
+      assert.ok(!RECEIPT_HEADERS.test(raw), JSON.stringify(Object.keys(extra)));
+    }
   });
 
-  test("it works on a plain-text mail with no image or links", async () => {
-    const raw = (await buildRawMessage({ mailbox, to, subject: "Hi", body: "x", requestReceipt: true, tracking: null })).raw.toString();
-    assert.match(raw, /Disposition-Notification-To/);
-    assert.ok(!/multipart\/alternative/i.test(raw));
-  });
-
-  describe("planReceipt", () => {
-    let mongod;
-    before(async () => {
-      mongod = await MongoMemoryServer.create();
-      await mongoose.connect(mongod.getUri());
-      await EmailTrackingOptOut.init();
-    });
-    after(async () => {
-      await mongoose.disconnect();
-      await mongod.stop();
-    });
-    beforeEach(() => EmailTrackingOptOut.deleteMany({}));
-
-    const plan = (over = {}) => planReceipt({ to, cc: [], requested: true, state: ACTIVE, ...over });
-
-    test("default off: only a ticked box asks", async () => {
-      assert.deepEqual(await plan({ requested: undefined }), { enabled: false, reason: "not_requested" });
-      assert.deepEqual(await plan({ requested: false }), { enabled: false, reason: "not_requested" });
-      assert.deepEqual(await plan(), { enabled: true });
-    });
-    test("needs tracking to be active", async () => {
-      assert.equal((await plan({ state: { ...ACTIVE, active: false } })).reason, "tracking_off");
-    });
-    test("company addresses follow the Super Admin toggle", async () => {
-      const internal = [{ address: "boss@humancareconnect.co" }];
-      assert.equal((await plan({ to: internal })).enabled, true);
-      assert.equal((await plan({ to: internal, state: { ...ACTIVE, trackInternalRecipients: false } })).reason, "internal_recipients");
-    });
-    test("an opted-out recipient is never asked", async () => {
-      await EmailTrackingOptOut.create({ address: "optout@gmail.com" });
-      assert.equal((await plan({ cc: [{ address: "OptOut@gmail.com" }] })).reason, "opted_out");
-    });
+  test("planReceipt no longer exists", () => {
+    assert.equal(require("../services/email/emailTracking").planReceipt, undefined);
   });
 });

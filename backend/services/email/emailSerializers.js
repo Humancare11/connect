@@ -22,7 +22,6 @@ function serializeMailbox(mb) {
     address: mb.address,
     displayName: mb.displayName,
     color: mb.color,
-    trackOpensDefault: mb.trackOpensDefault !== false,
   };
 }
 

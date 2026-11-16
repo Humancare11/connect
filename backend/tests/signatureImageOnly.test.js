@@ -364,6 +364,7 @@ describe("image-only signatures", () => {
 
     test("without the box ticked the mail is exactly what it was: company footer, no image, no HTML", async () => {
       await giveSignature();
+      state = { ...ON, active: false }; // no tracking image either, so the mail has no HTML part at all
       for (const fields of [{ signature: undefined }, { signature: "0" }, { signature: "true" }]) {
         const r = await send(fields);
         assert.equal(r.status, 201);
@@ -414,11 +415,19 @@ describe("image-only signatures", () => {
       assert.equal((r.html.match(/<img /g) || []).length, 2);
     });
 
-    test("with 'Track opens' off there is no tracking image, only the signature", async () => {
+    test("while open tracking is switched off there is no tracking image, only the signature", async () => {
       await giveSignature();
-      const r = await send({ trackOpens: "0" });
+      state = { ...ON, active: false };
+      const r = await send();
       assert.ok(!/\/api\/e\//.test(r.mime));
       assert.equal((r.html.match(/<img /g) || []).length, 1);
+    });
+
+    test("an old client's trackOpens=0 is ignored: the tracking image is still there", async () => {
+      await giveSignature();
+      const r = await send({ trackOpens: "0" });
+      assert.match(r.mime, /\/api\/e\//);
+      assert.equal((r.html.match(/<img /g) || []).length, 2);
     });
 
     test("links in the message are still tracked, and only those", async () => {
@@ -454,19 +463,18 @@ describe("image-only signatures", () => {
       assert.ok(!r.text.includes("\n-- \n"));
     });
 
-    test("the footer notice is last in both parts", async () => {
+    test("no footer notice, even if the old setting is on", async () => {
       await giveSignature();
-      state = { ...ON, disclosureEnabled: true };
-      const r = await send({ trackOpens: "1" });
-      assert.ok(r.html.includes("This email may include technology"));
-      assert.ok(r.html.indexOf("This email may include technology") > r.html.indexOf('<img src="cid:'));
-      assert.ok(r.text.trimEnd().endsWith(r.text.slice(r.text.indexOf("This email may include technology")).trimEnd()));
+      state = { ...ON, disclosureEnabled: true, disclosureText: "This email may include technology" };
+      const r = await send();
+      assert.ok(!r.html.includes("This email may include technology"));
+      assert.ok(!r.text.includes("This email may include technology"));
     });
 
-    test("a read receipt request does not change the image", async () => {
+    test("a read receipt request from an old client is ignored: no receipt header, image unchanged", async () => {
       await giveSignature();
       const r = await send({ requestReceipt: "1" });
-      assert.match(r.mime, /Disposition-Notification-To/);
+      assert.ok(!/Disposition-Notification-To|Return-Receipt-To|Return-Receipt-Requested/i.test(r.mime));
       assert.match(r.html, /<img src="cid:/);
     });
 

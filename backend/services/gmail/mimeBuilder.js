@@ -56,10 +56,10 @@ function composeText(body, signature, disclosure = "", attachmentBlock = "", { c
 //                embedded (CID, inline, no file name) and shown in the HTML part after the
 //                message. It replaces the company footer, and the plain-text part has no
 //                signature text at all.
-//   requestReceipt  true → adds Disposition-Notification-To: <the mailbox address>, so
-//                the recipient's mail app may confirm the mail was displayed
+// No read-receipt header (Disposition-Notification-To, Return-Receipt-To, ...) is ever added:
+// read receipts are not requested from anyone.
 // → { raw: Buffer, rfcMessageId, text }
-async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null, requestReceipt = false, secureLinks = null, disclosure = "", companyFooter = true, signatureImage = null }) {
+async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null, secureLinks = null, disclosure = "", companyFooter = true, signatureImage = null }) {
   if (!to?.length) throw new EmailValidationError("At least one recipient is required.");
   assertRecipientCount(to, cc);
 
@@ -117,7 +117,6 @@ async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo 
     ...(html ? { html } : {}),
     messageId: rfcMessageId,
     // The address comes from our own mailbox record, never from the request.
-    ...(requestReceipt ? { headers: { "Disposition-Notification-To": mailbox.address } } : {}),
     ...(inReplyTo ? { inReplyTo: cleanRef(inReplyTo) } : {}),
     ...(references.length ? { references: references.map(cleanRef).filter(Boolean) } : {}),
     attachments: [

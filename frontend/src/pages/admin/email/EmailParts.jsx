@@ -162,36 +162,6 @@ export function SecureLinksToggle({ checked, onChange, days }) {
   );
 }
 
-// "Request read receipt" box. Its own box, off by default, shown only while tracking is on.
-export const RECEIPT_WARNING = "The recipient will see a prompt asking to send a receipt \u2014 they will know you asked.";
-
-export function ReceiptToggle({ checked, onChange }) {
-  return (
-    <div className="em-receiptbox">
-      <label className="em-trkopt" title="Most mail apps never send a receipt, and the recipient can always decline.">
-        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-        Request read receipt
-      </label>
-      <small className="em-trkwarn">{RECEIPT_WARNING}</small>
-    </div>
-  );
-}
-
-// "Track opens" box of the compose and reply forms. Only rendered while open
-// tracking is switched on; the server decides whether the mail really carries it.
-export function TrackOpensToggle({ checked, onChange, disclosure, caveat = "" }) {
-  return (
-    <>
-      <label className="em-trkopt" title="Adds a tiny image so you can see whether the mail was opened. Not exact: some mail apps block images or load them automatically.">
-        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-        Track opens
-        {checked && disclosure ? <small className="em-sub"> · a short notice is added to the footer</small> : null}
-      </label>
-      {checked && caveat ? <small className="em-trkwarn">{caveat}</small> : null}
-    </>
-  );
-}
-
 // Link as shown in the list of tracked links: host and path, no query string (it can hold personal data).
 function shortUrl(url) {
   try {
