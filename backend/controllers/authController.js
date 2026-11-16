@@ -1350,9 +1350,49 @@ const refresh = async (req, res) => {
   return res.status(401).json({ msg: "No valid refresh session." });
 };
 
+// Identifies the caller's session from ANY token it holds: access or refresh
+// token, as a cookie, a Bearer header or a `refreshToken` body field. An
+// expired access token still proves which session it belonged to (the
+// signature is verified), so expiry is deliberately ignored here. Access and
+// refresh tokens are both signed with JWT_SECRET (middleware/verifyToken.js).
+const sessionFromRequest = (req) => {
+  const bearer = req.headers.authorization?.startsWith("Bearer ")
+    ? req.headers.authorization.split(" ")[1]
+    : null;
+  const candidates = [
+    bearer,
+    req.body?.refreshToken,
+    req.cookies?.userToken,
+    req.cookies?.userRefreshToken,
+  ].filter(Boolean);
+
+  for (const token of candidates) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+      if (decoded?.sid && decoded.role === "user") return decoded;
+    } catch {
+      // Bad signature or malformed token: try the next candidate.
+    }
+  }
+  return null;
+};
+
 const logout = async (req, res) => {
-  await recordActivity(req, { action: "LOGOUT", resource: "User" });
-  if (req.user?.sid) await revokeSession(req.user.sid, "logout");
+  const decoded = sessionFromRequest(req);
+  if (decoded) {
+    // Revoke first: nothing below may prevent the session from being ended.
+    try {
+      await revokeSession(decoded.sid, "logout");
+    } catch (err) {
+      console.error("logout: revokeSession failed", err);
+    }
+    try {
+      req.user = req.user || decoded; // lets recordActivity attribute the entry
+      await recordActivity(req, { action: "LOGOUT", resource: "User" });
+    } catch (err) {
+      console.error("logout: recordActivity failed", err);
+    }
+  }
   clearAuthCookies(res, "user");
   res.json({ msg: "Logged out." });
 };
