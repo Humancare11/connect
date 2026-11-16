@@ -9,6 +9,8 @@ const { isCompanyAddress, EMAIL_DOMAIN } = Mailbox;
 
 const DEFAULT_COLOR = "#0d7a6f";
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+const { clearMailboxCache } = require("../services/email/mailboxAccessCache");
+
 const EDITABLE = ["displayName", "color", "signature", "isActive", "sortOrder"];
 // Removed setting that a cached old page may still send: silently ignored, never an error.
 const IGNORED = ["trackOpensDefault"];
@@ -100,6 +102,11 @@ function createSuperadminMailboxesRouter({
 } = {}) {
   const router = express.Router();
   router.use(...guard);
+  // Any change to a Mail ID (access list, active flag, order ...) drops the cached per-admin lists.
+  router.use((req, res, next) => {
+    if (req.method !== "GET") res.on("finish", clearMailboxCache);
+    next();
+  });
 
   const handle = (fn) => async (req, res) => {
     try {

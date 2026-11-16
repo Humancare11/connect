@@ -8,6 +8,7 @@ const EmailAttachment = require("../models/EmailAttachment");
 const User = require("../models/User");
 const { verifyAdminToken, adminOnly } = require("../middleware/verifyToken");
 const { parseListQuery, buildMessageFilter, EmailQueryError } = require("../services/email/emailQueries");
+const { cachedMailboxes } = require("../services/email/mailboxAccessCache");
 const { serializeMailbox, serializeListItem, serializeThreadMessage, idOf } = require("../services/email/emailSerializers");
 const { summarizeLinks, summarizeDownloads } = require("../services/email/clickSummary");
 const { recordView, summarizeViews } = require("../services/email/emailViews");
@@ -64,9 +65,11 @@ function createAdminEmailRouter({
 
   // Active mailboxes this admin may use. Empty allowedAdmins = every admin.
   const accessibleMailboxes = (adminId) =>
-    Mailbox.find({ isActive: true, $or: [{ allowedAdmins: { $size: 0 } }, { allowedAdmins: adminId }] })
-      .sort({ sortOrder: 1, address: 1 })
-      .lean();
+    cachedMailboxes(adminId, () =>
+      Mailbox.find({ isActive: true, $or: [{ allowedAdmins: { $size: 0 } }, { allowedAdmins: adminId }] })
+        .sort({ sortOrder: 1, address: 1 })
+        .lean()
+    );
 
   const replySubject = (subject) => (/^re:/i.test(subject) ? subject : `Re: ${subject}`);
 
@@ -127,14 +130,17 @@ function createAdminEmailRouter({
   // Unread = received, not viewed by ANY admin in the dashboard, and not read in Gmail.
   // "Spam" counts follow the same rule, per mailbox (and `counts` has the totals).
   router.get("/mailboxes", handle(async (req, res) => {
-    const actor = await loadActor(req, res);
+    const [actor, mailboxes] = await Promise.all([loadActor(req, res), accessibleMailboxes(req.user.id)]);
     if (!actor) return;
-    const mailboxes = await accessibleMailboxes(actor.id);
     const ids = mailboxes.map((m) => m._id);
 
-    const rows = await EmailMessage.aggregate([
-      { $match: { mailbox: { $in: ids }, direction: "in", isReceipt: { $ne: true }, firstViewedAt: null, gmailRead: { $ne: true } } },
-      { $group: { _id: { mailbox: "$mailbox", isSpam: "$isSpam" }, n: { $sum: 1 } } },
+    // The unread counts and the tracking state do not depend on each other either.
+    const [rows, tracking] = await Promise.all([
+      EmailMessage.aggregate([
+        { $match: { mailbox: { $in: ids }, direction: "in", isReceipt: { $ne: true }, firstViewedAt: null, gmailRead: { $ne: true } } },
+        { $group: { _id: { mailbox: "$mailbox", isSpam: "$isSpam" }, n: { $sum: 1 } } },
+      ]),
+      trackingState(),
     ]);
     const unread = new Map();
     const spamBy = new Map();
@@ -150,8 +156,6 @@ function createAdminEmailRouter({
       }
     }
 
-    // Tells the compose form whether to show "Track opens" at all.
-    const tracking = await trackingState();
     res.json({
       mailboxes: mailboxes.map((m) => ({ ...serializeMailbox(m), unread: unread.get(String(m._id)) || 0, spam: spamBy.get(String(m._id)) || 0 })),
       counts: { received, spam },
@@ -169,24 +173,37 @@ function createAdminEmailRouter({
   }));
 
   // GET /messages — one folder, filtered, newest first, paginated.
+  //
+  // A list row needs no body: lean objects without `content` / `signatureImage`, and the snippet
+  // comes from the small `snippetEnc` envelope. Rows that have none yet (not backfilled) get their
+  // snippet from `content`, fetched in ONE extra query for just those rows.
   router.get("/messages", handle(async (req, res) => {
-    const actor = await loadActor(req, res);
-    if (!actor) return;
     const params = parseListQuery(req.query);
-    const mailboxes = await accessibleMailboxes(actor.id);
+    // The admin and the accessible mailboxes do not depend on each other: one round trip, not two.
+    const [actor, mailboxes] = await Promise.all([loadActor(req, res), accessibleMailboxes(req.user.id)]);
+    if (!actor) return;
     const filter = buildMessageFilter(params, mailboxes.map((m) => m._id));
 
     const [docs, total] = await Promise.all([
       EmailMessage.find(filter)
+        .select("-content -signatureImage")
         .sort({ messageDate: -1, _id: -1 })
         .skip((params.page - 1) * params.limit)
-        .limit(params.limit),
+        .limit(params.limit)
+        .lean(),
       EmailMessage.countDocuments(filter),
     ]);
 
+    const missing = docs.filter((d) => !d.snippetEnc?.cipherText).map((d) => d._id);
+    const fallback = new Map();
+    if (missing.length) {
+      const rows = await EmailMessage.find({ _id: { $in: missing } }).select("content").lean();
+      for (const r of rows) fallback.set(String(r._id), r.content);
+    }
+
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));
     res.json({
-      items: docs.map((d) => serializeListItem(d, mailboxMap)),
+      items: docs.map((d) => serializeListItem(d, mailboxMap, fallback.get(String(d._id)))),
       page: params.page,
       limit: params.limit,
       total,

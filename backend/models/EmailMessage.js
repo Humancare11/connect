@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { encryptEmailContent, decryptEmailContent } = require("../utils/emailCrypto");
+const { encryptEmailContent, decryptEmailContent, encryptSnippet, decryptSnippet } = require("../utils/emailCrypto");
 
 const { ObjectId } = mongoose.Schema.Types;
 
@@ -84,6 +84,10 @@ const emailMessageSchema = new mongoose.Schema(
     cc: { type: [addressSchema], default: [] },
     subject: { type: String, default: "", trim: true, maxlength: 998 },
     content: { type: contentSchema, default: null },
+    // The list snippet on its own, encrypted separately (same key), so a mail list never loads or
+    // decrypts whole bodies. Written by setContent; older rows get it from
+    // scripts/backfillEmailSnippets.js, and until then the list falls back to `content`.
+    snippetEnc: { type: contentSchema, default: null },
 
     // Date shown in lists: Gmail's internalDate for inbound, send time for outbound.
     messageDate: { type: Date, required: true },
@@ -191,11 +195,17 @@ emailMessageSchema.index({ firstViewedBy: 1, messageDate: -1 });
 
 emailMessageSchema.methods.setContent = function setContent(content) {
   this.content = encryptEmailContent(content);
+  this.snippetEnc = encryptSnippet(content?.snippet || "");
 };
 
 // → { text, html, snippet }
 emailMessageSchema.methods.getContent = function getContent() {
   return decryptEmailContent(this.content);
+};
+
+// → the list snippet, from the small envelope. null when this row has none yet (not backfilled).
+emailMessageSchema.methods.getSnippet = function getSnippet() {
+  return this.snippetEnc?.cipherText ? decryptSnippet(this.snippetEnc) : null;
 };
 
 module.exports = mongoose.model("EmailMessage", emailMessageSchema);

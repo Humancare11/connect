@@ -150,6 +150,19 @@ describe("admin email read API", () => {
       assert.equal(body.mailboxes.find((m) => m.address === support.address).unread, 2);
     });
 
+    test("list snippets: from the small snippet envelope; a row without one still shows its snippet; no body is returned", async () => {
+      const fresh = await mk(support, { subject: "Fresh", body: "Full body text that is long", snippet: "Fresh snippet" });
+      const legacy = await mk(support, { subject: "Legacy", body: "Legacy body", snippet: "Legacy snippet" });
+      await EmailMessage.collection.updateOne({ _id: legacy._id }, { $unset: { snippetEnc: "" } }); // a row written before snippetEnc existed
+      assert.ok((await EmailMessage.findById(fresh._id)).snippetEnc.cipherText, "setContent wrote the envelope");
+      const res = await get("/messages?folder=inbox", priya);
+      assert.equal(res.status, 200);
+      const bySubject = Object.fromEntries(res.body.items.map((m) => [m.subject, m]));
+      assert.equal(bySubject.Fresh.snippet, "Fresh snippet");
+      assert.equal(bySubject.Legacy.snippet, "Legacy snippet");
+      assert.ok(!/cipherText|authTag|snippetEnc|Full body text/.test(JSON.stringify(res.body)), "nothing encrypted or body-like in the list");
+    });
+
     test("mail read in Gmail stops counting as unread (received and spam), per mailbox and in the totals", async () => {
       await EmailMessage.updateOne({ _id: ids.in2 }, { $set: { gmailRead: true } });
       await EmailMessage.updateOne({ _id: ids.spam1 }, { $set: { gmailRead: true } });

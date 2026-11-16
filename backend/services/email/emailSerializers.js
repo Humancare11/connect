@@ -3,6 +3,7 @@
 // idempotency keys — can reach the browser.
 
 const { computeReadStatus } = require("./readStatus");
+const { decryptEmailContent, decryptSnippet } = require("../../utils/emailCrypto");
 const { displaySize } = require("../../utils/signatureDisplay");
 
 const idOf = (v) => (v ? String(v._id || v) : null);
@@ -111,8 +112,22 @@ function baseFields(doc, mailboxMap) {
   };
 }
 
-function serializeListItem(doc, mailboxMap) {
-  return { ...baseFields(doc, mailboxMap), snippet: safeContent(doc).snippet };
+// The list snippet. Works on a hydrated document or a lean object. Prefers the small
+// snippetEnc envelope; a row without one (not backfilled yet) falls back to the full body
+// envelope, when the caller loaded it. `fallbackContent` is that envelope, if it was fetched
+// separately for this row.
+function snippetOf(doc, fallbackContent) {
+  try {
+    if (doc.snippetEnc?.cipherText) return decryptSnippet(doc.snippetEnc);
+    const envelope = fallbackContent || doc.content;
+    return envelope?.cipherText ? decryptEmailContent(envelope).snippet || "" : "";
+  } catch {
+    return "";
+  }
+}
+
+function serializeListItem(doc, mailboxMap, fallbackContent) {
+  return { ...baseFields(doc, mailboxMap), snippet: snippetOf(doc, fallbackContent) };
 }
 
 // attachmentsByMessage: Map(messageId → EmailAttachment[]); adminsById: Map(id → { name, role });

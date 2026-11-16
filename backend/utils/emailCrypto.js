@@ -57,4 +57,31 @@ function decryptEmailContent(envelope) {
   return { ...empty, ...JSON.parse(json) };
 }
 
-module.exports = { encryptEmailContent, decryptEmailContent };
+// The list snippet is stored in its own small envelope (EmailMessage.snippetEnc), so a mail list
+// never has to load or decrypt whole bodies. Same key and scheme as the content, but a different
+// authenticated-data label: a snippet envelope can never be passed off as a body (or the reverse).
+const SNIPPET_AAD = Buffer.from("email-snippet:v1");
+
+function encryptSnippet(snippet = "") {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", activeKey(), iv);
+  cipher.setAAD(SNIPPET_AAD);
+  const cipherText = Buffer.concat([cipher.update(String(snippet || ""), "utf8"), cipher.final()]);
+  return {
+    cipherText: cipherText.toString("base64"),
+    iv: iv.toString("base64"),
+    authTag: cipher.getAuthTag().toString("base64"),
+    keyVersion: KEY_VERSION,
+  };
+}
+
+// → the snippet text, or "" when there is no envelope.
+function decryptSnippet(envelope) {
+  if (!envelope?.cipherText) return "";
+  const decipher = crypto.createDecipheriv("aes-256-gcm", activeKey(), Buffer.from(envelope.iv, "base64"));
+  decipher.setAAD(SNIPPET_AAD);
+  decipher.setAuthTag(Buffer.from(envelope.authTag, "base64"));
+  return Buffer.concat([decipher.update(Buffer.from(envelope.cipherText, "base64")), decipher.final()]).toString("utf8");
+}
+
+module.exports = { encryptEmailContent, decryptEmailContent, encryptSnippet, decryptSnippet };
