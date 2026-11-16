@@ -93,6 +93,7 @@ const safeUser = (user) => ({
   rating:          user.rating,
   deletionRequestStatus: user.deletionRequestStatus,
   deletionRequestedAt: user.deletionRequestedAt,
+  createdAt:       user.createdAt,
   // Only meaningful for role "partner"; null/undefined for everyone else.
   partner:         user.partner || null,
 });
