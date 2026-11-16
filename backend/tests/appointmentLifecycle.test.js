@@ -4,6 +4,10 @@ const assert = require("node:assert/strict");
 process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret";
 process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "sk_test_dummy_not_used";
 
+// These tests are about appointment completion with stubbed models, not signing (covered in documentSignature.test.js),
+// so the Prescription/Certificate signature rule is switched off here.
+process.env.REQUIRE_DOCTOR_SIGNATURE = "false";
+
 // Seams replaced BEFORE the modules under test are required (they destructure
 // these at load time).
 const pushes = [];

@@ -118,13 +118,17 @@ export default function WritePrescription() {
       setError("Select an appointment.");
       return;
     }
+    if (signature.blocked) {
+      setError("Add your signature to issue this prescription.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
       const { data } = await api.post("/api/medical/prescriptions", {
         ...form,
         patientId: patient?._id,
-        sign,
+        sign: signature.required ? true : sign, // required: the server signs every prescription anyway
         // Saving from the Appointments page also completes the appointment.
         ...(fromAppointment ? { completeOnSave: true } : {}),
       });
@@ -355,7 +359,7 @@ export default function WritePrescription() {
                 <button
                   type="submit"
                   className="dp-btn dp-btn--primary"
-                  disabled={saving || saved}
+                  disabled={saving || saved || signature.blocked}
                 >
                   {saving ? "Saving…" : "Save Prescription"}
                 </button>

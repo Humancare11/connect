@@ -12,7 +12,7 @@ const { serializeReport, logReportAccess } = require("../utils/medicalReportServ
 const { encryptPHI, decryptPHI } = require("../utils/phiCrypto");
 const { ensureDoctorAppointment } = require("../utils/doctorAppointmentAccess");
 const {
-  DocumentSignatureError, snapshotSignature, publicSignatureFields, streamDocumentSignature,
+  DocumentSignatureError, isDoctorSignatureRequired, snapshotSignature, publicSignatureFields, streamDocumentSignature,
 } = require("../utils/documentSignature");
 const { loadAppointmentAny, completeLoaded } = require("../utils/appointmentLifecycle");
 
@@ -34,11 +34,12 @@ function withDecryptedFields(doc, fieldNames) {
   return { ...rest, ...decrypted };
 }
 
-// Optional signing on create: only `sign: true` signs. A doctor with no saved signature gets 422 SIGNATURE_REQUIRED
-// (the form then lets them issue unsigned). Returns { fields } to merge into the new document, or { failed: true }
-// after having sent the error response.
+// Signing on create. By default (REQUIRE_DOCTOR_SIGNATURE not "false") every Prescription / Certificate is signed with
+// the doctor's saved signature and the client's `sign` flag is ignored; a doctor with none gets 422 SIGNATURE_REQUIRED
+// and nothing is created. With the emergency switch off, only `sign: true` signs (the old optional behaviour).
+// Returns { fields } to merge into the new document, or { failed: true } after having sent the error response.
 async function signIfRequested(req, res, kind, docId) {
-  if (req.body?.sign !== true) return { fields: {} };
+  if (!isDoctorSignatureRequired() && req.body?.sign !== true) return { fields: {} };
   try {
     return { fields: await snapshotSignature({ kind, docId, doctorId: req.user.id }) };
   } catch (err) {

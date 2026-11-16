@@ -163,6 +163,17 @@ describe("/api/doctor/signature (PNG + JPG, preview)", () => {
     s3.sent.length = 0;
   });
 
+  test("GET / reports hasSignature and whether Prescriptions/Certificates require one (emergency switch)", async () => {
+    const get = async () => (await fetch(`${base}/api/doctor/signature`, { headers: { "x-test-doctor": String(doctorId) } })).json();
+    assert.deepEqual(await get(), { hasSignature: false, required: true });
+    process.env.REQUIRE_DOCTOR_SIGNATURE = "false";
+    try {
+      assert.equal((await get()).required, false);
+    } finally {
+      delete process.env.REQUIRE_DOCTOR_SIGNATURE;
+    }
+  });
+
   test("preview returns the processed PNG and stores nothing", async () => {
     const res = await send("POST", "/preview", await jpgSignature(), { type: "image/jpeg", name: "s.jpg" });
     assert.equal(res.status, 200);
@@ -271,7 +282,58 @@ describe("Prescription / Certificate signing", () => {
     ["certificate", "certificates", () => cert({ sign: true }), "my-certificates", "certificates"],
   ]) {
     describe(kind, () => {
-      const unsigned = () => (kind === "prescription" ? rx() : cert());
+      // An "old style" unsigned document: only possible with the emergency switch off (the rule is ON by default).
+      const withSwitchOff = async (fn) => {
+        process.env.REQUIRE_DOCTOR_SIGNATURE = "false";
+        try {
+          return await fn();
+        } finally {
+          delete process.env.REQUIRE_DOCTOR_SIGNATURE;
+        }
+      };
+      const unsigned = () => withSwitchOff(() => (kind === "prescription" ? rx() : cert()));
+      const issue = (over) => (kind === "prescription" ? rx(over) : cert(over));
+      const Model = kind === "prescription" ? Prescription : MedicalCertificate;
+
+      test("RULE ON (default): always signed, whatever the client sends for `sign`", async () => {
+        await giveSignature(doctor, sigA);
+        for (const over of [{}, { sign: false }, { sign: true }, { sign: "no" }]) {
+          const res = await issue(over);
+          assert.equal(res.status, 201);
+          assert.equal(res.body[kind].isSigned, true);
+          assert.ok(res.body[kind].signedAt);
+        }
+      });
+
+      test("RULE ON (default): no saved signature is 422 whatever the client sends, and nothing is created or copied", async () => {
+        for (const over of [{}, { sign: false }, { sign: true }]) {
+          const res = await issue(over);
+          assert.equal(res.status, 422);
+          assert.equal(res.body.code, "SIGNATURE_REQUIRED");
+          assert.equal(res.body.msg, "Add your signature to issue this document.");
+        }
+        assert.equal(await Model.countDocuments(), 0);
+        assert.equal(s3.sent.length, 0);
+      });
+
+      test("only REQUIRE_DOCTOR_SIGNATURE=false switches the rule off; other values keep it ON", async () => {
+        for (const v of ["true", "0", "off", "", "no"]) {
+          process.env.REQUIRE_DOCTOR_SIGNATURE = v;
+          try {
+            assert.equal((await issue()).status, 422, `value "${v}" must keep the rule ON`);
+          } finally {
+            delete process.env.REQUIRE_DOCTOR_SIGNATURE;
+          }
+        }
+        for (const v of ["false", " FALSE "]) {
+          process.env.REQUIRE_DOCTOR_SIGNATURE = v;
+          try {
+            assert.equal((await issue()).status, 201, `value "${v}" turns it off`);
+          } finally {
+            delete process.env.REQUIRE_DOCTOR_SIGNATURE;
+          }
+        }
+      });
 
       test("sign:true copies the saved signature to a key the document owns and never exposes the key", async () => {
         await giveSignature(doctor, sigA);
@@ -289,10 +351,10 @@ describe("Prescription / Certificate signing", () => {
         assert.equal(raw.signedBy.registrationNumber, "MCI-12345");
       });
 
-      test("unsigned (no sign flag, or sign:false) stays unsigned and copies nothing", async () => {
+      test("SWITCH OFF: unsigned (no sign flag, or sign:false) stays unsigned and copies nothing", async () => {
         await giveSignature(doctor, sigA);
         const before = s3.sent.length;
-        for (const res of [await unsigned(), await (kind === "prescription" ? rx({ sign: false }) : cert({ sign: false }))]) {
+        for (const res of [await unsigned(), await withSwitchOff(() => issue({ sign: false }))]) {
           assert.equal(res.status, 201);
           assert.equal(res.body[kind].isSigned, false);
           assert.equal(res.body[kind].signedAt, undefined);
@@ -300,10 +362,11 @@ describe("Prescription / Certificate signing", () => {
         assert.equal(s3.sent.length, before);
       });
 
-      test("sign:true with no saved signature is 422 SIGNATURE_REQUIRED and creates nothing; unsigned still works", async () => {
-        const res = await create();
+      test("SWITCH OFF: sign:true with no saved signature is 422 and creates nothing; unsigned still works", async () => {
+        const res = await withSwitchOff(() => create());
         assert.equal(res.status, 422);
         assert.equal(res.body.code, "SIGNATURE_REQUIRED");
+        assert.match(res.body.msg, /issue this document unsigned/);
         assert.equal(await (kind === "prescription" ? Prescription : MedicalCertificate).countDocuments(), 0);
         assert.equal((await unsigned()).status, 201);
       });
@@ -377,7 +440,9 @@ describe("Prescription / Certificate signing", () => {
         await giveSignature(doctor, sigA);
         const make = route.kind === "prescription" ? () => rx({ sign: true }) : () => cert({ sign: true });
         const signedDoc = (await make()).body[route.kind];
+        process.env.REQUIRE_DOCTOR_SIGNATURE = "false"; // an old-style unsigned document, only possible with the switch off
         const unsignedDoc = (await (route.kind === "prescription" ? rx() : cert())).body[route.kind];
+        delete process.env.REQUIRE_DOCTOR_SIGNATURE;
 
         const owner = route.role === "doctor" ? asDoctor() : asPatient();
         const stranger = route.role === "doctor" ? asDoctor(otherDoctor) : asPatient(otherPatient);

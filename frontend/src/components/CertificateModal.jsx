@@ -52,13 +52,17 @@ export default function CertificateModal({ patient, appointments, onClose, onSav
       setError("Select an appointment.");
       return;
     }
+    if (signature.blocked) {
+      setError("Add your signature to issue this certificate.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
       await api.post("/api/medical/certificates", {
         ...form,
         patientId: patient._id,
-        sign,
+        sign: signature.required ? true : sign, // required: the server signs every certificate anyway
       });
       onSaved("certificate");
     } catch (err) {
@@ -163,7 +167,7 @@ export default function CertificateModal({ patient, appointments, onClose, onSav
             <button
               type="submit"
               className="dp-btn dp-btn--primary"
-              disabled={saving}
+              disabled={saving || signature.blocked}
             >
               {saving ? "Saving…" : "Issue Certificate"}
             </button>

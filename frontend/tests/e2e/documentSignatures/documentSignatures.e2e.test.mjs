@@ -211,6 +211,31 @@ describe("signed / unsigned papers: layout and PDF", { skip: skipReason || false
     });
   });
 
+  // Signature REQUIRED (the default; the server's REQUIRE_DOCTOR_SIGNATURE=false brings the checkbox above back).
+  describe("Signature required (default)", () => {
+    const openRequired = async (query) => {
+      await page.goto(`${base}/tests/e2e/documentSignatures/harness/index.html?doc=sign-option&required=1&${query}`);
+      await page.waitForSelector("#sign-state");
+    };
+    for (const compact of [false, true]) {
+      test(`${compact ? "video-call" : "form"}: saved signature shown with "Change signature", no checkbox`, async () => {
+        await openRequired(`saved=1${compact ? "&compact=1" : ""}`);
+        assert.equal(await page.getByRole("checkbox").count(), 0);
+        assert.equal(await page.locator('img[alt="Your saved signature"]').count(), 1, "thumbnail always shown");
+        assert.match(await page.locator("body").innerText(), /will be applied/i);
+        await page.getByRole("button", { name: "Change signature" }).click();
+        assert.equal(await page.getByRole("button", { name: "Hide signature options" }).count(), 1);
+      });
+      test(`${compact ? "video-call" : "form"}: no saved signature offers the draw/upload panel right there`, async () => {
+        await openRequired(`saved=0${compact ? "&compact=1" : ""}`);
+        assert.equal(await page.getByRole("checkbox").count(), 0);
+        assert.match(await page.locator("body").innerText(), /Add your signature to issue this prescription/i);
+        assert.ok((await page.getByRole("button", { name: /draw/i }).count()) > 0, "draw option is available inline");
+        assert.doesNotMatch(await page.locator("body").innerText(), /issued unsigned/i);
+      });
+    }
+  });
+
   test("no page errors in the browser", () => {
     assert.deepEqual(pageErrors, []);
   });

@@ -9,6 +9,8 @@ import PhoneInputField, {
 } from "../../components/PhoneInputField";
 // import PhoneInputField, { COUNTRIES as PHONE_COUNTRIES, getFlagUrl, findCountryByName } from "../../components/PhoneInputField";
 import DatePickerField from "../../components/DatePickerField";
+import SignaturePanel from "../../components/SignaturePanel";
+import useDoctorSignature from "../../hooks/useDoctorSignature";
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import { Country, State, City } from "country-state-city";
 
@@ -1722,6 +1724,10 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
   );
 }
 
+// Signature at enrollment. false (current): shown clearly but optional. true: a NEW enrollment cannot be submitted
+// without one (doctors who are already approved and edit their profile are never blocked either way).
+const REQUIRE_SIGNATURE_AT_ENROLLMENT = false;
+
 // ═══════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════
@@ -1732,6 +1738,9 @@ export default function DoctorOnboardingWizard({
 }) {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  // The same signature the doctor can also set later under My Signature (Enrollment.signatureKey).
+  const signature = useDoctorSignature();
+  const [signatureError, setSignatureError] = useState("");
   const [draftSaved, setDraftSaved] = useState(false);
   const draftTimerRef = useRef(null);
   const lastProgressKeyRef = useRef("");
@@ -2252,6 +2261,12 @@ export default function DoctorOnboardingWizard({
   };
   const validateS4 = () => {
     setS4Errors({});
+    const isNewEnrollment = regStatus !== "approved" && initialData?.pendingRequestType !== "profile_update";
+    if (REQUIRE_SIGNATURE_AT_ENROLLMENT && isNewEnrollment && !signature.loading && !signature.hasSignature) {
+      setSignatureError("Please add your signature to submit your application.");
+      return false;
+    }
+    setSignatureError("");
     return true;
   };
 
@@ -3646,6 +3661,19 @@ export default function DoctorOnboardingWizard({
               onChange={(e) => setS4({ ...s4, paypalId: e.target.value })}
             />
           </div>
+        </div>
+
+        <div style={{ marginTop: 28 }}>
+          <h3 style={{ margin: "0 0 6px", fontSize: 16 }}>Signature{REQUIRE_SIGNATURE_AT_ENROLLMENT ? " *" : ""}</h3>
+          <p className="sgp-muted" style={{ marginBottom: 10 }}>
+            Your signature is required to issue prescriptions, certificates and visit notes. You can add it now or later in My Signature.
+          </p>
+          <SignaturePanel
+            sig={signature}
+            onSaved={() => setSignatureError("")}
+            prompt={signature.hasSignature ? "" : "No signature saved yet. Draw or upload one below."}
+          />
+          {signatureError && <p className="sgp-error" role="alert">{signatureError}</p>}
         </div>
 
         <div className="btn-row">

@@ -21,6 +21,10 @@ class DocumentSignatureError extends Error {
   }
 }
 
+// Emergency switch for the Prescription / Certificate rule. ON unless REQUIRE_DOCTOR_SIGNATURE is exactly "false"
+// (read per request, so no code path caches it). Visit Notes are always signed and ignore this.
+const isDoctorSignatureRequired = () => String(process.env.REQUIRE_DOCTOR_SIGNATURE ?? "").trim().toLowerCase() !== "false";
+
 const documentSignatureKey = (kind, docId) => `${KINDS[kind]}/${docId}/signature.png`;
 
 // Copies the doctor's saved signature for a document about to be created.
@@ -33,7 +37,9 @@ async function snapshotSignature({ kind, docId, doctorId }) {
   ]);
   if (!enrollment?.signatureKey) {
     throw new DocumentSignatureError(
-      "You have no saved signature. Add one in your profile, or issue this document unsigned.",
+      isDoctorSignatureRequired()
+        ? "Add your signature to issue this document."
+        : "You have no saved signature. Add one in your profile, or issue this document unsigned.",
       422,
       "SIGNATURE_REQUIRED",
     );
@@ -74,6 +80,7 @@ const streamDocumentSignature = (Model, scope) => async (req, res) => {
 };
 
 module.exports = {
+  isDoctorSignatureRequired,
   DocumentSignatureError,
   documentSignatureKey,
   snapshotSignature,

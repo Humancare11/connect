@@ -3,30 +3,56 @@ import SignaturePanel from "./SignaturePanel";
 import "./SignaturePanel.css";
 
 /**
- * "Sign this document" control for the Prescription and Medical Certificate forms (and, compact, the video-call panel).
+ * Signature block for the Prescription and Medical Certificate forms (and the video-call prescription form).
  *
  *   sig            hooks/useDoctorSignature()
- *   sign           whether the document will be signed (state lives in the form)
+ *   sign           whether the document will be signed (only used when signing is optional; state lives in the form)
  *   onSignChange   (boolean) => void
  *   noun           "prescription" | "certificate"
- *   compact        video call: checkbox only, never a panel; no saved signature = short message with a link
  *
- * UNCHECKED by default, even when a signature is saved: the doctor ticks it each time to sign. The saved signature's
- * thumbnail shows while it is ticked. With no saved signature the doctor is prompted to upload or draw one, but can
- * still issue unsigned: this never blocks the form.
+ * REQUIRED (the default; sig.required): the saved signature is applied automatically. Its thumbnail is always shown
+ * with "Change signature". With no saved signature the doctor draws/uploads one right here (the form and everything
+ * typed stays mounted) and the form's Issue button stays disabled until it is saved (see sig.blocked).
+ *
+ * OPTIONAL (server emergency switch REQUIRE_DOCTOR_SIGNATURE=false): the old tick-box behaviour, unchanged.
  */
 export default function SignDocumentOption({ sig, sign, onSignChange, noun = "document", compact = false, profilePath = "/doctor-dashboard/profile" }) {
   const [changing, setChanging] = useState(false);
 
-  // Never leave "sign" ticked when there is nothing to sign with.
+  // Optional mode only: never leave "sign" ticked when there is nothing to sign with.
   useEffect(() => {
-    if (!sig.loading && !sig.hasSignature && sign) onSignChange(false);
+    if (!sig.required && !sig.loading && !sig.hasSignature && sign) onSignChange(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sig.loading, sig.hasSignature, sign]);
-
-  const toggle = (checked) => onSignChange(checked);
+  }, [sig.required, sig.loading, sig.hasSignature, sign]);
 
   if (sig.loading) return null;
+
+  if (sig.required) {
+    return (
+      <div className="sgp-option">
+        {sig.error && (
+          <p className="sgp-muted">
+            {sig.error}{" "}
+            <button type="button" className="sgp-btn sgp-btn--link" onClick={() => sig.refresh()}>Try again</button>
+          </p>
+        )}
+        {sig.hasSignature ? (
+          <>
+            <p className="sgp-muted"><strong>Your signature</strong>: it will be applied when you issue this {noun}.</p>
+            {sig.imageUrl && <div className="sgp-img-box"><img src={sig.imageUrl} alt="Your saved signature" /></div>}
+            <button type="button" className="sgp-btn sgp-btn--link" onClick={() => setChanging((v) => !v)}>
+              {changing ? "Hide signature options" : "Change signature"}
+            </button>
+            {changing && <SignaturePanel sig={sig} onSaved={() => setChanging(false)} />}
+          </>
+        ) : (
+          <SignaturePanel sig={sig} prompt={`Add your signature to issue this ${noun}. Draw or upload it below; what you have typed is kept.`} />
+        )}
+      </div>
+    );
+  }
+
+  const toggle = (checked) => onSignChange(checked);
 
   if (compact) {
     return sig.hasSignature ? (

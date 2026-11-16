@@ -18,3 +18,6 @@
 .sgp-option { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid #e3e9f3; border-radius: 10px; background: #f8faff; margin: 12px 0; }
 .sgp-btn--link { align-self: flex-start; background: none; border: none; padding: 0; color: #1e63d6; text-decoration: underline; font-weight: 600; }
 .sgp-btn--link:hover:not(:disabled) { background: none; }
+.sgp-banner { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin: 0 0 14px; padding: 10px 14px; border-radius: 8px; background: #fff8e6; border: 1px solid #f3dba0; color: #5c4400; font-size: 14px; }
+.sgp-banner a { color: #12296b; font-weight: 600; }
+.sgp-banner__x { border: none; background: none; cursor: pointer; color: #5c4400; font-size: 14px; line-height: 1; padding: 2px 4px; }

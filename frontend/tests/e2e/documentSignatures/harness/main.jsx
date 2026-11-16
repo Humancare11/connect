@@ -2,7 +2,7 @@
 // Renders the REAL slips (RxSlip in both layouts, MedicalCertificateSlip, VisitNoteSlip) with fixed data, signed or
 // unsigned, and exposes window.makePdf() which runs the app's own PDF code (utils/slipPdf.js).
 //   ?doc=rx|rx-legacy|cert|visit   &signed=1
-//   ?doc=sign-option&saved=1|0&compact=1   the "Sign this ..." control with a stub signature hook (state shown in #sign-state)
+//   ?doc=sign-option&saved=1|0&compact=1&required=1   the "Sign this ..." control with a stub signature hook (state shown in #sign-state)
 //   (slips:)   &sig=normal|wide|tall   &long=1 (long content, pushes to 2 pages)
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -88,7 +88,7 @@ function SignOptionDemo() {
   const saved = params.get("saved") === "1";
   const [sign, setSign] = useState(false);
   const sig = {
-    loading: false, hasSignature: saved, imageUrl: saved ? makeSignature("normal") : "", error: "",
+    loading: false, required: params.get("required") === "1", hasSignature: saved, imageUrl: saved ? makeSignature("normal") : "", error: "",
     refresh: async () => {}, preview: async () => ({}), save: async () => {},
   };
   return (

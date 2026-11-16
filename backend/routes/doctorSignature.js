@@ -5,6 +5,7 @@ const Enrollment = require("../models/Enrollment");
 const { verifyDoctorToken } = require("../middleware/verifyToken");
 const { doctorSignatureLimiter } = require("../middleware/rateLimiters");
 const { MAX_SIGNATURE_BYTES, SignatureUploadError, processSignatureUpload } = require("../utils/signatureUpload");
+const { isDoctorSignatureRequired } = require("../utils/documentSignature");
 const { doctorSignatureKey, putPng, streamPng } = require("../utils/visitNoteStorage");
 
 // Mounted at /api/doctor/signature (before /api/doctor). The doctor's one reusable signature, used on
@@ -41,7 +42,8 @@ const handleUpload = (onProcessed) => (req, res) => {
 
 router.get("/", async (req, res) => {
   const enrollment = await Enrollment.findOne({ doctorId: req.user.id }).select("signatureKey").lean();
-  res.status(200).json({ hasSignature: !!enrollment?.signatureKey });
+  // `required` tells the forms whether Prescriptions / Certificates need a signature (emergency switch).
+  res.status(200).json({ hasSignature: !!enrollment?.signatureKey, required: isDoctorSignatureRequired() });
 });
 
 router.get("/image", async (req, res) => {

@@ -223,6 +223,10 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
       setError("Diagnosis is required.");
       return;
     }
+    if (signature.blocked) {
+      setError("Add your signature to issue this prescription.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -235,7 +239,7 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
           medicines: medicines.filter((m) => m.name.trim()),
           instructions,
           followUpDate,
-          sign,
+          sign: signature.required ? true : sign, // required: the server signs every prescription anyway
         },
         {
           authRole: "doctor",
@@ -363,7 +367,7 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
             <button
               type="submit"
               className="hc-vc__rx-btn-primary"
-              disabled={saving}
+              disabled={saving || signature.blocked}
             >
               {saving ? "Saving..." : "Issue Prescription"}
             </button>
