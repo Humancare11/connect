@@ -590,6 +590,8 @@ app.use("/api/admin/country-changes", require("./routes/adminCountryChanges"));
 app.use("/api/admin/partner-cases",require("./routes/adminPartnerCases"));
 app.use("/api/admin/notifications", require("./routes/adminNotifications"));
 // Registered first: signatures are private to each admin and have their own guard.
+// UAT-only timing of the Email module (off unless EMAIL_TIMING_LOG=true; refused in production).
+app.use("/api/admin/email", require("./services/email/timingLog").emailTimingMiddleware());
 app.use("/api/admin/email/signatures", require("./routes/adminEmailSignatures"));
 app.use("/api/admin/email", require("./routes/adminEmail"));
 app.use("/api/superadmin/email/mailboxes", require("./routes/superadminMailboxes"));
