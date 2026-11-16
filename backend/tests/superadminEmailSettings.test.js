@@ -155,12 +155,20 @@ describe("superadmin email settings (open tracking switches, opt-outs)", () => {
   });
 
   describe("per-mailbox default (Mail IDs): removed", () => {
-    test("the mailbox API no longer has trackOpensDefault, and it cannot be edited", async () => {
+    test("the mailbox API no longer has trackOpensDefault; an old client sending it is ignored", async () => {
       let r = await call("POST", "/mailboxes", { address: "accounts@humancareconnect.co", displayName: "Accounts" });
       assert.equal(r.status, 201);
       assert.equal(r.body.mailbox.trackOpensDefault, undefined);
-      r = await call("PATCH", `/mailboxes/${r.body.mailbox.id}`, { trackOpensDefault: false });
-      assert.equal(r.status, 400);
+      const id = r.body.mailbox.id;
+      // A cached old page may still send it: ignored, no error, nothing changes.
+      r = await call("PATCH", `/mailboxes/${id}`, { trackOpensDefault: false });
+      assert.equal(r.status, 200);
+      assert.equal(r.body.mailbox.trackOpensDefault, undefined);
+      r = await call("PATCH", `/mailboxes/${id}`, { displayName: "Accounts team", trackOpensDefault: false });
+      assert.equal(r.status, 200);
+      assert.equal(r.body.mailbox.displayName, "Accounts team");
+      r = await call("POST", "/mailboxes", { address: "hr@humancareconnect.co", displayName: "HR", trackOpensDefault: false });
+      assert.equal(r.status, 201);
       const list = await call("GET", "/mailboxes");
       assert.ok(list.body.mailboxes.every((m) => m.trackOpensDefault === undefined));
     });

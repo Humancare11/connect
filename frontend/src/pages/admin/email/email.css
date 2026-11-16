@@ -241,7 +241,7 @@ button.em-att-main:hover .em-att-nm { text-decoration: underline; }
 
 .em-replybox { margin: 18px 24px 0 72px; border: 1px solid var(--em-line); border-radius: var(--em-radius); box-shadow: 0 1px 4px rgba(11, 4, 67, 0.06); overflow: hidden; }
 .em-rb-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--em-line); font-size: 13px; color: var(--em-muted); }
-.em-replybox textarea { display: block; width: 100%; border: 0; outline: 0; resize: vertical; min-height: 140px; padding: 12px 14px; background: transparent; }
+.em-replybox textarea { overscroll-behavior: contain; display: block; width: 100%; border: 0; outline: 0; resize: vertical; min-height: 140px; padding: 12px 14px; background: transparent; }
 .em-replybox textarea:focus-visible {
   outline: 2px solid var(--primary, #2563eb);
   outline-offset: 2px;

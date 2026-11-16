@@ -203,7 +203,7 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
   };
 
   return (
-    <form className="em-replybox" onSubmit={submit} noValidate>
+    <form className="em-replybox" onSubmit={submit} noValidate data-lenis-prevent>
       <div className="em-rb-head">
         <Icon name="reply" />
         <span>

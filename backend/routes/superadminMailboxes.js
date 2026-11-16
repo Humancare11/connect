@@ -10,6 +10,8 @@ const { isCompanyAddress, EMAIL_DOMAIN } = Mailbox;
 const DEFAULT_COLOR = "#0d7a6f";
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 const EDITABLE = ["displayName", "color", "signature", "isActive", "sortOrder"];
+// Removed setting that a cached old page may still send: silently ignored, never an error.
+const IGNORED = ["trackOpensDefault"];
 
 class ValidationError extends Error {
   constructor(message, status = 400, extra = {}) {
@@ -185,11 +187,12 @@ function createSuperadminMailboxesRouter({
     const body = req.body;
     if (body && typeof body === "object" && !Array.isArray(body)) {
       if (body.address !== undefined) throw new ValidationError("The address of a mailbox cannot be changed.");
-      const unknown = Object.keys(body).filter((k) => !EDITABLE.includes(k));
+      const unknown = Object.keys(body).filter((k) => !EDITABLE.includes(k) && !IGNORED.includes(k));
       if (unknown.length) throw new ValidationError(`Cannot edit: ${unknown.join(", ")}.`);
     }
     const fields = validateFields(body, { requireAll: false });
-    if (!Object.keys(fields).length) throw new ValidationError("Nothing to update.");
+    const ignoredSent = Boolean(body && typeof body === "object" && IGNORED.some((k) => body[k] !== undefined));
+    if (!Object.keys(fields).length && !ignoredSent) throw new ValidationError("Nothing to update.");
 
     const mailbox = await Mailbox.findById(req.params.id);
     if (!mailbox) throw new ValidationError("Mailbox not found.", 404);
