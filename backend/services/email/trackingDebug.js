@@ -35,20 +35,28 @@ function debugLogState(env = process.env, now = Date.now()) {
 }
 
 // A hit no address list recognised: counted ones, grace-window and generic scanner-looking ones.
-// Vendor-matched scanners, Apple and our own address need no tuning.
+// Other vendor-matched scanners, Apple and our own address need no tuning. Microsoft IS logged:
+// Outlook on the web, new Outlook and Outlook mobile load images through Microsoft servers, so a
+// real open can look like a Microsoft scanner hit (see the Outlook classification work).
 function isUnmatched(verdict) {
   if (!verdict || verdict.apple) return false;
   if (verdict.reason === "own_ip") return false;
+  if (verdict.reason === "scanner_microsoft") return true;
   if (/^scanner_/.test(verdict.reason || "") && verdict.reason !== "scanner_ua") return false;
   return true;
 }
 
 // kind: "open" | "click"
-function logUnmatched({ kind, ip, family, verdict }, { env = process.env, now = Date.now(), logger = console.log } = {}) {
+// ageSeconds (optional): seconds between the send and this hit. emptyUa (optional): the hit had no
+// user agent at all. Both are numbers/flags only: no token, message id, address or subject.
+function logUnmatched({ kind, ip, family, verdict, ageSeconds, emptyUa }, { env = process.env, now = Date.now(), logger = console.log } = {}) {
   if (!isUnmatched(verdict) || !debugLogState(env, now).on) return false;
   const safe = (v) => String(v || "").replace(/[^\w.:\-]/g, "").slice(0, 64);
   const result = verdict.counted ? "counted" : verdict.reason || "ignored";
-  logger(`[email-tracking-debug] ${kind} ip=${safe(ip)} ua=${safe(family)} verdict=${safe(result)}`);
+  const extra =
+    (Number.isFinite(ageSeconds) ? ` age=${Math.max(0, Math.round(ageSeconds))}s` : "") +
+    (emptyUa === undefined ? "" : ` noua=${emptyUa ? 1 : 0}`);
+  logger(`[email-tracking-debug] ${kind} ip=${safe(ip)} ua=${safe(family)}${extra} verdict=${safe(result)}`);
   return true;
 }
 

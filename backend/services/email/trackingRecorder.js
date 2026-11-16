@@ -106,7 +106,17 @@ async function recordOpen({ token, ip = "", userAgent = "" }, { now = new Date()
     uaFamily: family,
   });
   // UAT-only tuning aid, off unless explicitly enabled (see trackingDebug.js): server log only.
-  logUnmatched({ kind: "open", ip, family, verdict }, { env, now: now.getTime() });
+  logUnmatched(
+    {
+      kind: "open",
+      ip,
+      family,
+      verdict,
+      ageSeconds: (new Date(now).getTime() - new Date(message.messageDate).getTime()) / 1000,
+      emptyUa: !String(userAgent || "").trim(),
+    },
+    { env, now: now.getTime() }
+  );
   return { recorded: true, counted: verdict.counted, reason: verdict.secondHit ? "second_hit" : verdict.reason };
 }
 

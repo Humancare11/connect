@@ -526,6 +526,21 @@ describe("UAT-only tuning log", () => {
     ]);
   });
 
+  test("Microsoft-matched hits are logged too, with seconds after send and an empty-user-agent flag", () => {
+    const env = { EMAIL_TRACKING_DEBUG_LOG: "true", EMAIL_TRACKING_DEBUG_UNTIL: FUTURE };
+    const lines = [];
+    const logger = (l) => lines.push(l);
+    assert.equal(logUnmatched({ kind: "open", ip: "40.92.1.1", family: "Scanner", verdict: { counted: false, reason: "scanner_microsoft" }, ageSeconds: 312.4, emptyUa: false }, { env, logger }), true);
+    assert.equal(logUnmatched({ kind: "open", ip: "52.1.1.1", family: "", verdict: { counted: false, reason: "no_user_agent", automated: true }, ageSeconds: 95, emptyUa: true }, { env, logger }), true);
+    assert.deepEqual(lines, [
+      "[email-tracking-debug] open ip=40.92.1.1 ua=Scanner age=312s noua=0 verdict=scanner_microsoft",
+      "[email-tracking-debug] open ip=52.1.1.1 ua= age=95s noua=1 verdict=no_user_agent",
+    ]);
+    assert.ok(!/token|@|subject/i.test(lines.join(" ")));
+    // still refused in production and when off
+    assert.equal(logUnmatched({ kind: "open", ip: "40.92.1.1", family: "Scanner", verdict: { counted: false, reason: "scanner_microsoft" } }, { env: { ...env, NODE_ENV: "production" }, logger }), false);
+  });
+
   test("writes nothing when off", () => {
     const lines = [];
     assert.equal(logUnmatched({ kind: "open", ip: "1.1.1.1", family: "Chrome", verdict: verdictCounted }, { env: {}, logger: (l) => lines.push(l) }), false);
