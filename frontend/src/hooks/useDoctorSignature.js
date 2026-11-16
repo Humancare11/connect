@@ -10,8 +10,6 @@ import { blobToDataUrl } from "../utils/visitNote";
 //   required  true unless the server's emergency switch (REQUIRE_DOCTOR_SIGNATURE=false) made signing optional again;
 //             defaults to true until the server has answered, since the server enforces it anyway
 //   blocked   required && no saved signature (yet): Prescription / Certificate forms disable "Issue" while true
-// Saving also fires SIGNATURE_CHANGED_EVENT so the dashboard banner hides without a reload.
-export const SIGNATURE_CHANGED_EVENT = "hc-doctor-signature-changed";
 
 export default function useDoctorSignature() {
   const [state, setState] = useState({ loading: true, hasSignature: false, required: true, imageUrl: "", error: "" });
@@ -59,11 +57,6 @@ export default function useDoctorSignature() {
     async (file, removeBackground = true) => {
       await api.put("/api/doctor/signature", body(file, removeBackground), { authRole: "doctor" });
       await refresh();
-      try {
-        window.dispatchEvent(new Event(SIGNATURE_CHANGED_EVENT));
-      } catch {
-        // Non-fatal: the banner just stays until the next page load.
-      }
     },
     [refresh],
   );
