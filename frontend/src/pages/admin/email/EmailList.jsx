@@ -19,6 +19,7 @@ import {
   recipientsLabel,
   useEmailShell,
 } from "./emailUtils";
+import { showsFirstViewed } from "./folderRules";
 
 const PAGE_SIZE = 50;
 const FILTER_KEYS = ["by", "box", "st", "open", "view", "date", "att"];
@@ -68,7 +69,7 @@ function Row({ m, onOpen, showMailbox }) {
           {m.snippet && <span className="em-snip">— {m.snippet}</span>}
         </div>
         <MetaCol m={m} showMailbox={showMailbox} />
-        <div className="em-stc">{!m.isSpam && <FirstViewed firstViewed={m.firstViewed} readInGmail={m.readInGmail} />}</div>
+        <div className="em-stc"><FirstViewed firstViewed={m.firstViewed} readInGmail={m.readInGmail} /></div>
         <div className="em-time">{fmtTime(m.messageDate)}</div>
       </div>
     );
@@ -99,7 +100,6 @@ function Row({ m, onOpen, showMailbox }) {
       <MetaCol m={m} showMailbox={showMailbox} />
       <div className="em-stc">
         <TrackingBadge tracking={m.tracking} />
-        <FirstViewed firstViewed={m.firstViewed} />
       </div>
       <div className="em-time">{fmtTime(m.messageDate)}</div>
     </div>
@@ -136,7 +136,8 @@ export default function EmailList() {
         status: filters.st || undefined,
         // Sent only; the server ignores it elsewhere.
         readStatus: folder === "sent" ? filters.open || undefined : undefined,
-        viewedBy: filters.view || undefined,
+        // Received and Spam only: "first viewed by" means nothing on sent mail.
+        viewedBy: showsFirstViewed(folder) ? filters.view || undefined : undefined,
         dateFrom: dateFromPreset(filters.date),
         hasAttachment: filters.att || undefined,
         q: q || undefined,

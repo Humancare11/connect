@@ -110,7 +110,7 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
   return (
     <>
       {full && <div className="em-c-scrim" onClick={() => setFull(false)} />}
-      <div className={`em-compose${full ? " full" : ""}`} role="dialog" aria-labelledby="em-c-title">
+      <div className={`em-compose${full ? " full" : ""}`} role="dialog" aria-labelledby="em-c-title" data-lenis-prevent>
         <div className="em-c-head">
           <span id="em-c-title">New Message</span>
           <span className="em-c-btns">

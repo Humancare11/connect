@@ -168,35 +168,10 @@ const startServer = async () => {
   initGeoIp().catch(() => {});
 };
 
-function normalizeOrigin(value) {
-  const origin = String(value || "").trim().replace(/\/+$/, "");
-  if (!origin) return "";
-  try {
-    return new URL(origin).origin;
-  } catch {
-    return origin;
-  }
-}
+const { buildAllowedOrigins, normalizeOrigin } = require("./utils/allowedOrigins");
 
-function parseOriginList(value) {
-  return String(value || "")
-    .split(",")
-    .map(normalizeOrigin)
-    .filter(Boolean);
-}
-
-// Allowed Origins
-const allowedOrigins = Array.from(
-  new Set([
-    ...parseOriginList(process.env.FRONTEND_URL),
-    ...parseOriginList(process.env.CORS_ALLOWED_ORIGINS),
-    "https://humancareconnect.co",
-    "https://www.humancareconnect.co",
-    "https://uat.humancareconnect.co",
-    "http://localhost:5173",
-    "http://localhost:3000",
-  ].filter(Boolean))
-);
+// Allowed Origins (localhost entries are removed in production, see utils/allowedOrigins.js)
+const allowedOrigins = buildAllowedOrigins();
 
 function isLocalDevOrigin(origin) {
   try {

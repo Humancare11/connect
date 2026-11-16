@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Icon } from "./EmailParts";
 import { TRACKING_FILTER_OPTIONS } from "./emailUtils";
+import { showsFirstViewed } from "./folderRules";
 
 // The filter bar for Received and Sent. Every value lives in the URL query, so
 // going back from a mail keeps the filters, and a filtered view can be shared.
@@ -41,7 +42,7 @@ export default function EmailFilters({ folder, allMailIds, filters, mailboxes, a
   };
 
   const inline = ["by", "box", "date"].filter((k) => !(k === "by" && !isSent) && !(k === "box" && !allMailIds));
-  const extra = ["st", ...(isSent ? ["open"] : []), "view", "att"];
+  const extra = ["st", ...(isSent ? ["open"] : []), ...(showsFirstViewed(folder) ? ["view"] : []), "att"];
   const active = Object.keys(defs).filter((k) => filters[k] && (inline.includes(k) || extra.includes(k)));
   const extraSet = extra.filter((k) => filters[k]).length;
   const chipText = (k) => {
