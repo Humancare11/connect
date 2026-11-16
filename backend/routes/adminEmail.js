@@ -8,6 +8,7 @@ const EmailAttachment = require("../models/EmailAttachment");
 const User = require("../models/User");
 const { verifyAdminToken, adminOnly } = require("../middleware/verifyToken");
 const { parseListQuery, buildMessageFilter, EmailQueryError } = require("../services/email/emailQueries");
+const { emitEmailChanged } = require("../services/email/emailEvents");
 const { cachedMailboxes } = require("../services/email/mailboxAccessCache");
 const { serializeMailbox, serializeListItem, serializeThreadMessage, idOf } = require("../services/email/emailSerializers");
 const { summarizeLinks, summarizeDownloads } = require("../services/email/clickSummary");
@@ -48,6 +49,8 @@ function createAdminEmailRouter({
   store = createS3AttachmentStore(),
   sendLimiter = emailSendLimiter,
   trackingState = () => getTrackingState(),
+  // Tells open dashboards that mail changed (see services/email/emailEvents.js). No-op in tests.
+  onChange = emitEmailChanged,
 } = {}) {
   const router = express.Router();
   router.use(...guard);
@@ -274,6 +277,8 @@ function createAdminEmailRouter({
     if (!message) return res.status(404).json({ msg: "Mail not found." });
 
     const { recorded } = await recordView(message, actor);
+    // Another admin's unread counts change when a mail is opened for the first time.
+    if (recorded) onChange(message.mailbox);
     const [views, fresh] = await Promise.all([
       summarizeViews(message._id),
       EmailMessage.findById(message._id).select("firstViewedBy firstViewedByName firstViewedAt").lean(),
@@ -317,6 +322,7 @@ function createAdminEmailRouter({
       trackingState: await trackingState(),
     });
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));
+    if (!duplicate) onChange(message.mailbox);
     res.status(duplicate ? 200 : 201).json({ duplicate, message: serializeListItem(message, mailboxMap) });
   }));
 
@@ -355,6 +361,7 @@ function createAdminEmailRouter({
       trackingState: await trackingState(),
     });
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));
+    if (!duplicate && message) onChange(message.mailbox);
     res.status(duplicate ? 200 : 201).json({ duplicate, message: message ? serializeListItem(message, mailboxMap) : null });
   }));
 
@@ -371,6 +378,7 @@ function createAdminEmailRouter({
 
       const mailbox = mailboxes.find((m) => String(m._id) === String(message.mailbox));
       const updated = await setSpamState({ message, isSpam, gmail: lazyGmail(mailbox) });
+      onChange(message.mailbox);
       res.json({ message: serializeListItem(updated, new Map(mailboxes.map((m) => [String(m._id), m]))) });
     }));
   }

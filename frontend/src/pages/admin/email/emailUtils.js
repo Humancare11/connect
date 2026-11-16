@@ -237,3 +237,11 @@ export function trackingInfo(t) {
 
 // Refresh interval for counts/lists: new mail is synced every 30–60 s on the server.
 export const POLL_MS = 45_000;
+// While live updates work (see useEmailLive) the poll is only a safety net.
+export const POLL_MS_LIVE = 90_000;
+let livePush = false;
+export const setLivePush = (on) => {
+  livePush = Boolean(on);
+};
+// A function, so react-query re-reads it on every cycle.
+export const pollMs = () => (livePush ? POLL_MS_LIVE : POLL_MS);

@@ -857,6 +857,10 @@ const io = new Server(server, {
   },
 });
 
+// Email module: tell open dashboards that mail changed (event carries only a mailbox id).
+const emailEvents = require("./services/email/emailEvents");
+emailEvents.setEmailEmitter((payload) => io.to(emailEvents.EMAIL_ROOM).emit(emailEvents.EVENT, payload));
+
 app.set("io", io);
 app.set("callReportRecorder", callReportRecorder);
 app.set("evictDoctorFromAppointmentRoom", evictDoctorFromAppointmentRoom);
@@ -1996,6 +2000,24 @@ io.on("connection", (socket) => {
 
     if (role !== "admin") {
       io.emit("active-users-count", onlineUsers.size);
+    }
+  });
+
+  // The Email page asks to hear about new mail. Only a verified admin or Super Admin joins the room;
+  // anyone else gets "email-watch-denied" and nothing else happens.
+  socket.on("email-watch", async ({ token } = {}) => {
+    try {
+      const identity =
+        (await resolveSocketIdentity(socket, { role: "admin", token })) ||
+        (await resolveSocketIdentity(socket, { role: "superadmin", token }));
+      if (!emailEvents.canWatchEmail(identity)) {
+        socket.emit("email-watch-denied");
+        return;
+      }
+      socket.join(emailEvents.EMAIL_ROOM);
+      socket.emit("email-watching");
+    } catch (err) {
+      socket.emit("email-watch-denied");
     }
   });
 

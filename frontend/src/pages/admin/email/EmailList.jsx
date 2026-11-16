@@ -9,7 +9,7 @@ import {
   FOLDERS,
   FOLDER_IDS,
   OUTSIDE_LABEL,
-  POLL_MS,
+  pollMs,
   dateFromPreset,
   firstName,
   fmtTime,
@@ -150,7 +150,7 @@ export default function EmailList() {
       const prev = previousQuery?.queryKey?.[2];
       return prev && prev.folder === folder && prev.mailboxId === selectedMailboxId ? previous : undefined;
     },
-    refetchInterval: POLL_MS,
+    refetchInterval: pollMs,
     staleTime: 0,
     refetchOnWindowFocus: true,
     // Wait for the mail IDs: the default selection (Support) is only known then.

@@ -6,7 +6,8 @@ import emailApi from "../../../api/emailApi";
 import { useAdmin } from "../../../context/AdminContext";
 import EmailComposer from "./EmailComposer";
 import { Icon } from "./EmailParts";
-import { EMAIL_BASE, EmailShellContext, FOLDERS, POLL_MS, folderPath } from "./emailUtils";
+import { EMAIL_BASE, EmailShellContext, FOLDERS, folderPath, pollMs } from "./emailUtils";
+import { useEmailLive } from "./useEmailLive";
 import "./email.css";
 
 // Where in the module the URL is: a list or a mail page. The selected Mail ID is
@@ -29,6 +30,7 @@ export default function EmailLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const qc = useQueryClient();
+  useEmailLive(qc);
 
   const [compose, setCompose] = useState(null);
   const [toast, setToast] = useState("");
@@ -39,7 +41,7 @@ export default function EmailLayout() {
   const mailboxesQ = useQuery({
     queryKey: ["email", "mailboxes"],
     queryFn: emailApi.mailboxes,
-    refetchInterval: POLL_MS,
+    refetchInterval: pollMs,
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
