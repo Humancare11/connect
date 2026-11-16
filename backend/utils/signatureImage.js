@@ -3,14 +3,19 @@ const sharp = require("sharp");
 // Image signatures: whatever is uploaded is decoded and re-encoded here, so what is stored and
 // sent is OUR file, never the uploaded bytes. Limits are fixed on purpose.
 const MAX_RAW_BYTES = 5 * 1024 * 1024; // the upload itself
-const MAX_OUTPUT_BYTES = 200 * 1024; // after processing
-const MAX_WIDTH = 600;
-const MAX_HEIGHT = 400; // a signature banner, not a poster
+const MAX_OUTPUT_BYTES = 400 * 1024; // after processing
+const MAX_WIDTH = 1000; // stored at 2x; shown at 500 px (see signatureDisplay.js)
+const MAX_HEIGHT = 800; // a signature banner, not a poster
 const MIN_WIDTH = 50;
 const MIN_HEIGHT = 20;
 const MAX_INPUT_PIXELS = 36_000_000; // 6000 x 6000: refuses decompression bombs
 
 const ALLOWED = new Set(["image/png", "image/jpeg"]);
+// Blank-margin trim (top and bottom only): a row counts as blank when EVERY pixel is near-white
+// (darkest channel >= BLANK_MIN). 242 absorbs JPEG noise around white but keeps light-grey
+// content (#eee = 238 and darker). TRIM_PAD blank rows are kept so the text is not tight.
+const BLANK_MIN = 242;
+const TRIM_PAD = 4;
 const JPEG_QUALITIES = [85, 75, 65, 55];
 
 class SignatureImageError extends Error {
@@ -21,17 +26,39 @@ class SignatureImageError extends Error {
   }
 }
 
+// First and last row that has any content (any pixel darker than BLANK_MIN), or null when the
+// whole image is blank (then nothing is trimmed). raw: interleaved pixels, `channels` per pixel.
+function contentRows(data, width, height, channels) {
+  const colour = Math.min(channels, 3);
+  const rowHasContent = (y) => {
+    const start = y * width * channels;
+    for (let x = 0; x < width; x++) {
+      const i = start + x * channels;
+      for (let c = 0; c < colour; c++) if (data[i + c] < BLANK_MIN) return true;
+    }
+    return false;
+  };
+  let top = 0;
+  while (top < height && !rowHasContent(top)) top++;
+  if (top === height) return null;
+  let bottom = height - 1;
+  while (bottom > top && !rowHasContent(bottom)) bottom--;
+  return { top, bottom };
+}
+
 // → { content: Buffer, mime, ext, width, height, bytes }
 //
 // 1. the real type is read from the bytes (not the file name): only PNG and JPEG pass,
 //    so SVG, GIF, WebP and HEIC are refused, and so is anything that merely claims to be an image
 // 2. decoded with a pixel limit; animated or multi-frame images are refused
 // 3. EXIF orientation is applied, then ALL metadata is dropped
-// 4. scaled down to at most 600 px wide (never enlarged), transparency flattened onto white
-// 5. lossless PNG if it fits in 200 KB (best for logos and flat colour), otherwise JPEG at
+// 4. scaled down to at most 1000 px wide (never enlarged), transparency flattened onto white
+// 5. fully blank (white / near-white) rows at the TOP and BOTTOM are removed, keeping 4 px of
+//    padding. Never the sides, never a row with any content: nothing is ever cropped.
+// 6. lossless PNG if it fits in 400 KB (best for logos and flat colour), otherwise JPEG at
 //    falling quality (best for photographs), otherwise refused. No reduced-colour PNG: it
 //    would make a photograph look posterised and hide the real size problem.
-// `limit` exists only so tests can exercise the refusal; the product limit is fixed (200 KB).
+// `limit` exists only so tests can exercise the refusal; the product limit is fixed (400 KB).
 async function processSignatureImage(input, { limit = MAX_OUTPUT_BYTES } = {}) {
   if (!Buffer.isBuffer(input) || !input.length) throw new SignatureImageError("Choose an image file.");
   if (input.length > MAX_RAW_BYTES) throw new SignatureImageError("The image is larger than 5 MB. Choose a smaller file.");
@@ -60,8 +87,17 @@ async function processSignatureImage(input, { limit = MAX_OUTPUT_BYTES } = {}) {
       .toColourspace("srgb");
 
   let probe;
+  let pipeline = base;
   try {
-    probe = await base().png({ compressionLevel: 9 }).toBuffer({ resolveWithObject: true });
+    const raw = await base().raw().toBuffer({ resolveWithObject: true });
+    const rows = contentRows(raw.data, raw.info.width, raw.info.height, raw.info.channels);
+    if (rows && (rows.top > 0 || rows.bottom < raw.info.height - 1)) {
+      const top = Math.max(0, rows.top - TRIM_PAD);
+      const bottom = Math.min(raw.info.height - 1, rows.bottom + TRIM_PAD);
+      const { width: w, channels } = raw.info;
+      pipeline = () => sharp(raw.data, { raw: { width: w, height: raw.info.height, channels } }).extract({ left: 0, top, width: w, height: bottom - top + 1 });
+    }
+    probe = await pipeline().png({ compressionLevel: 9 }).toBuffer({ resolveWithObject: true });
   } catch {
     throw new SignatureImageError("That image could not be read, or it is too large. Try another file.");
   }
@@ -71,19 +107,19 @@ async function processSignatureImage(input, { limit = MAX_OUTPUT_BYTES } = {}) {
     throw new SignatureImageError(`The image is too small (at least ${MIN_WIDTH} x ${MIN_HEIGHT} px).`);
   }
   if (height > MAX_HEIGHT) {
-    throw new SignatureImageError(`The image is too tall (at most ${MAX_HEIGHT} px high at ${MAX_WIDTH} px wide). Use a banner.`);
+    throw new SignatureImageError(`The image is too tall. Best size: ${MAX_WIDTH}px wide (export at 2x). Max height ${MAX_HEIGHT}px, max 400 KB.`);
   }
 
   if (probe.data.length <= limit) {
     return { content: probe.data, mime: "image/png", ext: "png", width, height, bytes: probe.data.length };
   }
   for (const quality of JPEG_QUALITIES) {
-    const out = await base().jpeg({ quality, progressive: true, mozjpeg: true }).toBuffer({ resolveWithObject: true });
+    const out = await pipeline().jpeg({ quality, progressive: true, mozjpeg: true }).toBuffer({ resolveWithObject: true });
     if (out.data.length <= limit) {
       return { content: out.data, mime: "image/jpeg", ext: "jpg", width: out.info.width, height: out.info.height, bytes: out.data.length };
     }
   }
-  throw new SignatureImageError("The image is too detailed to fit in 200 KB. Use a simpler banner (logo, name, title).");
+  throw new SignatureImageError("The image is too detailed to fit in 400 KB. Best size: 1000px wide (export at 2x). Max height 800px, max 400 KB. Use a simpler banner (logo, name, title).");
 }
 
 module.exports = {
@@ -96,4 +132,6 @@ module.exports = {
   MIN_WIDTH,
   MIN_HEIGHT,
   MAX_INPUT_PIXELS,
+  BLANK_MIN,
+  TRIM_PAD,
 };

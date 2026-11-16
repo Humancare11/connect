@@ -7,6 +7,8 @@ const { verifyAdminToken, adminOnly } = require("../middleware/verifyToken");
 const { createS3AttachmentStore } = require("../utils/emailAttachments");
 const { processSignatureImage, SignatureImageError, MAX_RAW_BYTES, MAX_OUTPUT_BYTES, MAX_WIDTH, MAX_HEIGHT } = require("../utils/signatureImage");
 
+const { displaySize, DISPLAY_WIDTH } = require("../utils/signatureDisplay");
+
 const IMAGE_PREFIX = "email-signature-images";
 const UPLOADS_PER_HOUR = 20;
 
@@ -76,7 +78,10 @@ function createRouter({
 
   // Never includes the storage key. No signature yet reads as "no image, automatic on".
   const toView = (s) => ({
-    image: s?.image ? { mime: s.image.mime, width: s.image.width, height: s.image.height, bytes: s.image.bytes } : null,
+    // displayWidth/displayHeight: the size it is shown at in a mail (the stored file is 2x).
+    image: s?.image
+      ? { mime: s.image.mime, width: s.image.width, height: s.image.height, bytes: s.image.bytes, displayWidth: displaySize(s.image.width, s.image.height).width, displayHeight: displaySize(s.image.width, s.image.height).height }
+      : null,
     autoAdd: s ? s.autoAdd !== false : true,
     updatedAt: s?.updatedAt || null,
   });
@@ -87,7 +92,7 @@ function createRouter({
     if (!actor) return;
     res.json({
       signature: toView(await mine(actor)),
-      limits: { maxImageBytes: MAX_OUTPUT_BYTES, maxImageWidth: MAX_WIDTH, maxImageHeight: MAX_HEIGHT },
+      limits: { maxImageBytes: MAX_OUTPUT_BYTES, maxImageWidth: MAX_WIDTH, maxImageHeight: MAX_HEIGHT, displayWidth: DISPLAY_WIDTH },
     });
   }));
 

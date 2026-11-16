@@ -3,6 +3,7 @@
 // idempotency keys — can reach the browser.
 
 const { computeReadStatus } = require("./readStatus");
+const { displaySize } = require("../../utils/signatureDisplay");
 
 const idOf = (v) => (v ? String(v._id || v) : null);
 
@@ -130,6 +131,8 @@ function serializeThreadMessage(doc, mailboxMap, attachmentsByMessage, adminsByI
           mime: doc.signatureImage.mime,
           width: doc.signatureImage.width,
           height: doc.signatureImage.height,
+          displayWidth: displaySize(doc.signatureImage.width, doc.signatureImage.height).width,
+          displayHeight: displaySize(doc.signatureImage.width, doc.signatureImage.height).height,
           alt: doc.signatureImage.alt || "",
         }
       : null,

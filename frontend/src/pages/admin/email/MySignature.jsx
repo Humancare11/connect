@@ -131,7 +131,7 @@ export default function MySignature() {
             <span className="sg-drop-ico"><Icon name="upload" size={22} /></span>
             <b>{upload.isPending ? "Uploading…" : "Upload signature image"}</b>
             <span>Drag an image here or click to choose</span>
-            <small>PNG or JPG · best 600px wide · it will be resized automatically</small>
+            <small>PNG or JPG · Best size: 1000px wide (export at 2x). Max height 800px, max 400 KB.</small>
           </div>
         )}
 

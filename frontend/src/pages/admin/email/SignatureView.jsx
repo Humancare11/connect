@@ -4,6 +4,14 @@ import { useAuthImage } from "./useAuthImage";
 // A signature image behind the session, shown as a normal picture. While it loads there is a
 // quiet placeholder; if it cannot be loaded (network, storage) the placeholder says so, so a
 // broken image never silently shows only alt text.
+// The size a signature is SHOWN at (the file is stored at 2x): the server sends it as
+// displayWidth/displayHeight; the fallback is the same rule (at most 500 px wide, proportional).
+function shownSize({ width, height, displayWidth, displayHeight }) {
+  if (displayWidth && displayHeight) return { width: displayWidth, height: displayHeight };
+  const w = Math.min(500, width);
+  return { width: w, height: Math.round((w * height) / width) };
+}
+
 function AuthImage({ load, cacheKey, width, height, alt, className, maxWidth }) {
   const { url, failed } = useAuthImage(load, cacheKey);
   if (url) {
@@ -20,7 +28,8 @@ function AuthImage({ load, cacheKey, width, height, alt, className, maxWidth }) 
 // `signature` is the GET /signatures view: { image: { width, height, bytes } | null, updatedAt }.
 export function SignatureImage({ signature, className = "sg-img", maxWidth, alt = "Signature" }) {
   if (!signature?.image) return null;
-  const { width, height, bytes } = signature.image;
+  const { bytes } = signature.image;
+  const { width, height } = shownSize(signature.image);
   return (
     <AuthImage
       load={() => signaturesApi.imageBlob()}
@@ -40,8 +49,8 @@ export function SentSignatureImage({ messageId, image, className = "sg-img" }) {
     <AuthImage
       load={() => emailApi.signatureImageBlob(messageId)}
       cacheKey={`${messageId}:${image.width}x${image.height}`}
-      width={image.width}
-      height={image.height}
+      width={shownSize(image).width}
+      height={shownSize(image).height}
       alt={image.alt || "Signature"}
       className={className}
     />

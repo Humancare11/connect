@@ -1,3 +1,4 @@
+const { displaySize } = require("../../utils/signatureDisplay");
 // HTML twin of a plain-text mail. Built FROM the final plain text, so the two
 // parts of a tracked mail always say exactly the same thing. Text is escaped,
 // line breaks and runs of spaces are kept, bare http(s) and www. links become clickable
@@ -81,9 +82,12 @@ function buildSignatureImageHtml(parts, { image, imageUrl = "", linkTracker = nu
   const font = "font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f1f1f";
   const block = (text, top = 0) => (text ? `<div style="${font}${top ? `;margin-top:${top}px` : ""}">${textToHtml(text, { linkTracker })}</div>` : "");
 
+  // Shown at most 500 px wide (the file is stored at 2x, so it stays sharp). width/height are
+  // attributes too: Outlook desktop ignores the CSS size.
+  const shown = displaySize(image.width, image.height);
   const picture =
-    `<img src="cid:${escapeHtml(image.cid)}" alt="${escapeHtml(image.alt || "")}" width="${Number(image.width) || 0}"` +
-    ` height="${Number(image.height) || 0}" border="0" style="display:block;border:0;max-width:100%;height:auto">`;
+    `<img src="cid:${escapeHtml(image.cid)}" alt="${escapeHtml(image.alt || "")}" width="${shown.width}"` +
+    ` height="${shown.height}" border="0" style="width:${shown.width}px;max-width:100%;height:auto;display:block;border:0">`;
 
   const pixel = imageUrl
     ? `<img src="${escapeHtml(imageUrl)}" width="1" height="1" alt="" border="0" style="border:0;width:1px;height:1px">`
@@ -92,7 +96,7 @@ function buildSignatureImageHtml(parts, { image, imageUrl = "", linkTracker = nu
   return (
     `<!DOCTYPE html>\n<html><head><meta charset="utf-8"></head><body>` +
     block(parts.message) +
-    `<div style="margin-top:16px">${picture}</div>` +
+    `<div style="margin-top:6px">${picture}</div>` +
     block(parts.notice, 16) +
     `${pixel}</body></html>`
   );

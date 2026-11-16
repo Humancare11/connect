@@ -473,9 +473,8 @@ button.em-att-main:hover .em-att-nm { text-decoration: underline; }
 .sg-toggle small { display: block; color: var(--em-muted); font-size: 12.5px; }
 .sg-private { margin: 14px 0 0; font-size: 12.5px; color: var(--em-muted); display: flex; gap: 8px; align-items: center; }
 .sg-img { display: block; max-width: 100%; height: auto; border-radius: 4px; }
-.sg-big { width: 600px; }
 .sg-img-wait { max-width: 100%; display: grid; place-items: center; border: 1px dashed var(--em-line); border-radius: 6px; color: var(--em-muted); font-size: 12.5px; background: var(--em-sunk); }
-.sg-sent { margin: 14px 0 6px; }
+.sg-sent { margin: 6px 0 6px; }
 .sg-sent .sg-img { max-width: 100%; height: auto; }
 .em-sigstrip { margin: 6px 12px 0; border: 1px solid var(--em-line); border-radius: 12px; padding: 10px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .em-sigstrip.has-image { flex-direction: column; align-items: stretch; gap: 10px; }
