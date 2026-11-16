@@ -4,7 +4,7 @@ const sharp = require("sharp");
 // sent is OUR file, never the uploaded bytes. Limits are fixed on purpose.
 const MAX_RAW_BYTES = 5 * 1024 * 1024; // the upload itself
 const MAX_OUTPUT_BYTES = 400 * 1024; // after processing
-const MAX_WIDTH = 1000; // stored at 2x; shown at 500 px (see signatureDisplay.js)
+const MAX_WIDTH = 1000; // stored at 2x; shown at 420 px (see signatureDisplay.js)
 const MAX_HEIGHT = 800; // a signature banner, not a poster
 const MIN_WIDTH = 50;
 const MIN_HEIGHT = 20;

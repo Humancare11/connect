@@ -82,7 +82,7 @@ function buildSignatureImageHtml(parts, { image, imageUrl = "", linkTracker = nu
   const font = "font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f1f1f";
   const block = (text, top = 0) => (text ? `<div style="${font}${top ? `;margin-top:${top}px` : ""}">${textToHtml(text, { linkTracker })}</div>` : "");
 
-  // Shown at most 500 px wide (the file is stored at 2x, so it stays sharp). width/height are
+  // Shown at most 420 px wide (the file is stored at 2x, so it stays sharp). width/height are
   // attributes too: Outlook desktop ignores the CSS size.
   const shown = displaySize(image.width, image.height);
   const picture =

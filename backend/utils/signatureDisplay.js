@@ -2,7 +2,7 @@
 // The file is stored at up to 2x (see signatureImage.js) so it stays sharp on high-resolution
 // screens; it is displayed at most DISPLAY_WIDTH wide, like a signature written in Gmail.
 // A smaller image is never enlarged. The height follows the proportions: nothing is cropped.
-const DISPLAY_WIDTH = 500;
+const DISPLAY_WIDTH = 420;
 
 function displaySize(width, height) {
   const w = Number(width) || 0;

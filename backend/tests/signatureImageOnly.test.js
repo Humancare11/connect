@@ -147,7 +147,7 @@ describe("image-only signatures", () => {
       assert.equal(res.status, 200);
       const body = await res.json();
       assert.deepEqual(body.signature, { image: null, autoAdd: true, updatedAt: null });
-      assert.deepEqual(body.limits, { maxImageBytes: 400 * 1024, maxImageWidth: 1000, maxImageHeight: 800, displayWidth: 500 });
+      assert.deepEqual(body.limits, { maxImageBytes: 400 * 1024, maxImageWidth: 1000, maxImageHeight: 800, displayWidth: 420 });
       assert.equal(await EmailSignature.countDocuments(), 0);
     });
 
@@ -157,7 +157,7 @@ describe("image-only signatures", () => {
       const { signature } = await res.json();
       assert.equal(signature.image.width, 1000);
       assert.equal(signature.image.height, 250);
-      assert.deepEqual([signature.image.displayWidth, signature.image.displayHeight], [500, 125]);
+      assert.deepEqual([signature.image.displayWidth, signature.image.displayHeight], [420, 105]);
       assert.equal(signature.autoAdd, true);
       assert.ok(!JSON.stringify(signature).includes("email-signature-images"));
       const doc = await EmailSignature.findOne({ owner: anita._id }).lean();
@@ -552,7 +552,7 @@ describe("image-only signatures", () => {
       const row = await EmailMessage.findById(r.body.message.id);
       assert.equal(row.getContent().text, "Dear client,\nThank you.\n");
       const page = await (await fetch(`${base}/messages/${row._id}`, { headers: as(anita) })).json();
-      assert.deepEqual(page.message.signatureImage, { mime: "image/png", width: 480, height: 120, displayWidth: 480, displayHeight: 120, alt: "Signature" });
+      assert.deepEqual(page.message.signatureImage, { mime: "image/png", width: 480, height: 120, displayWidth: 420, displayHeight: 105, alt: "Signature" });
       assert.ok(!JSON.stringify(page).includes("email-sent-signatures"));
       const list = await (await fetch(`${base}/messages?folder=sent`, { headers: as(anita) })).json();
       assert.ok(!JSON.stringify(list).includes("email-sent-signatures"));
@@ -597,7 +597,7 @@ describe("image-only signatures", () => {
       old.setContent({ text: "Old text", html: "", snippet: "Old text" });
       await old.save();
       const page = await (await fetch(`${base}/messages/${old._id}`, { headers: as(anita) })).json();
-      assert.deepEqual(page.message.signatureImage, { mime: "image/png", width: 480, height: 120, displayWidth: 480, displayHeight: 120, alt: "Anita Rao" });
+      assert.deepEqual(page.message.signatureImage, { mime: "image/png", width: 480, height: 120, displayWidth: 420, displayHeight: 105, alt: "Anita Rao" });
     });
 
     test("a mail built without a signature image is byte-identical in shape to before (no new parts)", async () => {

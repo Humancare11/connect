@@ -5,10 +5,10 @@ import { useAuthImage } from "./useAuthImage";
 // quiet placeholder; if it cannot be loaded (network, storage) the placeholder says so, so a
 // broken image never silently shows only alt text.
 // The size a signature is SHOWN at (the file is stored at 2x): the server sends it as
-// displayWidth/displayHeight; the fallback is the same rule (at most 500 px wide, proportional).
+// displayWidth/displayHeight; the fallback is the same rule (at most 420 px wide, proportional).
 function shownSize({ width, height, displayWidth, displayHeight }) {
   if (displayWidth && displayHeight) return { width: displayWidth, height: displayHeight };
-  const w = Math.min(500, width);
+  const w = Math.min(420, width);
   return { width: w, height: Math.round((w * height) / width) };
 }
 
