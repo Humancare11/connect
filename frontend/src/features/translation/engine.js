@@ -12,6 +12,7 @@
 import { buildCandidateLocales } from "./candidates.js";
 import { createCaptionReceiver, createCaptionSender, createLangAnnouncer, createStatusAnnouncer } from "./captionProtocol.js";
 import { confidenceTier, normalizeThresholds, safetyNetTriggered } from "./confidence.js";
+import { defaultLog } from "./diagnostics.js";
 import { createDucker } from "./ducker.js";
 import { createEchoBreaker, createEchoFilter } from "./echoFilter.js";
 import { NONE, canTranscribeLanguage, getLanguage, languageBase, localeForLanguage, voiceForLanguage } from "./languages.js";
@@ -50,7 +51,7 @@ export function createTranscriptionEngine({
   clearTimer = (id) => clearTimeout(id),
   random = Math.random,
   doc = typeof document !== "undefined" ? document : null,
-  log = (...a) => { try { if (typeof console !== "undefined") console.info(...a); } catch { /* no console */ } }, // diagnostics: numbers and codes, NEVER any text
+  log = defaultLog, // diagnostics: numbers and codes, NEVER any text
   getPeerLevel = null, // () => 0..1 | null: how loud the other person is (default: measured from the remote audio element's stream)
 } = {}) {
   const thresholds = normalizeThresholds(config.thresholds);

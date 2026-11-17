@@ -523,7 +523,8 @@ test("nothing in the feature logs or stores anything", () => {
   const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "src", "features", "translation");
   for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".js") && f !== "languages.data.js")) {
     const code = fs.readFileSync(path.join(dir, file), "utf8").split("\n").filter((l) => !l.trim().startsWith("//")).join("\n");
-    assert.equal(/\bconsole\s*\./.test(code), false, file + " must not log");
+    // The one exception is diagnostics.js: the "[tr-diag]" lines (codes and numbers, never any text), tested in transcriptionSubtitlesListenerOnly.
+    if (file !== "diagnostics.js") assert.equal(/\bconsole\s*\./.test(code), false, file + " must not log");
     assert.equal(/localStorage|sessionStorage|indexedDB|document\.cookie/.test(code), false, file + " must not store anything in the browser");
   }
 });
