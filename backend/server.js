@@ -51,6 +51,9 @@ const { normalizeDenyReason } = require("./utils/roomDenyReason");
 const { createGraceTimerRegistry } = require("./utils/graceTimers");
 const { createGracefulShutdown, registerShutdownSignals } = require("./utils/gracefulShutdown");
 const { installSocketErrorGuard } = require("./utils/socketErrorGuard");
+const { installSocketInputGuard } = require("./utils/socketInputGuard");
+const { rejectOperatorInput } = require("./middleware/rejectOperatorInput");
+const { asObjectIdString } = require("./utils/inputGuards");
 const { createPresenceDownTracker } = require("./utils/presenceDown");
 const CallReport = require("./models/CallReport");
 const { createCallReportRecorder } = require("./utils/callReportRecorder");
@@ -374,6 +377,8 @@ app.use(cors(corsOptions));
 // Razorpay signs the RAW body, so its webhook gets the bytes untouched (before express.json parses and discards them).
 app.post("/api/razorpay/webhook", express.raw({ type: "*/*", limit: "1mb" }), require("./routes/razorpay").webhookHandler);
 app.use(express.json());
+// Refuses MongoDB operator keys ("$ne", "$gt", ...) and object/array values in id fields before any route sees them (utils/inputGuards.js).
+app.use(rejectOperatorInput);
 app.use(require("cookie-parser")());
 
 // Every response carries an X-Request-Id so a user-reported error (or a
@@ -1123,6 +1128,27 @@ async function resolveSocketIdentity(socket, requested = {}) {
   }
 
   return null;
+}
+
+// The display name for chat messages sent over this socket: the signed-in user's own name (the same field the call page shows today),
+// "Doctor" / "Patient" when there is none (what the page falls back to). Looked up once per socket and person, then remembered.
+async function resolveChatSenderName(socket, role, userId) {
+  const fallback = role === "doctor" ? "Doctor" : "Patient";
+  const cached = socket.data && socket.data.chatSenderName;
+  if (cached && cached.userId === String(userId || "") && cached.role === role) return cached.name;
+  let name = "";
+  try {
+    const id = asObjectIdString(String(userId || ""));
+    if (id) {
+      const doc = await (role === "doctor" ? Doctor : User).findById(id).select("name").lean();
+      if (doc && typeof doc.name === "string") name = doc.name.trim().slice(0, 200);
+    }
+  } catch {
+    name = ""; // a failed lookup only means the fallback name is shown
+  }
+  const result = name || fallback;
+  if (socket.data) socket.data.chatSenderName = { userId: String(userId || ""), role, name: result };
+  return result;
 }
 
 function isSocketInAppointmentRoom(socket, appointmentId) {
@@ -1979,6 +2005,8 @@ app.set("recordExpectedDisconnectReason", (guestId, reason) => {
 io.on("connection", (socket) => {
   // Contain any handler error (null payload, DB failure, ...) to this socket.
   installSocketErrorGuard(socket);
+  // Every event payload is checked before its handler runs: ids must be real id strings, chat fields strings of a sane size (utils/socketInputGuard.js).
+  installSocketInputGuard(socket);
 
   // Liveness probe: clients ack-ping after a resume/wake to find out whether
   // their socket is really still connected to this server.
@@ -2291,10 +2319,9 @@ io.on("connection", (socket) => {
 
   socket.on(
     "appointment-message",
-    ({
+    async ({
       appointmentId,
       senderId,
-      senderName,
       text,
       fileUrl,
       fileName,
@@ -2307,6 +2334,8 @@ io.on("connection", (socket) => {
       const liveIdentity = socketUsers.get(socket.id);
       const senderRole = liveIdentity?.role || socket.userRole || "user";
       const senderUserId = liveIdentity?.userId || socket.userId || senderId;
+      // The name shown next to a message is the signed-in person's own name, read here, never what the browser says it is.
+      const senderName = await resolveChatSenderName(socket, senderRole, senderUserId);
       const encrypted = encryptChatText(text || "");
       const hour = new Date().getHours();
       const fileKey = fileUrl ? keyFromStoredValue(fileUrl) : "";
