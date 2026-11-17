@@ -50,9 +50,13 @@ export function createTranscriptionEngine({
   clearTimer = (id) => clearTimeout(id),
   random = Math.random,
   doc = typeof document !== "undefined" ? document : null,
+  log = (...a) => { try { if (typeof console !== "undefined") console.info(...a); } catch { /* no console */ } }, // diagnostics: numbers and codes, NEVER any text
   getPeerLevel = null, // () => 0..1 | null: how loud the other person is (default: measured from the remote audio element's stream)
 } = {}) {
   const thresholds = normalizeThresholds(config.thresholds);
+  const diag = (what, data) => { try { log(`[tr-diag] ${what}`, data); } catch { /* never into the call */ } };
+  let lastReannounceAt = -Infinity;
+  const seenPartial = new Set(); // sentence ids whose first partial was already logged
   const listeners = new Set();
   let state = {
     phase: "idle", // idle | running | stopped | unavailable
@@ -155,6 +159,18 @@ export function createTranscriptionEngine({
     isVoiceOn: () => state.voiceEnabled && !state.voiceBreakerTripped,
     now,
     onTranscript: (e) => addTranscript({ who: "peer", ...e }),
+    onTrace: (t) => {
+      // Logged: every finished sentence, and the first partial of each sentence. The subtitle outcome says why one did or did not appear.
+      if (!t.final && seenPartial.has(t.id)) return;
+      if (!t.final) seenPartial.add(t.id); else seenPartial.delete(t.id);
+      diag("caption received", { id: t.id, final: t.final, from: t.from, srcLang: t.srcLang, tier: t.tier, iHear: t.myLang, translationsInCaption: t.targets, subtitlesOn: state.subtitlesEnabled, outcome: t.outcome });
+      // The speaker's caption has no translation in my language: it never learned my language (a lost lang-changed). Say it again, at most every 5 s.
+      if (t.outcome === "no_translation_for_my_language" && t.final && now() - lastReannounceAt > 5000) {
+        lastReannounceAt = now();
+        announcer.announce(state.readLang);
+        diag("language announced again (the caption had no translation for it)", { iHear: state.readLang });
+      }
+    },
     onSubtitle: (s) => showSubtitle(s),
     onVoice: (v) => { voiceQueue.enqueue(v); },
     onHint: (h) => set({ hint: h }),
@@ -262,10 +278,19 @@ export function createTranscriptionEngine({
   }
 
   function showSubtitle(s) {
-    if (!state.subtitlesEnabled) return; // the person switched subtitles off (the transcript panel is unaffected)
+    if (!state.subtitlesEnabled) { diag("subtitle not shown", { id: s.id, why: "subtitles_switched_off" }); return; } // the person switched subtitles off (the transcript panel is unaffected)
     clearTimer(subtitleTimer);
     set({ subtitle: s });
-    subtitleTimer = setTimer(() => { if (state.subtitle && state.subtitle.id === s.id) set({ subtitle: null }); }, SUBTITLE_HOLD_MS);
+    // A finished sentence stays on screen while its translated voice is still being spoken or is waiting its turn (up to 20 s more).
+    let extensions = 0;
+    const arm = (ms) => {
+      subtitleTimer = setTimer(() => {
+        if (!state.subtitle || state.subtitle.id !== s.id) return;
+        if (s.final && extensions < 13 && (voiceQueue.isSpeaking() || voiceQueue.waitingCount() > 0)) { extensions += 1; arm(1500); return; }
+        set({ subtitle: null });
+      }, ms);
+    };
+    arm(SUBTITLE_HOLD_MS);
   }
 
   // The translation targets: English (the record) and the language the other person reads. Never more than two.
@@ -348,6 +373,7 @@ export function createTranscriptionEngine({
     // Always sent (echo excepted). An unclear sentence is not shown or spoken on the other side, but its arrival tells that device that a
     // sentence was not translated, so the real voice is not left muted.
     captionSender.final({ text: f.text, tr: f.tr, srcLang: f.srcLang, confidence: f.confidence });
+    diag("caption sent", { srcLang: f.srcLang, confidence: f.confidence, translationsSent: Object.keys(f.tr || {}), recognizerTargets: recognizer ? recognizer.targets() : [] });
 
     // The wrong-language safety net (only when a language was picked): nonsense with low confidence means the pick does not match
     // what is spoken, so listen with detection instead, at the next pause.
@@ -376,7 +402,8 @@ export function createTranscriptionEngine({
   function handleIncomingLang(msg) {
     if (!mine(msg) || typeof msg.lang !== "string") return;
     set({ peerReadLang: msg.lang });
-    if (recognizer) recognizer.setTargets(targetsFor(msg.lang)); // on the RUNNING recognizer: no restart
+    if (recognizer) { const targetsNow = recognizer.setTargets(targetsFor(msg.lang)); diag("listener language received", { listenerHears: msg.lang, targetsNow }); } // on the RUNNING recognizer: no restart
+    else diag("listener language received before the recognizer was up", { listenerHears: msg.lang });
   }
   function handleIncomingCaption(msg) {
     if (!mine(msg) || stopped) return;

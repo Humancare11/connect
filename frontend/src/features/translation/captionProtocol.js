@@ -103,6 +103,7 @@ export function createCaptionReceiver({
   onVoice = () => {},
   onHint = () => {},
   onUnspoken = () => {}, // a finished sentence of the other person that will NOT be spoken here (unclear, or no translation for me)
+  onTrace = () => {}, // diagnostics only, never any text: ({ id, final, from, srcLang, tier, myLang, targets, outcome })
   now = () => Date.now(),
 } = {}) {
   const hintShownAt = new Map(); // language base -> time
@@ -115,6 +116,7 @@ export function createCaptionReceiver({
       onTranscript(entry);
 
       const myLang = getMyLang();
+      const trace = (outcome) => onTrace({ id: entry.id, final: entry.final, from: entry.from, srcLang: entry.srcLang, tier, myLang, targets: Object.keys(entry.tr), outcome });
 
       // The doctor's hint: the patient speaks a language other than the doctor's, and the doctor has translation off ("Real voice").
       if (role === "doctor" && caption.from === "patient" && entry.final && tier !== "unclear" && (myLang === "none" || !myLang)) {
@@ -128,7 +130,7 @@ export function createCaptionReceiver({
         }
       }
 
-      if (!myLang || myLang === "none") return; // Real voice: no subtitles, no translated voice
+      if (!myLang || myLang === "none") { trace("no_language_picked"); return; } // Real voice: no subtitles, no translated voice
       // The speaker did not need to pick a language: when they spoke MY language, their own words are the text (no translation, not "unclear").
       const sameLanguage = Boolean(entry.srcLang) && languageBase(entry.srcLang) === languageBase(myLang);
       const text = translationFor(entry.tr, myLang) || (sameLanguage ? entry.text : "");
@@ -136,8 +138,10 @@ export function createCaptionReceiver({
         if (entry.final) onUnspoken(entry);
         const shown = text || entry.text;
         if (entry.final && !showLive(tier) && shown) onSubtitle({ id: entry.id, text: shown, final: true, lighter: true, unclear: true, from: entry.from });
+        trace(!text ? "no_translation_for_my_language" : "unclear_not_shown_live");
         return;
       }
+      trace(sameLanguage ? "subtitle_same_language" : "subtitle");
       onSubtitle({ id: entry.id, text, final: entry.final, lighter: showLighter(tier), from: entry.from });
       if (entry.final && speakAloud(tier) && isVoiceOn() && languageBase(entry.srcLang) !== languageBase(myLang)) {
         onVoice({ id: entry.id, text, lang: myLang });
