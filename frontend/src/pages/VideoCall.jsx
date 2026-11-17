@@ -7,6 +7,7 @@ import api, { getUserAuthToken } from "../api";
 import CallMoreMenu from "../components/CallMoreMenu";
 import { useTranscription } from "../features/translation/useTranscription";
 import { loadTranscriptionConfig } from "../features/translation/featureFlag";
+import { profileCountryCode } from "../features/translation/candidates";
 import { LanguageButton, TranscriptButton } from "../features/translation/ControlButtons";
 import LanguagePanel from "../features/translation/LanguagePanel";
 import TranscriptPanel from "../features/translation/TranscriptPanel";
@@ -1214,6 +1215,9 @@ export default function VideoCall() {
     socket,
     getLocalStream: () => localStreamRef.current,
     getRemoteElements: () => [remoteAudioRef.current].filter(Boolean),
+    // The country on THIS person's own profile ("" when there is none): it only decides which English / Indian languages the recognizer
+    // listens for on this device. It is never sent to the other person and only its code appears in the diagnostics line.
+    profileCountry: profileCountryCode(isDoctor ? doctor?.country : user?.country),
   });
   // Read by the socket handlers and the track-swap code below, which live in older callbacks.
   const trActionsRef = useRef(tr.actions);

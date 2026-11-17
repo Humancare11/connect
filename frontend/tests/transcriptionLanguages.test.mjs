@@ -2,7 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { LANGUAGE_LIST, STT_LOCALES, NONE, getLanguage, languageBase, searchLanguages, canTranscribeLanguage, voiceForLanguage, localeForLanguage, UNSUPPORTED_SPEECH_NOTE } from "../src/features/translation/languages.js";
-import { englishChoice, buildCandidateLocales, normalizeBrowserLanguage, MAX_CANDIDATES, COUNTRY_LOCALES, FILLERS } from "../src/features/translation/candidates.js";
+import { profileCountryCode, englishChoice, buildCandidateLocales, normalizeBrowserLanguage, MAX_CANDIDATES, COUNTRY_LOCALES, FILLERS } from "../src/features/translation/candidates.js";
 import { confidenceTier, normalizeThresholds, DEFAULT_THRESHOLDS, showLive, speakAloud, showLighter, safetyNetTriggered } from "../src/features/translation/confidence.js";
 
 // ---------------------------------------------------------------------------------------------------------------- languages
@@ -230,4 +230,13 @@ test("INDIAN ENGLISH: en-IN is THE English candidate for an Indian profile count
   }
   // a language the person PICKED is not touched
   assert.ok(buildCandidateLocales({ pickedLocale: "en-GB", browserLanguages: ["hi-IN"], profileCountry: "IN" }).includes("en-GB"));
+});
+
+test("profileCountryCode: a stored ISO code (or India's name) becomes a two-letter code; anything else is 'no country' and changes nothing", () => {
+  assert.equal(profileCountryCode("IN"), "IN");
+  assert.equal(profileCountryCode(" in "), "IN");
+  assert.equal(profileCountryCode("India"), "IN");
+  for (const none of ["", "   ", undefined, null, 5, {}, "United States", "USA", "I"]) assert.equal(profileCountryCode(none), "", String(none));
+  // no country = today's behaviour: the browser's English
+  assert.deepEqual(buildCandidateLocales({ browserLanguages: ["en-GB"], profileCountry: profileCountryCode("") }), buildCandidateLocales({ browserLanguages: ["en-GB"] }));
 });

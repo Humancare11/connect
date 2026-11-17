@@ -86,6 +86,14 @@ function dedupeByLanguage(locales) {
   });
 }
 
+// The profile country as stored on the account ("IN") -> a two-letter ISO code, or "" when there is none (then nothing changes).
+export function profileCountryCode(value) {
+  if (typeof value !== "string") return "";
+  const v = value.trim();
+  if (/^[A-Za-z]{2}$/.test(v)) return v.toUpperCase();
+  return v.toLowerCase() === "india" ? "IN" : "";
+}
+
 // Which English to listen for. Indian English is recognised best as en-IN (step 0 tests: en-IN 0.94 against en-US 0.66-0.88), so an Indian
 // person gets en-IN: profile country India, any Indian locale among the browser / UI languages (a region of IN, or a bare Indic language
 // such as "hi"). Everyone else keeps their browser's English, then their country's, then en-US.

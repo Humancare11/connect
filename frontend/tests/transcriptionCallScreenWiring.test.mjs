@@ -68,3 +68,9 @@ test("the call screen never logs transcript or caption text", () => {
 test("the direct-booking call screen is untouched (a later step)", () => {
   assert.doesNotMatch(direct, /features\/translation/);
 });
+
+test("VideoCall passes the CURRENT user's own profile country to the engine (patient or doctor), as a code, and nothing else about it", () => {
+  assert.match(src, /import \{ profileCountryCode \} from "\.\.\/features\/translation\/candidates"/);
+  assert.match(src, /profileCountry: profileCountryCode\(isDoctor \? doctor\?\.country : user\?\.country\)/);
+  assert.equal(count(/profileCountry:/g), 1);
+});

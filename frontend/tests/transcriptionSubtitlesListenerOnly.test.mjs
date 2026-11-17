@@ -32,7 +32,7 @@ function person(role, clock, browserLanguages, profileCountry = "IN") {
     now: clock.now, nowPerf: clock.perf, setTimer: clock.setTimer, clearTimer: clock.clearTimer, random: () => 0.5, doc: null,
     log: (...a) => logs.push(a),
   });
-  return { role, engine, sdk, socket, audio, logs, rec: () => sdk.log.recognizers.at(-1), st: () => engine.getState() };
+  return { role, engine, sdk, socket, audio, logs, sent: [], rec: () => sdk.log.recognizers.at(-1), st: () => engine.getState() };
 }
 
 // Joins the two through the server's own parsers. `dropLang` simulates a lost lang-changed from one side.
@@ -42,6 +42,7 @@ async function call({ dropLangFrom = null, patientBrowser = ["en-US"], patientCo
   const patient = person("patient", clock, patientBrowser, patientCountry);
   const wire = (from, to) => {
     from.socket.emit = (event, payload) => {
+      from.sent.push([event, payload]);
       if (event === "caption") {
         const r = parseCaption(payload);
         if (r.ok) to.socket.receive("caption", { appointmentId: APPT, from: from.role, ...r.caption, at: 1 });
@@ -219,4 +220,23 @@ test("INDIAN patient speaking ENGLISH (browser hi-IN + en-GB): the English candi
   await settle(); await settle(); await c.clock.advance(600);
   assert.equal(c.doctor.st().realVoiceMuted, true);
   assert.equal(c.doctor.audio.bufferSources.length, 1);
+});
+
+test("PROFILE COUNTRY: an Indian patient with an English-only browser (en-GB) listens for en-IN + hi-IN; the country never leaves the device and only its code is logged", async () => {
+  const c = await call({ patientBrowser: ["en-GB"], patientCountry: "IN" });
+  const list = c.patient.rec().auto.languages;
+  assert.deepEqual(list.filter((l) => l.startsWith("en")), ["en-IN"], "Indian English, not en-GB: " + list.join(","));
+  assert.ok(list.includes("hi-IN"));
+  const line = c.patient.logs.find((l) => /recognizer listening/.test(l[0]));
+  assert.deepEqual([line[1].english, line[1].englishWhy, line[1].profileCountry], ["en-IN", "profile country IN", "IN"]);
+  // nothing about the country is sent to the other person
+  c.doctor.engine.setReadLanguage("en");
+  c.finish("मुझे सिरदर्द है", { en: "I have a headache" }, { lang: "hi-IN" });
+  await settle(); await settle();
+  const sentPayloads = JSON.stringify(c.patient.sent);
+  assert.equal(/country/i.test(sentPayloads), false);
+  for (const l of c.doctor.logs) assert.equal(JSON.stringify(l).includes("profileCountry"), l[0] === "[tr-diag] recognizer listening", "only the candidate line carries the code");
+  // and a patient with NO country keeps today's behaviour (the browser's English)
+  const none = await call({ patientBrowser: ["en-GB"], patientCountry: "" });
+  assert.deepEqual(none.patient.rec().auto.languages.filter((l) => l.startsWith("en")), ["en-GB"]);
 });
