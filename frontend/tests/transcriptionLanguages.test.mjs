@@ -2,7 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { LANGUAGE_LIST, STT_LOCALES, NONE, getLanguage, languageBase, searchLanguages, canTranscribeLanguage, voiceForLanguage, localeForLanguage, UNSUPPORTED_SPEECH_NOTE } from "../src/features/translation/languages.js";
-import { buildCandidateLocales, normalizeBrowserLanguage, MAX_CANDIDATES, COUNTRY_LOCALES, FILLERS } from "../src/features/translation/candidates.js";
+import { englishChoice, buildCandidateLocales, normalizeBrowserLanguage, MAX_CANDIDATES, COUNTRY_LOCALES, FILLERS } from "../src/features/translation/candidates.js";
 import { confidenceTier, normalizeThresholds, DEFAULT_THRESHOLDS, showLive, speakAloud, showLighter, safetyNetTriggered } from "../src/features/translation/confidence.js";
 
 // ---------------------------------------------------------------------------------------------------------------- languages
@@ -131,7 +131,7 @@ test("English is always in the list, even when ten other languages come first", 
 test("a picked language goes first, and a country's own English is preferred", () => {
   const list = buildCandidateLocales({ pickedLocale: "de-DE", browserLanguages: ["en-US"], profileCountry: "IN" });
   assert.equal(list[0], "de-DE");
-  assert.ok(list.includes("en-US"));
+  assert.ok(list.includes("en-IN") && !list.includes("en-US"), "an Indian profile gets Indian English, and only one English");
   const noEnglish = buildCandidateLocales({ browserLanguages: ["hi"], profileCountry: "IN" });
   assert.ok(noEnglish.includes("en-IN"), "India's English, not en-US: " + noEnglish.join(","));
 });
@@ -205,4 +205,29 @@ test("excludeBases leaves a language out (second opinion), but never the picked 
   assert.ok(list.includes("hi-IN"));
   assert.equal(list.length, MAX_CANDIDATES);
   assert.ok(buildCandidateLocales({ pickedLocale: "en-GB", excludeBases: ["en"] }).includes("en-GB"));
+});
+
+test("INDIAN ENGLISH: en-IN is THE English candidate for an Indian profile country, any Indian browser/UI locale; everyone else keeps the browser's English", () => {
+  const cases = [
+    [{ browserLanguages: ["en-GB"], profileCountry: "IN" }, "en-IN", "profile country IN"],
+    [{ browserLanguages: ["en-US"], profileCountry: "in" }, "en-IN", "profile country IN"],
+    [{ browserLanguages: ["en-US", "hi-IN"], profileCountry: "" }, "en-IN", "Indian locale in the browser"],
+    [{ browserLanguages: ["hi"], profileCountry: "" }, "en-IN", "Indian locale in the browser"],
+    [{ browserLanguages: ["en-GB", "ta"], profileCountry: "US" }, "en-IN", "Indian locale in the browser"],
+    [{ browserLanguages: ["en-IN"], profileCountry: "" }, "en-IN", "Indian locale in the browser"],
+    [{ browserLanguages: ["en-GB"], profileCountry: "" }, "en-GB", "browser"],
+    [{ browserLanguages: ["en-US"], profileCountry: "US" }, "en-US", "browser"],
+    [{ browserLanguages: ["bn-BD"], profileCountry: "BD" }, "en-IN", "default"], // Bangladesh's listed English is en-IN
+    [{ browserLanguages: ["fr-FR"], profileCountry: "" }, "en-US", "default"],
+    [{ browserLanguages: ["de-DE"], profileCountry: "AU" }, "en-AU", "default"],
+  ];
+  for (const [input, locale, why] of cases) {
+    const c = englishChoice(input);
+    assert.deepEqual([c.locale, c.why], [locale, why], JSON.stringify(input));
+    const list = buildCandidateLocales(input);
+    assert.deepEqual(list.filter((l) => l.startsWith("en")), [locale], "exactly one English, the chosen one: " + list.join(","));
+    assert.ok(list.includes("hi-IN"));
+  }
+  // a language the person PICKED is not touched
+  assert.ok(buildCandidateLocales({ pickedLocale: "en-GB", browserLanguages: ["hi-IN"], profileCountry: "IN" }).includes("en-GB"));
 });

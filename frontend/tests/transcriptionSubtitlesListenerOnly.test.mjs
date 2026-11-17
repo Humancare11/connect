@@ -13,7 +13,7 @@ const require = createRequire(import.meta.url);
 const { parseCaption, parseLangChanged } = require("../../backend/utils/speech/captionRelay.js");
 const APPT = "64b7f0c2a1b2c3d4e5f60718";
 
-function person(role, clock, browserLanguages) {
+function person(role, clock, browserLanguages, profileCountry = "IN") {
   const sdk = createFakeSdk();
   const handlers = new Map();
   const logs = [];
@@ -28,7 +28,7 @@ function person(role, clock, browserLanguages) {
     role, appointmentId: APPT, config: { mode: "notice", noticeVersion: "v1" },
     http: { post: async () => ({ data: { recorded: true, accepted: 0, duplicates: 0, rejected: [] } }), get: async () => ({ data: { token: "t", region: "eastus", expiresInSeconds: 600 } }) },
     socket, loadSdk: async () => sdk, createAudioContext: () => audio, getLocalStream: () => ({ getAudioTracks: () => [{ addEventListener() {}, removeEventListener() {} }] }),
-    getRemoteElements: () => [{ muted: false, volume: 1 }], browserLanguages, profileCountry: "IN", getPeerLevel: () => 0.2,
+    getRemoteElements: () => [{ muted: false, volume: 1 }], browserLanguages, profileCountry, getPeerLevel: () => 0.2,
     now: clock.now, nowPerf: clock.perf, setTimer: clock.setTimer, clearTimer: clock.clearTimer, random: () => 0.5, doc: null,
     log: (...a) => logs.push(a),
   });
@@ -36,10 +36,10 @@ function person(role, clock, browserLanguages) {
 }
 
 // Joins the two through the server's own parsers. `dropLang` simulates a lost lang-changed from one side.
-async function call({ dropLangFrom = null, patientBrowser = ["en-US"] } = {}) {
+async function call({ dropLangFrom = null, patientBrowser = ["en-US"], patientCountry = "IN" } = {}) {
   const clock = createClock(Date.parse("2026-11-12T10:00:00Z"));
   const doctor = person("doctor", clock, ["en-US"]);
-  const patient = person("patient", clock, patientBrowser);
+  const patient = person("patient", clock, patientBrowser, patientCountry);
   const wire = (from, to) => {
     from.socket.emit = (event, payload) => {
       if (event === "caption") {
@@ -194,4 +194,29 @@ test("real English at LOW confidence from a patient is translated and muted too 
   c.finish("It started on monday", { en: "It started on Monday" }, { lang: "en-GB", conf: 0.93 });
   await settle(); await settle();
   assert.equal(c.doctor.st().realVoiceMuted, false, "a confident English sentence: the real voice again");
+});
+
+test("INDIAN patient speaking ENGLISH (browser hi-IN + en-GB): the English candidate is en-IN only, it is detected at 0.94, and the English doctor keeps the real voice", async () => {
+  const c = await call({ patientBrowser: ["hi-IN", "en-GB"], patientCountry: "" }); // no profile country: the Indian browser locale decides
+  c.doctor.engine.setReadLanguage("en");
+  await settle(); await c.clock.advance(600);
+  const list = c.patient.rec().auto.languages;
+  assert.deepEqual(list.filter((l) => l.startsWith("en")), ["en-IN"], "one English, Indian English: " + list.join(","));
+  assert.ok(list.includes("hi-IN"));
+  const listening = c.patient.logs.find((l) => /recognizer listening/.test(l[0]));
+  assert.deepEqual([listening[1].english, listening[1].englishWhy], ["en-IN", "Indian locale in the browser"], "the diagnostics line says which English and why");
+  assert.ok(listening[1].candidates.includes("en-IN"));
+
+  c.finish("I have a headache since monday", {}, { lang: "en-IN", conf: 0.94 });
+  await settle(); await settle(); await c.clock.advance(600);
+  assert.equal(c.doctor.st().peerSpeechLang, "en-IN");
+  assert.equal(c.doctor.st().realVoiceMuted, false, "the real voice");
+  assert.equal(c.doctor.audio.bufferSources.length, 0, "no AI voice");
+  assert.equal(c.doctor.st().subtitle.text, "I have a headache since monday");
+  assert.equal(c.patient.sdk.log.recognizers.length, 1, "no second opinion: nothing was suspect");
+  // and the same patient in Hindi is still found, in the same list
+  c.finish("मुझे सिरदर्द है", { en: "I have a headache" }, { lang: "hi-IN", conf: 0.9 });
+  await settle(); await settle(); await c.clock.advance(600);
+  assert.equal(c.doctor.st().realVoiceMuted, true);
+  assert.equal(c.doctor.audio.bufferSources.length, 1);
 });

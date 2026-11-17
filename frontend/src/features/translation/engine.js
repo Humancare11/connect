@@ -9,7 +9,7 @@
 //
 // Safe by construction: nothing here ever throws into the call, nothing is logged, nothing is kept in browser storage, and when the
 // feature is off the engine is simply never created.
-import { buildCandidateLocales } from "./candidates.js";
+import { buildCandidateLocales, englishChoice } from "./candidates.js";
 import { createCaptionReceiver, createCaptionSender, createLangAnnouncer, createStatusAnnouncer } from "./captionProtocol.js";
 import { confidenceTier, normalizeThresholds, safetyNetTriggered } from "./confidence.js";
 import { defaultLog } from "./diagnostics.js";
@@ -527,7 +527,7 @@ export function createTranscriptionEngine({
           getToken: async (force) => { if (force) await tokens.refresh().catch(() => {}); return tokens.getToken(); },
           attachSink: (fn) => { sinkFn = fn; },
           onPartial, onFinal, onNoMatch,
-          onSessionConfig: (c) => diag("recognizer listening", { mode: c.mode, locale: c.locale, candidates: c.candidates, targets: c.targets }),
+          onSessionConfig: (c) => { const en = englishChoice({ browserLanguages, profileCountry }); diag("recognizer listening", { mode: c.mode, locale: c.locale, candidates: c.candidates, targets: c.targets, english: en.locale, englishWhy: en.why }); },
           onStatus: (status) => { set({ recognizerStatus: status, reconnecting: status === "reconnecting" }); refreshMyStatus(); },
           onGap: addGap,
           nowPerf, setTimer, clearTimer, random,

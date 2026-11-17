@@ -86,7 +86,22 @@ function dedupeByLanguage(locales) {
   });
 }
 
-// -> up to `max` locales, no two of the same language, always including an English one and Hindi.
+// Which English to listen for. Indian English is recognised best as en-IN (step 0 tests: en-IN 0.94 against en-US 0.66-0.88), so an Indian
+// person gets en-IN: profile country India, any Indian locale among the browser / UI languages (a region of IN, or a bare Indic language
+// such as "hi"). Everyone else keeps their browser's English, then their country's, then en-US.
+const INDIC_BARE = new Set(["hi", "ta", "te", "mr", "gu", "kn", "ml", "pa"]);
+export function englishChoice({ browserLanguages = [], profileCountry = "" } = {}) {
+  const raw = Array.isArray(browserLanguages) ? browserLanguages.slice(0, 20).filter((t) => typeof t === "string") : [];
+  const countryList = COUNTRY_LOCALES[String(profileCountry || "").toUpperCase()] || [];
+  if (String(profileCountry || "").toUpperCase() === "IN" && supported("en-IN")) return { locale: "en-IN", why: "profile country IN" };
+  const indian = raw.some((t) => { const parts = t.trim().replace(/_/g, "-").split("-"); return parts.slice(1).some((x) => x.toUpperCase() === "IN") || (parts.length === 1 && INDIC_BARE.has(parts[0].toLowerCase())); });
+  if (indian && supported("en-IN")) return { locale: "en-IN", why: "Indian locale in the browser" };
+  const own = raw.map(normalizeBrowserLanguage).find((l) => l && languageBase(l) === "en");
+  if (own) return { locale: own, why: "browser" };
+  return { locale: countryList.find((l) => languageBase(l) === "en" && supported(l)) || "en-US", why: "default" };
+}
+
+// -> up to `max` locales, no two of the same language (ONE English), always including an English one and Hindi.
 //   excludeBases: languages (base codes, "en") left OUT, to ask the recognizer for a second opinion when it keeps hearing a language with
 //   low confidence (the wrong-language safety net). The picked language is never excluded.
 export function buildCandidateLocales({ pickedLocale = null, browserLanguages = [], profileCountry = "", max = MAX_CANDIDATES, excludeBases = [] } = {}) {
@@ -94,10 +109,12 @@ export function buildCandidateLocales({ pickedLocale = null, browserLanguages = 
   const browser = Array.isArray(browserLanguages) ? browserLanguages.slice(0, 20).map(normalizeBrowserLanguage) : [];
   const excluded = new Set((excludeBases || []).map((b) => String(b).toLowerCase()));
   const keep = (l) => l && (l === pickedLocale || !excluded.has(languageBase(l)));
-  const english = browser.find((l) => l && languageBase(l) === "en") || countryList.find((l) => languageBase(l) === "en" && supported(l)) || "en-US";
+  const english = englishChoice({ browserLanguages, profileCountry }).locale;
 
   // The picked language and the browser languages in their own order (a few of them), then English and Hindi if they were not among them.
-  const own = dedupeByLanguage([pickedLocale, ...browser].filter(keep)).slice(0, MAX_BROWSER_EXTRA + 2);
+  // the browser's English is replaced by the chosen one (one English only); a language the person PICKED stays exactly as picked
+  const browserChosen = browser.map((l) => (l && languageBase(l) === "en" ? english : l));
+  const own = dedupeByLanguage([pickedLocale, ...browserChosen].filter(keep)).slice(0, MAX_BROWSER_EXTRA + 2);
   const head = dedupeByLanguage([...own, english, ALWAYS_LOCALE].filter(keep));
   const rest = [...INDIAN_PRIORITY, ...countryList, ...FILLERS, ...INDIAN_REST].filter(keep);
   return dedupeByLanguage([...head, ...rest]).slice(0, max);
