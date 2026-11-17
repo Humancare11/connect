@@ -1229,6 +1229,11 @@ export default function VideoCall() {
     if (tr.active && inCall) trActionsRef.current.start();
   }, [tr.active, inCall]);
   const [isRemoteConnected, setIsRemoteConnected] = useState(false);
+  // Tell the transcript engine whether the call itself is connected: only then does it send its "I am alive" signal, and only then does it
+  // treat a silent other side as "translation is not arriving" (the real voice comes back).
+  useEffect(() => {
+    if (tr.active) trActionsRef.current.setCallConnected(isRemoteConnected);
+  }, [tr.active, isRemoteConnected]);
   const [connectionState, setConnectionState] = useState("idle");
   const [callDuration, setCallDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);

@@ -7,12 +7,11 @@ export const MACHINE_TRANSLATED = "Machine-translated, may contain errors";
 export const NOTICE_LINE_1 = "This call is being transcribed.";
 export const NOTICE_LINE_2 = "Please keep the call in a quiet place. Other voices nearby may be transcribed.";
 export const RECONNECTING_TEXT = "Subtitles unavailable, reconnecting…";
-export const NO_SPEECH_NOTE_OWN = "Subtitles only: your own speech in this language cannot be transcribed.";
 export const LANGUAGE_HELP = "Choose the language you want to HEAR. If you also choose the language you speak, recognition is more accurate.";
 export const DIDNT_CATCH_TEXT = "Didn't catch that - please ask them to repeat";
 export const NOT_UNDERSTOOD_TEXT = "Not understood - please repeat";
 export const WRONG_LANGUAGE_HINT = "You may be speaking a different language than selected";
-export const NO_VOICE_NOTE = "No voice for this language: subtitles only.";
+export const NO_VOICE_NOTE = "Subtitles only: no translated voice in this language.";
 
 // The rows of the LANGUAGE list: "Real voice" is ALWAYS first (also while searching), then the languages that match the search.
 export function buildLanguageRows({ query = "", selected = NONE } = {}) {
@@ -23,7 +22,7 @@ export function buildLanguageRows({ query = "", selected = NONE } = {}) {
     nativeName: l.nativeName,
     rtl: l.rtl,
     selected: selected === l.code,
-    note: !l.canTranscribe ? NO_SPEECH_NOTE_OWN : !l.hasVoice ? NO_VOICE_NOTE : "",
+    note: !l.hasVoice ? NO_VOICE_NOTE : "", // what I HEAR: only the voice matters (my own speech is recognised separately)
     isNone: false,
   }));
   return { rows: [none, ...matches], matchCount: matches.length, noResults: String(query).trim() !== "" && matches.length === 0 };
@@ -42,7 +41,6 @@ export function selectedNote(code) {
   if (!code || code === NONE) return REAL_VOICE_HELP;
   const l = getLanguage(code);
   if (!l) return REAL_VOICE_HELP;
-  if (!l.canTranscribe) return NO_SPEECH_NOTE_OWN;
   if (!l.hasVoice) return NO_VOICE_NOTE;
   return `You will hear and read the other person in ${l.name}.`;
 }

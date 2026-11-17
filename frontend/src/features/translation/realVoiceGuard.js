@@ -12,6 +12,8 @@
 import { NONE, canTranscribeLanguage, getLanguage, languageBase, voiceForLanguage } from "./languages.js";
 
 export const TICK_MS = 500;
+export const HEARTBEAT_MS = 3500; // the speaker's device says "I am alive" this often while its recognizer runs
+export const PEER_SILENCE_MS = 6000; // no heartbeat, caption or status for this long while the call is connected: translation is not arriving
 export const STALL_MS = 8000; // the other person is speaking and nothing at all has arrived for this long
 export const SPEECH_LEVEL = 0.02; // RMS of the other person's stream that counts as "speaking"
 export const QUIET_GAP_MS = 1500; // this much quiet ends "a stretch of speech"
@@ -31,7 +33,8 @@ export const SPEAKING_TEXT = "Speaking the translation";
 // moment that is over.
 //
 // peerStatus: what the other person's recognizer reported (ok | stalled | backgrounded | interrupted | down).
-// i: { readLang, voiceEnabled, breakerTripped, phase, recognizerStatus, reconnecting, tokenFailed, audioState, voiceFailed, peerStatus }
+// i: { readLang, voiceEnabled, breakerTripped, phase, recognizerStatus, reconnecting, tokenFailed, audioState, voiceFailed, peerStatus, peerSilent }
+//   peerSilent  the call is connected but nothing at all (no heartbeat, no caption, no status) came from the other person for PEER_SILENCE_MS
 // -> { expected, mute, reason, showMessage }
 //   expected   translation is supposed to be doing the talking (the listener picked a language, and keeps the translated voice on)
 //   mute       the other person's real voice should be muted
@@ -53,6 +56,7 @@ export function evaluateGuard(i) {
   if (i.audioState !== "running") return fail("audio_blocked");
   if (i.voiceFailed) return fail("voice_failed");
   if (i.peerStatus && i.peerStatus !== "ok") return fail("peer_" + i.peerStatus);
+  if (i.peerSilent) return fail("peer_silent");
   return { expected: true, mute: true, reason: null, showMessage: false };
 }
 

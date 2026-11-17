@@ -244,3 +244,32 @@ test("PROFILE COUNTRY: an Indian patient with an English-only browser (en-GB) li
   const none = await call({ patientBrowser: ["en-GB"], patientCountry: "" });
   assert.deepEqual(none.patient.rec().auto.languages.filter((l) => l.startsWith("en")), ["en-GB"]);
 });
+
+test("SILENT FAILURE, two real engines: the patient's side keeps sending heartbeats and the doctor stays muted for a minute with nobody speaking; when the patient's side goes silent (page frozen, network gone) the doctor gets the real voice back within ~6 s, and muted again when it returns", async () => {
+  const c = await call();
+  c.doctor.engine.setReadLanguage("en");
+  // (the fake microphone is silent, which a real device would report as "stalled": report "ok" here, this test is about the heartbeat)
+  const wired = c.patient.socket.emit;
+  const okOnly = (e, p) => wired(e, e === "tr-status" ? { ...p, status: "ok" } : p);
+  c.patient.socket.emit = okOnly;
+  c.doctor.engine.setCallConnected(true);
+  c.patient.engine.setCallConnected(true);
+  await settle();
+  await c.clock.advance(60000);
+  assert.equal(c.doctor.st().realVoiceMuted, true, "a minute of silence in the room, heartbeats arriving");
+  assert.equal(c.doctor.st().fallbackReason, null);
+  // the patient's device stops talking to the server (frozen tab / lost connection) while the call media still looks connected
+  const sentBefore = c.patient.sent.length;
+  c.patient.socket.emit = () => {};
+  await c.clock.advance(5000);
+  assert.equal(c.doctor.st().realVoiceMuted, true, "5 s: not yet");
+  await c.clock.advance(3000);
+  assert.equal(c.doctor.st().realVoiceMuted, false, "about 6 s: the real voice is back");
+  assert.equal(c.doctor.st().fallbackReason, "peer_silent");
+  assert.equal(c.doctor.st().translationStatus, "unavailable");
+  // it returns
+  c.patient.socket.emit = okOnly;
+  await c.clock.advance(4000);
+  assert.equal(c.doctor.st().realVoiceMuted, true, "heartbeats are back: muted again");
+  assert.ok(c.patient.sent.length > sentBefore);
+});

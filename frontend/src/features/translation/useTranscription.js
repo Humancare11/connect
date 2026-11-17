@@ -37,7 +37,7 @@ export const OFF_STATE = Object.freeze({
 const noop = () => {};
 export const OFF_ACTIONS = Object.freeze({
   start: noop, stop: noop, unlockAudio: noop, setReadLanguage: noop, setSpeakLanguage: noop, setSubtitlesEnabled: noop, setVoiceEnabled: noop, setMuted: noop,
-  swapMicStream: noop, dismissHint: noop, onPeerJoined: noop, onSocketReconnected: noop,
+  swapMicStream: noop, setCallConnected: noop, dismissHint: noop, onPeerJoined: noop, onSocketReconnected: noop,
 });
 
 const offSubscribe = () => noop;
@@ -89,6 +89,7 @@ export function useTranscription(params) {
           setVoiceEnabled: (on) => engine.setVoiceEnabled(on),
           setMuted: (on) => engine.setMuted(on),
           swapMicStream: (stream) => engine.swapMicStream(stream),
+          setCallConnected: (on) => engine.setCallConnected(on),
           dismissHint: () => engine.dismissHint(),
           onPeerJoined: () => engine.onPeerJoined(),
           onSocketReconnected: () => engine.onSocketReconnected(),

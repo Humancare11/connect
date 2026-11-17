@@ -264,3 +264,33 @@ describe("the new gap reason for speech that was not recognised", () => {
     assert.ok(require("../utils/speech/transcriptSegments").GAP_REASONS.has("not_recognised"));
   });
 });
+
+describe("the heartbeat (tr-status ok every ~3.5 s) is allowed by the relay's rate limit", () => {
+  const { makeSocketLimiter } = require("../utils/socketRateLimit");
+  const server = fs.readFileSync(path.join(__dirname, "..", "server.js"), "utf8");
+  const m = server.match(/const trStatusLimiter = makeSocketLimiter\(\{ windowMs: (\d+), max: (\d+) \}\)/);
+  test("server.js configures the limiter for it", () => {
+    assert.ok(m, "trStatusLimiter is defined");
+    const [windowMs, max] = [Number(m[1]), Number(m[2])];
+    assert.ok(max / (windowMs / 1000) >= 3, "at least 3 a second headroom is not needed, but the window must allow a burst of 10 on top of the beat: " + max);
+    assert.ok(max >= 15);
+  });
+  test("an hour of heartbeats every 3.5 s (plus status changes and a rejoin burst of 6) is never refused; a flood still is", () => {
+    const limiter = makeSocketLimiter({ windowMs: Number(m[1]), max: Number(m[2]) });
+    const realNow = Date.now;
+    let t = 1_000_000;
+    Date.now = () => t;
+    try {
+      let refused = 0;
+      for (let beat = 0; beat < 1030; beat++) { // ~1 hour
+        t += 3500;
+        if (!limiter.allow("s1")) refused++;
+        if (beat % 50 === 0) for (let k = 0; k < 6; k++) if (!limiter.allow("s1")) refused++; // a rejoin re-sends status a few times
+      }
+      assert.equal(refused, 0);
+      let flood = 0;
+      for (let k = 0; k < 200; k++) if (!limiter.allow("s2")) flood++;
+      assert.ok(flood > 150, "a flood is still limited");
+    } finally { Date.now = realNow; }
+  });
+});

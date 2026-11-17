@@ -79,6 +79,8 @@ export function createStatusAnnouncer({ send } = {}) {
     // force: send even if unchanged (every "no_match" is an event of its own)
     set(status, { force = false } = {}) { if (!force && status === last) return; last = status; send({ status }); },
     resend() { if (last !== "ok") send({ status: last }); },
+    // The "I am alive" signal: the current status again, every few seconds (the listener unmutes the real voice if nothing arrives).
+    heartbeat() { send({ status: last }); },
     current: () => last,
   };
 }

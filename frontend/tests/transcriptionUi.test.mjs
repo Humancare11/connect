@@ -53,9 +53,18 @@ test("language list: Real voice is first, also while searching, and is the selec
   assert.equal(ui.buildLanguageRows({ query: "zzzzqq" }).noResults, true);
 });
 
-test("language rows carry the notes for languages without speech or voice", () => {
+test("language rows: the only note is about the translated VOICE (what I hear); nothing about my own speech", () => {
   const rows = ui.buildLanguageRows({}).rows.filter((r) => r.note);
-  assert.ok(rows.some((r) => r.note === ui.NO_SPEECH_NOTE_OWN));
+  assert.ok(rows.length > 0);
+  assert.ok(rows.every((r) => r.note === "Subtitles only: no translated voice in this language."), "one correct text");
+  assert.equal(ui.NO_VOICE_NOTE, "Subtitles only: no translated voice in this language.");
+  assert.equal(ui.NO_SPEECH_NOTE_OWN, undefined, "the old, misleading note is gone");
+  for (const r of ui.buildLanguageRows({}).rows) assert.doesNotMatch(r.note || "", /own speech|cannot be transcribed/);
+  // a language Azure cannot transcribe but CAN speak has no note at all: hearing it does not depend on recognising it
+  const speakable = ui.buildLanguageRows({}).rows.filter((r) => !r.isNone && !r.note);
+  assert.ok(speakable.length > 50);
+  assert.equal(ui.selectedNote("ht"), "Subtitles only: no translated voice in this language.");
+  assert.match(ui.selectedNote("de"), /You will hear and read the other person in German\./);
 });
 
 test("doctor banner only for a doctor, and only when the patient's DETECTED speech language cannot be transcribed", () => {
@@ -164,7 +173,7 @@ test("overlay: badge and notice while running; reconnecting, banner and hint onl
   assert.match(rec, /Subtitles unavailable, reconnecting…/);
 
   // The banner follows the DETECTED speech language of the patient, never the language the patient picked to hear.
-  const unsupported = ui.buildLanguageRows({}).rows.find((r) => r.note === ui.NO_SPEECH_NOTE_OWN).code;
+  const unsupported = "ht"; // Haitian Creole: cannot be transcribed
   const picked = render(h(O, { state: { ...baseState, peerReadLang: unsupported }, actions, role: "doctor" }));
   assert.doesNotMatch(picked, /cannot be transcribed/, "the patient only picked a language to hear: no banner");
   const spokenOk = render(h(O, { state: { ...baseState, peerReadLang: unsupported, peerSpeechLang: "hi-IN" }, actions, role: "doctor" }));

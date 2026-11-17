@@ -264,3 +264,92 @@ test("SPEAKER picked nothing: the device translates into the listener's language
   assert.deepEqual(rec.targetLanguages, ["en"]);
   assert.equal(t.sdk.log.recognizers.length, 1, "no restart");
 });
+
+// ---------------------------------------------------------------------------------------------------------------- silent failure safety: the heartbeat
+const statuses = (t) => t.socket.emitted.filter(([e]) => e === "tr-status").map(([, p]) => p);
+
+test("HEARTBEAT (speaker side): while its recognizer runs and the call is connected, the device sends tr-status every ~3.5 s - the current status, nothing else", async () => {
+  const t = await running({ role: "patient" });
+  await t.tick(20000);
+  const before = statuses(t).length; // (the fake microphone is silent, so one "stalled" change was announced; it is not a heartbeat)
+  assert.ok(before <= 1, "no heartbeats before the call is connected");
+  t.engine.setCallConnected(true);
+  await t.tick(20000);
+  const beats = statuses(t).slice(before);
+  assert.ok(beats.length >= 5 && beats.length <= 7, "about one every 3.5 s: " + beats.length);
+  for (const b of statuses(t)) assert.deepEqual(Object.keys(b).sort(), ["appointmentId", "status"], "no text, no names");
+  assert.equal(t.logs.some((l) => /heartbeat|alive/i.test(String(l[0]))), false, "nothing is logged for a heartbeat");
+  t.engine.setCallConnected(false);
+  const n = statuses(t).length;
+  await t.tick(20000);
+  assert.equal(statuses(t).length, n, "stops when the call is not connected");
+});
+
+test("HEARTBEAT: a heartbeat carries the current status when it is not ok (stalled / no_match are still signs of life)", async () => {
+  const t = await running({ role: "patient" });
+  t.engine.setCallConnected(true);
+  await t.tick(12000);
+  const last = statuses(t).slice(-3);
+  assert.equal(last.length, 3);
+  assert.ok(last.every((s) => s.status === last[0].status && s.status !== "ok"), "not ok (the fake microphone is silent = stalled) and repeated: the listener is told again and again");
+});
+
+test("SILENT FAILURE (listener side): no heartbeat, caption or status for 6 s while the call is connected -> the real voice comes back with the message; heartbeats return -> muted again", async () => {
+  const t = await running({ role: "doctor" });
+  t.engine.setReadLanguage("en");
+  t.engine.setCallConnected(true);
+  await t.tick(5000);
+  assert.equal(t.els[0].muted, true, "not yet: 5 s");
+  await t.tick(2000);
+  assert.equal(t.els[0].muted, false, "6 s without any sign of life");
+  assert.equal(t.st().fallbackReason, "peer_silent");
+  assert.equal(t.st().translationStatus, "unavailable");
+  assert.ok(t.logs.some((l) => /no sign of life/.test(l[0])), "[tr-diag] says so");
+  t.socket.receive("tr-status", { appointmentId: APPT, status: "ok", from: "patient" });
+  await t.tick();
+  assert.equal(t.els[0].muted, true, "the heartbeat is back: muted again");
+  assert.equal(t.st().fallbackReason, null);
+  assert.ok(t.logs.some((l) => /is heard again/.test(l[0])));
+});
+
+test("SILENT FAILURE: heartbeats every 3.5 s (even with one missed) keep the real voice muted for a long time; a caption counts too", async () => {
+  const t = await running({ role: "doctor" });
+  t.engine.setReadLanguage("en");
+  t.engine.setCallConnected(true);
+  for (let i = 0; i < 20; i++) {
+    t.socket.receive("tr-status", { appointmentId: APPT, status: "ok", from: "patient" });
+    await t.tick(i === 7 ? 5500 : 3500); // one late heartbeat: still under 6 s
+    assert.equal(t.els[0].muted, true, "beat " + i);
+  }
+  t.socket.receive("tr-status", { appointmentId: APPT, status: "ok", from: "patient" });
+  await t.tick(5000);
+  t.caption({ id: "cap", text: "मुझे बुखार है", srcLang: "hi-IN", conf: 0.9, tr: { en: "I have a fever" } });
+  await t.tick(5000);
+  assert.equal(t.els[0].muted, true, "the caption counted as a sign of life");
+});
+
+test("SILENT FAILURE: only while the call is connected, only when a language is picked, and not when the person chose the real voice", async () => {
+  const notConnected = await running({ role: "doctor" });
+  notConnected.engine.setReadLanguage("en");
+  await notConnected.tick(30000);
+  assert.equal(notConnected.els[0].muted, true, "the call is not connected: this is not 'silence'");
+  const real = await running({ role: "doctor" });
+  real.engine.setCallConnected(true);
+  await real.tick(30000);
+  assert.equal(real.els[0].muted, false);
+  assert.equal(real.st().fallbackReason, null);
+  assert.notEqual(real.st().translationStatus, "unavailable", "Real voice: no alarm");
+  const off = await running({ role: "doctor" });
+  off.engine.setReadLanguage("en"); off.engine.setVoiceEnabled(false); off.engine.setCallConnected(true);
+  await off.tick(30000);
+  assert.notEqual(off.st().translationStatus, "unavailable", "voice switched off by the person: no alarm");
+  // the call drops and returns: the waiting starts again from the new connection
+  const t = await running({ role: "doctor" });
+  t.engine.setReadLanguage("en"); t.engine.setCallConnected(true);
+  await t.tick(7000);
+  assert.equal(t.els[0].muted, false);
+  t.engine.setCallConnected(false); await t.tick();
+  assert.equal(t.els[0].muted, true, "not connected: the failure rule is off, translation as chosen");
+  t.engine.setCallConnected(true); await t.tick(3000);
+  assert.equal(t.els[0].muted, true, "a fresh 6 s of waiting");
+});

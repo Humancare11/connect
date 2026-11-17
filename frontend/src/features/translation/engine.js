@@ -19,7 +19,7 @@ import { NONE, canTranscribeLanguage, getLanguage, isTranscribableLocale, langua
 import { createMicPipeline } from "./micPipeline.js";
 import { createNoticeSender } from "./noticeSender.js";
 import { createRecognizerController } from "./recognizerController.js";
-import { QUIET_GAP_MS, SPEECH_LEVEL, STALL_MS, TICK_MS, UNCLEAR_HOLD_MS, VOICE_FAIL_HOLD_MS, WAITING_HOLD_MS, createElementMuter, createLevelMeter, evaluateGuard } from "./realVoiceGuard.js";
+import { HEARTBEAT_MS, PEER_SILENCE_MS, QUIET_GAP_MS, SPEECH_LEVEL, STALL_MS, TICK_MS, UNCLEAR_HOLD_MS, VOICE_FAIL_HOLD_MS, WAITING_HOLD_MS, createElementMuter, createLevelMeter, evaluateGuard } from "./realVoiceGuard.js";
 import { createTokenManager } from "./tokenManager.js";
 import { createTranscriptUploader } from "./transcriptUploader.js";
 import { createVoiceQueue } from "./voiceQueue.js";
@@ -129,6 +129,11 @@ export function createTranscriptionEngine({
   let unclearUntil = 0;
   let lastLevelAvailable = false;
   let peerStatus = "ok"; // the other person's recognizer health, as they reported it
+  let callConnected = false; // the call itself is connected (the other person's media is flowing), told by the call screen
+  let lastPeerSignalAt = -Infinity; // the last heartbeat / caption / status from the other person
+  let silenceBase = null; // when I started waiting for a sign of life from the other person
+  let peerSilent = false;
+  let lastHeartbeatAt = -Infinity;
   let didntCatchUntil = 0;
   let speakNoteUntil = 0;
   let detectExcluded = []; // languages (base codes) left out of the detection list while asking for a second opinion
@@ -203,7 +208,7 @@ export function createTranscriptionEngine({
       phase: state.phase, recognizerStatus: state.recognizerStatus, reconnecting: state.reconnecting,
       tokenFailed: Boolean(tokens && tokens.isPermanentlyFailed()),
       audioState: ctx ? ctx.state : "none",
-      peerStatus, voiceFailed: now() < voiceFailedUntil,
+      peerStatus, peerSilent, voiceFailed: now() < voiceFailedUntil,
     };
   }
 
@@ -321,6 +326,18 @@ export function createTranscriptionEngine({
         if (loudSince !== null && p - Math.max(loudSince, lastResultPerf) > SILENT_RESULT_MS) { loudSince = p; onNoMatch({ durationMs: SILENT_RESULT_MS, silent: true }); }
       } else loudSince = null;
     } catch { /* ignore */ }
+    // SPEAKER side: "I am alive" every few seconds while my recognizer runs and the call is connected (the current status, nothing else).
+    try {
+      if (statusReady && callConnected && state.phase === "running" && now() - lastHeartbeatAt >= HEARTBEAT_MS) { lastHeartbeatAt = now(); statusAnnouncer.heartbeat(); }
+      // LISTENER side: translation is expected and the call is connected, but nothing at all came from the other person: it is NOT working.
+      const watching = callConnected && state.readLang !== NONE && state.voiceEnabled;
+      if (!watching) { silenceBase = null; if (peerSilent) { peerSilent = false; diag("the other side is heard again (or no longer watched)", {}); } }
+      else {
+        if (silenceBase === null) silenceBase = now();
+        const silent = now() - Math.max(lastPeerSignalAt, silenceBase) > PEER_SILENCE_MS;
+        if (silent !== peerSilent) { peerSilent = silent; diag(silent ? "no sign of life from the other side" : "the other side is heard again", { silentForMs: silent ? now() - Math.max(lastPeerSignalAt, silenceBase) : 0 }); }
+      }
+    } catch { /* never into the call */ }
     refreshMyStatus();
     refreshGuard();
     guardTimer = setTimer(guardTick, TICK_MS);
@@ -505,6 +522,7 @@ export function createTranscriptionEngine({
   }
   function handleIncomingStatus(msg) {
     if (!mine(msg) || stopped || typeof msg.status !== "string") return;
+    lastPeerSignalAt = now(); // any status, a heartbeat included, is a sign of life
     if (msg.status === "no_match") { // the other person is clearly speaking but nothing was understood: that sentence is lost
       didntCatchUntil = now() + UNCLEAR_HOLD_MS; // only the message: the real voice is NOT given back
     } else {
@@ -523,6 +541,7 @@ export function createTranscriptionEngine({
   function handleIncomingCaption(msg) {
     if (!mine(msg) || stopped) return;
     lastCaptionAt = now();
+    lastPeerSignalAt = lastCaptionAt;
     // Per sentence: what language did they just speak? Same as mine = real voice, different = muted and translated (see realVoiceGuard).
     if (typeof msg.srcLang === "string" && msg.srcLang && msg.srcLang !== state.peerSpeechLang) set({ peerSpeechLang: msg.srcLang }); // for the doctor's banner
     receiver.handle(msg);
@@ -638,6 +657,14 @@ export function createTranscriptionEngine({
     },
 
     swapMicStream(stream) { if (pipeline) pipeline.swapStream(stream); },
+    // The call screen tells whether the call itself is connected: the heartbeat and the "nothing is arriving" check only run then.
+    setCallConnected(on) {
+      const value = Boolean(on);
+      if (value === callConnected) return;
+      callConnected = value;
+      silenceBase = null; peerSilent = false; lastHeartbeatAt = -Infinity;
+      refreshGuard();
+    },
     dismissHint() { set({ hint: null }); },
     onPeerJoined() { announcer.resend(); statusAnnouncer.resend(); },
     onSocketReconnected() { /* nothing to send yet: the room join is not confirmed; the "peer-joined" that follows it resends */ },

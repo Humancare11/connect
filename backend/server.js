@@ -759,7 +759,9 @@ const cameraStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 // 12 a second is well above real use; "which language I read" changes rarely (and is re-sent when the other person joins or reconnects).
 const captionLimiter = makeSocketLimiter({ windowMs: 1000, max: 12 });
 const langChangedLimiter = makeSocketLimiter({ windowMs: 5000, max: 8 });
-const trStatusLimiter = makeSocketLimiter({ windowMs: 5000, max: 10 }); // tr-status: sent on changes only
+// tr-status: sent on changes AND as a heartbeat every ~3.5 s while a speaker's recognizer runs (the listener unmutes the real voice if
+// nothing arrives for ~6 s). About 2 per 5 s in normal use; 20 leaves room for bursts (a rejoin re-sends the status).
+const trStatusLimiter = makeSocketLimiter({ windowMs: 5000, max: 20 });
 const callConnectedLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 // call-stats: every 30s normally, every ~3s while an admin watches the report.
 const callStatsLimiter = makeSocketLimiter({ windowMs: 2000, max: 2 });
