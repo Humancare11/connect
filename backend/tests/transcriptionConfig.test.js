@@ -25,6 +25,22 @@ const T0 = new Date("2026-11-12T10:00:00.000Z");
 const KEY = "test-azure-key-0123456789abcdef";
 
 // ---- the setting itself -------------------------------------------------------------------------------------------------
+describe("TRANSCRIPT_SEGMENTATION_SILENCE_MS", () => {
+  test("600 by default; 200 to 3000 accepted; 'default' or 0 = send nothing (null); anything else falls back to 600", () => {
+    const ms = (v) => config.getSegmentationSilenceMs(v === undefined ? {} : { TRANSCRIPT_SEGMENTATION_SILENCE_MS: v });
+    assert.equal(ms(undefined), 600);
+    assert.equal(ms(""), 600);
+    assert.equal(ms("500"), 500);
+    assert.equal(ms(" 700 "), 700);
+    assert.equal(ms("200"), 200);
+    assert.equal(ms("3000"), 3000);
+    assert.equal(ms("default"), null);
+    assert.equal(ms("DEFAULT"), null);
+    assert.equal(ms("0"), null);
+    for (const bad of ["199", "3001", "-5", "1.5", "abc", "500ms", "1e3"]) assert.equal(ms(bad), 600, bad);
+  });
+});
+
 describe("TRANSCRIPT_MODE", () => {
   test("notice is the default; consent only when asked for exactly; anything else is treated as notice (it never claims consent that is not there)", () => {
     const mode = (v) => config.getTranscriptMode(v === undefined ? {} : { TRANSCRIPT_MODE: v });
@@ -79,15 +95,15 @@ describe("GET /api/transcription/config", () => {
     const get = await start({ enabled: false });
     const r = await get(someone());
     assert.equal(r.status, 200);
-    assert.deepEqual(r.body, { enabled: false, mode: "notice", noticeVersion: "v1", confidence: { unclearBelow: 0.4, lowBelow: 0.7 } });
+    assert.deepEqual(r.body, { enabled: false, mode: "notice", noticeVersion: "v1", confidence: { unclearBelow: 0.4, lowBelow: 0.7 }, speed: { segmentationSilenceMs: 600 } });
     assert.equal(r.headers.get("cache-control"), "no-store");
   });
 
   test("flag on, and the mode: shown exactly", async () => {
     const on = await start({ enabled: true });
-    assert.deepEqual((await on(someone())).body, { enabled: true, mode: "notice", noticeVersion: "v1", confidence: { unclearBelow: 0.4, lowBelow: 0.7 } });
+    assert.deepEqual((await on(someone())).body, { enabled: true, mode: "notice", noticeVersion: "v1", confidence: { unclearBelow: 0.4, lowBelow: 0.7 }, speed: { segmentationSilenceMs: 600 } });
     const consent = await start({ enabled: true, mode: "consent" });
-    assert.deepEqual((await consent(someone("doctor"))).body, { enabled: true, mode: "consent", noticeVersion: "v1", confidence: { unclearBelow: 0.4, lowBelow: 0.7 } });
+    assert.deepEqual((await consent(someone("doctor"))).body, { enabled: true, mode: "consent", noticeVersion: "v1", confidence: { unclearBelow: 0.4, lowBelow: 0.7 }, speed: { segmentationSilenceMs: 600 } });
   });
 
   test("the thresholds are the ones the server uses to tag saved lines, including a custom pair from the environment", async () => {
@@ -118,7 +134,7 @@ describe("GET /api/transcription/config", () => {
     process.env.SPEECH_TOKEN_MAX_PER_APPOINTMENT = "7";
     try {
       const r = await (await start({ enabled: true }))(someone());
-      assert.deepEqual(Object.keys(r.body).sort(), ["confidence", "enabled", "mode", "noticeVersion"]);
+      assert.deepEqual(Object.keys(r.body).sort(), ["confidence", "enabled", "mode", "noticeVersion", "speed"]);
       assert.equal(JSON.stringify(r.body).includes(KEY), false);
     } finally {
       for (const [name, v] of [["AZURE_SPEECH_KEY", saved.k], ["SPEECH_TOKEN_MAX_PER_APPOINTMENT", saved.m]]) if (v === undefined) delete process.env[name]; else process.env[name] = v;

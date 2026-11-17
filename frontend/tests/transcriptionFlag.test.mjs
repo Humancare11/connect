@@ -37,7 +37,7 @@ test("build flag OFF: the answer is inactive and NO request is made", async () =
 test("build flag ON and server ON: active, with the mode and wording version the server gave", async () => {
   const h = http({ enabled: true, mode: "notice", noticeVersion: "v1" });
   const out = await loadTranscriptionConfig({ http: h, buildEnabled: true });
-  assert.deepEqual(out, { active: true, buildEnabled: true, serverEnabled: true, mode: "notice", noticeVersion: "v1", thresholds: { unclearBelow: 0.4, lowBelow: 0.7 } });
+  assert.deepEqual(out, { active: true, buildEnabled: true, serverEnabled: true, mode: "notice", noticeVersion: "v1", thresholds: { unclearBelow: 0.4, lowBelow: 0.7 }, segmentationSilenceMs: null });
   assert.equal(h.calls.length, 1);
   assert.equal(h.calls[0].url, CONFIG_PATH);
   assert.equal(CONFIG_PATH, "/api/transcription/config");
@@ -74,12 +74,22 @@ test("any problem asking the server leaves the feature off and never throws", as
 });
 
 test("an unknown mode or a strange wording version falls back to the safe defaults", () => {
-  assert.deepEqual(normalizeServerConfig({ enabled: true, mode: "concent", noticeVersion: "<script>" }), { serverEnabled: true, mode: "notice", noticeVersion: "v1", thresholds: { unclearBelow: 0.4, lowBelow: 0.7 } });
-  assert.deepEqual(normalizeServerConfig({ enabled: true, mode: "consent", noticeVersion: "v3", confidence: { unclearBelow: 0.3, lowBelow: 0.6 } }), { serverEnabled: true, mode: "consent", noticeVersion: "v3", thresholds: { unclearBelow: 0.3, lowBelow: 0.6 } });
+  assert.deepEqual(normalizeServerConfig({ enabled: true, mode: "concent", noticeVersion: "<script>" }), { serverEnabled: true, mode: "notice", noticeVersion: "v1", thresholds: { unclearBelow: 0.4, lowBelow: 0.7 }, segmentationSilenceMs: null });
+  assert.deepEqual(normalizeServerConfig({ enabled: true, mode: "consent", noticeVersion: "v3", confidence: { unclearBelow: 0.3, lowBelow: 0.6 } }), { serverEnabled: true, mode: "consent", noticeVersion: "v3", thresholds: { unclearBelow: 0.3, lowBelow: 0.6 }, segmentationSilenceMs: null });
   assert.deepEqual(normalizeServerConfig({ enabled: true, confidence: { unclearBelow: 0.9, lowBelow: 0.2 } }).thresholds, { unclearBelow: 0.4, lowBelow: 0.7 }, "nonsense thresholds fall back");
   assert.deepEqual(normalizeServerConfig({ enabled: true, noticeVersion: "x".repeat(40) }).noticeVersion, "v1");
   assert.equal(normalizeServerConfig(null), null);
   assert.equal(normalizeServerConfig([]), null);
+});
+
+test("the sentence-end silence setting: a whole number from 200 to 3000 is passed on, anything else means 'use the Azure default' (null)", () => {
+  const ms = (speed) => normalizeServerConfig({ enabled: true, speed }).segmentationSilenceMs;
+  assert.equal(ms({ segmentationSilenceMs: 600 }), 600);
+  assert.equal(ms({ segmentationSilenceMs: 200 }), 200);
+  assert.equal(ms({ segmentationSilenceMs: 3000 }), 3000);
+  for (const bad of [null, 0, 199, 3001, 1.5, "600", "abc", undefined, {}]) assert.equal(ms({ segmentationSilenceMs: bad }), null, String(bad));
+  assert.equal(ms(undefined), null);
+  assert.equal(ms(null), null);
 });
 
 test("the abort signal is passed on when given", async () => {

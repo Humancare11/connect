@@ -13,6 +13,9 @@
 //                                         every saved row) and is shown to the app by GET /api/transcription/config; it blocks nothing.
 //                                         Anything that is not exactly "notice" or "consent" is treated as "notice" (what the system
 //                                         really does today), with a one-time warning.
+//   TRANSCRIPT_SEGMENTATION_SILENCE_MS    how much silence (milliseconds) ends a spoken sentence for the live translation, so the finished
+//                                         sentence and its translated voice come sooner. 200 to 3000, default 600. "default" (or 0) = leave
+//                                         the Azure default (no setting sent). Sent to the app by GET /api/transcription/config.
 //   SPEECH_TOKEN_MAX_PER_APPOINTMENT      most tokens one person can fetch for one appointment (default 40, about 6 hours of
 //                                         call with a refresh every 9 minutes). A bound on cost if a call is left open.
 
@@ -67,6 +70,20 @@ function getLateUploadMinutes(env = process.env) {
   return n >= 1 && n <= MAX_LATE_UPLOAD_MINUTES ? n : DEFAULT_LATE_UPLOAD_MINUTES;
 }
 
+const DEFAULT_SEGMENTATION_SILENCE_MS = 600;
+const MIN_SEGMENTATION_SILENCE_MS = 200;
+const MAX_SEGMENTATION_SILENCE_MS = 3000;
+
+// Milliseconds of silence that end a sentence, or null = "do not send a setting, use the Azure default". Unset or invalid = 600.
+function getSegmentationSilenceMs(env = process.env) {
+  const raw = String(env.TRANSCRIPT_SEGMENTATION_SILENCE_MS ?? "").trim().toLowerCase();
+  if (raw === "") return DEFAULT_SEGMENTATION_SILENCE_MS;
+  if (raw === "default" || raw === "0") return null;
+  if (!/^[0-9]+$/.test(raw)) return DEFAULT_SEGMENTATION_SILENCE_MS;
+  const n = Number(raw);
+  return n >= MIN_SEGMENTATION_SILENCE_MS && n <= MAX_SEGMENTATION_SILENCE_MS ? n : DEFAULT_SEGMENTATION_SILENCE_MS;
+}
+
 // "notice" or "consent". Unset or empty = notice. A value that is neither is treated as notice (it never claims consent that is not
 // there) and reported once in the log (the value is a setting, not a secret).
 function getTranscriptMode(env = process.env) {
@@ -89,6 +106,8 @@ module.exports = {
   getMaxTokensPerAppointment,
   getConfidenceThresholds,
   getLateUploadMinutes,
+  getSegmentationSilenceMs,
+  DEFAULT_SEGMENTATION_SILENCE_MS,
   TRANSCRIPT_MODES,
   getTranscriptMode,
 };

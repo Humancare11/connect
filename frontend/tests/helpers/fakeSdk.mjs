@@ -7,7 +7,7 @@ export function createFakeSdk() {
   sdk.ResultReason = { TranslatedSpeech: 7, NoMatch: 0, SynthesizingAudioCompleted: 9 };
   sdk.CancellationReason = { Error: 1, EndOfStream: 2 };
   sdk.OutputFormat = { Detailed: "Detailed" };
-  sdk.PropertyId = { SpeechServiceConnection_LanguageIdMode: "LIDMODE", SpeechServiceResponse_JsonResult: "JSONRESULT" };
+  sdk.PropertyId = { SpeechServiceConnection_LanguageIdMode: "LIDMODE", SpeechServiceResponse_JsonResult: "JSONRESULT", Speech_SegmentationSilenceTimeoutMs: "SEGSIL" };
   sdk.AudioStreamFormat = { getWaveFormatPCM: (rate, bits, channels) => ({ rate, bits, channels }) };
   sdk.AudioConfig = { fromStreamInput: (push) => ({ push }) };
   sdk.AutoDetectSourceLanguageConfig = { fromLanguages: (languages) => ({ languages: [...languages] }) };
@@ -72,5 +72,6 @@ export function createFakeSdk() {
     }
     close() { this.closed = true; }
   };
+  sdk.Connection = { fromSynthesizer: (synth) => ({ openConnection() { synth.connectionOpened = (synth.connectionOpened || 0) + 1; } }) };
   return sdk;
 }

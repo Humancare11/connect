@@ -217,6 +217,8 @@ export function createMicPipeline({
     },
     // The loudest sample of the last `windowMs` (0 when nothing arrived): "is this person clearly speaking?"
     recentPeak(windowMs = 2000) { const from = nowPerf() - windowMs; let m = 0; for (const [t, p] of peaks) if (t >= from && p > m) m = p; return m; },
+    // How long ago the most recent chunk at least this loud arrived (null = none in the last 5 s): "when did they stop speaking?"
+    msSinceLoud(threshold) { for (let i = peaks.length - 1; i >= 0; i--) if (peaks[i][1] >= threshold) return Math.max(0, Math.round(nowPerf() - peaks[i][0])); return null; },
     isMuted: () => muted,
     isStalled: () => Boolean(gap && gap.reason !== "muted"),
     stats: () => ({ ...stats, clipRate: stats.chunks ? stats.clippedChunks / stats.chunks : 0 }),

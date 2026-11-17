@@ -118,7 +118,7 @@ export function createCaptionReceiver({
       onTranscript(entry);
 
       const myLang = getMyLang();
-      const trace = (outcome) => onTrace({ id: entry.id, final: entry.final, from: entry.from, srcLang: entry.srcLang, tier, myLang, targets: Object.keys(entry.tr), outcome });
+      const trace = (outcome) => onTrace({ id: entry.id, final: entry.final, from: entry.from, srcLang: entry.srcLang, tier, myLang, targets: Object.keys(entry.tr), outcome, at: entry.at });
 
       // The doctor's hint: the patient speaks a language other than the doctor's, and the doctor has translation off ("Real voice").
       if (role === "doctor" && caption.from === "patient" && entry.final && tier !== "unclear" && (myLang === "none" || !myLang)) {

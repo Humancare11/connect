@@ -32,6 +32,7 @@ export function createRecognizerController({
   setTimer = (fn, ms) => setTimeout(fn, ms),
   clearTimer = (id) => clearTimeout(id),
   random = Math.random,
+  segmentationSilenceMs = null, // how much silence ends a sentence (null = the Azure default): shorter = the finished sentence arrives sooner
   isUnavailable = () => false, // true once the token manager has been refused for good (no point retrying)
 } = {}) {
   let status = "idle";
@@ -75,6 +76,7 @@ export function createRecognizerController({
     const { token, region } = await getToken(forceToken);
     const sc = sdk.SpeechTranslationConfig.fromAuthorizationToken(token, region);
     sc.outputFormat = sdk.OutputFormat.Detailed; // needed to read the confidence
+    if (Number.isInteger(segmentationSilenceMs) && segmentationSilenceMs > 0) sc.setProperty(sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, String(segmentationSilenceMs));
     for (const t of cfg.targets) sc.addTargetLanguage(t);
     const push = sdk.AudioInputStream.createPushStream(sdk.AudioStreamFormat.getWaveFormatPCM(16000, 16, 1));
     const audio = sdk.AudioConfig.fromStreamInput(push);

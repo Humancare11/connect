@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Live Interpreter spike v2</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{font:14px system-ui,sans-serif;margin:16px;max-width:1250px}
+fieldset{margin:0 0 10px;padding:8px 10px}legend{font-weight:600}label{margin-right:14px;white-space:nowrap}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.box{border:1px solid #999;border-radius:6px;padding:8px;min-height:70px;white-space:pre-wrap}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:3px 6px;text-align:left;font-size:13px;vertical-align:top}
+#log{height:200px;overflow:auto;background:#111;color:#9f9;padding:6px;font:12px monospace;white-space:pre-wrap}
+#sum{background:#eef6ff;border:1px solid #9bc;border-radius:6px;padding:8px;font-size:14px}
+button{padding:6px 14px;font-size:14px}small{color:#555}
+</style></head><body>
+<h2>Azure Live Interpreter - spike v2 (local test only)</h2>
+<fieldset><legend>Language</legend>
+ <label>I will speak:
+  <select id="src"><option value="">Unspecified (open-range auto-detect)</option><option>hi-IN</option><option>en-IN</option><option>en-US</option><option>de-DE</option></select></label>
+ <label>Candidate languages (used only when "Unspecified"; empty = open range):
+  <input id="cands" size="22" placeholder="hi-IN,en-IN"></label>
+ <label>Language detection:
+  <select id="lidMode"><option value="continuous">Continuous (every phrase)</option><option value="atstart">At start only (SDK default)</option></select></label><br>
+ <label>Translate to:
+  <select id="tgt"><option value="en">English (en)</option><option value="hi">Hindi (hi)</option><option value="de">German (de)</option></select></label>
+ <label>Voice:
+  <select id="voiceMode"><option value="prebuilt">prebuilt neural voice</option><option value="personal">personal-voice</option><option value="custom">custom name</option></select></label>
+ <input id="voiceName" size="24">
+ <label>Variant:
+  <select id="variant"><option value="std">standard</option><option value="llm">LLM (?setfeature=llm)</option></select></label>
+</fieldset>
+<fieldset><legend>Latency / noise settings</legend>
+ <label>Phrase ends after silence (ms, blank = default): <input id="segSil" size="5" placeholder="e.g. 500"></label>
+ <label>Longest phrase (ms, blank = default): <input id="segMax" size="6" placeholder="e.g. 8000"></label>
+ <label><input type="checkbox" id="stable"> stable partial results</label><br>
+ <label>Microphone path:
+  <select id="micMode"><option value="sdk">SDK microphone (as before)</option><option value="own">Our own pipeline (needed for noise gate)</option></select></label>
+ <label>Noise gate level (own pipeline only; 0 = off, try 0.03 - 0.06): <input id="gate" size="5" value="0"></label>
+ <label><input type="checkbox" id="ns" checked> browser noise suppression</label>
+</fieldset>
+<fieldset><legend>Original text (Problem 1)</legend>
+ <label><input type="checkbox" id="par"> also run a plain speech recognizer in parallel (extra cost while testing) with candidates:</label>
+ <input id="parCands" size="22" value="hi-IN,en-IN">
+ <label><input type="checkbox" id="raw"> log the raw JSON of every result</label>
+</fieldset>
+<p><button id="start">Start</button> <button id="stop" disabled>Stop</button>
+ <label><input type="checkbox" id="mute"> mute translated voice (text only)</label>
+ <b id="state">idle</b> &nbsp; <small>Use headphones.</small></p>
+<div id="sum">No results yet.</div>
+<div class="row"><div><b>Original (interpreter)</b><div class="box" id="orig"></div></div>
+<div><b>Translated</b><div class="box" id="trans"></div></div></div>
+<h3>One row per time you spoke (all times in ms from the start of that speech)</h3>
+<table><thead><tr><th>#</th><th>spoke for (ms)</th><th>language label</th><th>first partial</th><th>first translated audio</th><th>audio began before I stopped?</th><th>final text</th><th>original (interpreter)</th><th>original (parallel recognizer)</th><th>translated</th></tr></thead><tbody id="rows"></tbody></table>
+<p><button id="csv">Copy results as text</button></p>
+<h3>Event log</h3><div id="log"></div>
+<script src="/sdk.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const T0 = performance.now();
+const log = m => { const d = $("log"); d.textContent += ((performance.now() - T0) / 1000).toFixed(2) + "s " + m + "\n"; d.scrollTop = d.scrollHeight; };
+const esc = s => String(s == null ? "" : s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+const DEFAULT_VOICE = { en: "en-US-AvaMultilingualNeural", hi: "hi-IN-SwaraNeural", de: "de-DE-KatjaNeural" };
+$("tgt").onchange = () => { $("voiceName").placeholder = DEFAULT_VOICE[$("tgt").value]; }; $("tgt").onchange();
+
+let rec, par, micCtx, micStream, proc, playCtx, playAt = 0, pushA = null, pushB = null;
+let segs = [], inSpeech = false, lastLoudAt = 0, quietFrom = 0, svcOpen = false, svcSeg = null, lastChunkAt = 0, sessionStartWall = 0, rawCount = 0, gateUntil = 0, running = false;
+const SPEECH_RMS = 0.02, QUIET_MS = 700;
+
+function newSeg(t, note) { const s = { n: segs.length + 1, t0: t, tEnd: null, partial: null, audio: null, final: null, lang: "", orig: "", origPar: "", langPar: "", trans: "", svc: false, aud: false, note: note || "" }; segs.push(s); return s; }
+function nextSvc(now) { // the oldest speech (last 40 s) the service has not started on yet
+  let s = segs.find(x => !x.svc && now - x.t0 < 40000);
+  if (!s) s = newSeg(now, "no mic onset");
+  s.svc = true; return s;
+}
+
+// ---- microphone: level meter (speech start/end) + optional own pipeline with noise gate ----
+function onFrame(f, now) {
+  let sum = 0; for (let i = 0; i < f.length; i++) sum += f[i] * f[i];
+  const rms = Math.sqrt(sum / f.length);
+  if (rms > SPEECH_RMS) {
+    if (!inSpeech && now - lastLoudAt >= QUIET_MS) newSeg(now);
+    else if (!segs.length) newSeg(now);
+    inSpeech = true; lastLoudAt = now;
+  } else if (inSpeech && now - lastLoudAt >= QUIET_MS) {
+    inSpeech = false; const s = segs[segs.length - 1]; if (s && s.tEnd == null) s.tEnd = lastLoudAt;
+  }
+  return rms;
+}
+
+async function startMic() {
+  micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: $("ns").checked, channelCount: 1 } });
+  micCtx = new AudioContext({ sampleRate: 16000 });
+  if (micCtx.sampleRate !== 16000) log("WARNING: audio context runs at " + micCtx.sampleRate + " Hz, own pipeline expects 16000");
+  const src = micCtx.createMediaStreamSource(micStream);
+  proc = micCtx.createScriptProcessor(2048, 1, 1);
+  const own = $("micMode").value === "own", gate = Number($("gate").value) || 0;
+  if (own) { const fmt = SpeechSDK.AudioStreamFormat.getWaveFormatPCM(16000, 16, 1); pushA = SpeechSDK.AudioInputStream.createPushStream(fmt); pushB = SpeechSDK.AudioInputStream.createPushStream(fmt); }
+  proc.onaudioprocess = e => {
+    const f = e.inputBuffer.getChannelData(0), now = performance.now();
+    const rms = onFrame(f, now);
+    if (!own) return;
+    if (rms >= gate) gateUntil = now + 400;
+    const open = gate <= 0 || now < gateUntil;
+    const i16 = new Int16Array(f.length);
+    if (open) for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); i16[i] = v < 0 ? v * 32768 : v * 32767; }
+    if (pushA) pushA.write(i16.buffer.slice(0)); if (pushB && $("par").checked) pushB.write(i16.buffer.slice(0));
+  };
+  const mute = micCtx.createGain(); mute.gain.value = 0;
+  src.connect(proc); proc.connect(mute); mute.connect(micCtx.destination);
+}
+const audioFor = which => $("micMode").value === "own" ? SpeechSDK.AudioConfig.fromStreamInput(which === "A" ? pushA : pushB) : SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+
+// ---- translated audio playback (raw 16 kHz 16-bit mono PCM) ----
+function play(ab) {
+  let bytes = new Uint8Array(ab);
+  if (bytes.length >= 44 && String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]) === "RIFF") bytes = bytes.slice(44);
+  const n = bytes.length >> 1; if (!n) return;
+  const i16 = new Int16Array(bytes.buffer, bytes.byteOffset, n), f = new Float32Array(n);
+  for (let i = 0; i < n; i++) f[i] = i16[i] / 32768;
+  const b = playCtx.createBuffer(1, n, 16000); b.copyToChannel(f, 0);
+  const s = playCtx.createBufferSource(); s.buffer = b; s.connect(playCtx.destination);
+  playAt = Math.max(playAt, playCtx.currentTime + 0.02); s.start(playAt); playAt += b.duration;
+}
+
+// ---- result helpers ----
+function rawJson(res) { try { return res.properties.getProperty(SpeechSDK.PropertyId.SpeechServiceResponse_JsonResult) || ""; } catch (e) { return ""; } }
+function origFrom(res) { // service text; if it is just punctuation, look in the raw JSON for any other source text field
+  let t = (res.text || "").trim();
+  if (/[\p{L}\p{N}]/u.test(t)) return t;
+  try {
+    const j = JSON.parse(rawJson(res));
+    for (const v of [j.Text, j.DisplayText, j.Lexical, j.Source && j.Source.Text, j.NBest && j.NBest[0] && (j.NBest[0].Display || j.NBest[0].Lexical)]) if (v && /[\p{L}\p{N}]/u.test(v)) return v + "  [from raw JSON]";
+  } catch (e) {}
+  return t;
+}
+function langOf(res) {
+  try { const l = SpeechSDK.AutoDetectSourceLanguageResult.fromResult(res).language; if (l) return l; } catch (e) {}
+  if (res.language) return res.language;
+  try { const j = JSON.parse(rawJson(res)); return (j.PrimaryLanguage && j.PrimaryLanguage.Language) || ""; } catch (e) { return ""; }
+}
+
+function ms(a, b) { return a == null ? "-" : Math.round(a - b); }
+const avg = a => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : null;
+const med = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return Math.round(s[s.length >> 1]); };
+function render() {
+  const aud = segs.filter(s => s.audio != null && s.svc), a = aud.map(s => s.audio - s.t0);
+  const fin = segs.filter(s => s.final != null).map(s => s.final - s.t0), par = segs.filter(s => s.partial != null).map(s => s.partial - s.t0);
+  const early = aud.filter(s => s.tEnd == null || s.audio < s.tEnd).length;
+  const f = v => v == null ? "-" : v + " ms";
+  $("sum").innerHTML = "<b>First translated audio</b> (after I started speaking): average <b>" + f(avg(a)) + "</b>, median " + f(med(a)) + ", fastest " + f(a.length ? Math.round(Math.min(...a)) : null) + ", slowest " + f(a.length ? Math.round(Math.max(...a)) : null) + " &nbsp;(" + a.length + " of " + segs.length + " speeches got audio)<br>"
+    + "Audio began <b>before I stopped speaking</b>: " + early + " of " + aud.length + " &nbsp;|&nbsp; first partial text: avg " + f(avg(par)) + " &nbsp;|&nbsp; final text: avg " + f(avg(fin)) + " (median " + f(med(fin)) + ")";
+  $("rows").innerHTML = segs.map(s => "<tr><td>" + s.n + (s.note ? "<br><small>" + s.note + "</small>" : "") + "</td><td>" + (s.tEnd == null ? "..." : Math.round(s.tEnd - s.t0)) + "</td><td>" + esc(s.lang || "-") + (s.langPar ? "<br><small>par: " + esc(s.langPar) + "</small>" : "") + "</td><td>" + ms(s.partial, s.t0) + "</td><td>" + ms(s.audio, s.t0) + "</td><td>" + (s.audio == null ? "-" : (s.tEnd == null || s.audio < s.tEnd) ? "YES" : "no") + "</td><td>" + ms(s.final, s.t0) + "</td><td>" + esc(s.orig) + "</td><td>" + esc(s.origPar) + "</td><td>" + esc(s.trans) + "</td></tr>").join("");
+}
+
+async function start() {
+  $("start").disabled = true; $("state").textContent = "connecting...";
+  const sdk = SpeechSDK;
+  const tk = await (await fetch("/token")).json();
+  if (!tk.token) { $("state").textContent = "token failed: " + tk.error; $("start").disabled = false; return; }
+  await startMic();
+  playCtx = new AudioContext({ sampleRate: 16000 }); playAt = 0; running = true;
+
+  const tgt = $("tgt").value, vm = $("voiceMode").value;
+  const voice = vm === "personal" ? "personal-voice" : vm === "custom" ? $("voiceName").value.trim() : DEFAULT_VOICE[tgt];
+  const sc = sdk.SpeechTranslationConfig.fromAuthorizationToken(tk.token, tk.region);
+  if ($("variant").value === "llm") sc.setProperty(sdk.PropertyId.SpeechServiceConnection_Endpoint, "wss://" + tk.region + ".stt.speech.microsoft.com/stt/speech/universal/v2?setfeature=llm");
+  sc.addTargetLanguage(tgt);
+  if (voice) sc.voiceName = voice;
+  sc.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Raw16Khz16BitMonoPcm;
+  if ($("segSil").value.trim()) sc.setProperty(sdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, $("segSil").value.trim());
+  if ($("segMax").value.trim()) sc.setProperty(sdk.PropertyId.Speech_SegmentationMaximumTimeMs, $("segMax").value.trim());
+  if ($("stable").checked) sc.setProperty(sdk.PropertyId.SpeechServiceResponse_TranslationRequestStablePartialResult, "true");
+
+  const srcLang = $("src").value, cands = $("cands").value.split(",").map(x => x.trim()).filter(Boolean);
+  let r, mode = "";
+  if (srcLang) { sc.speechRecognitionLanguage = srcLang; r = new sdk.TranslationRecognizer(sc, audioFor("A")); mode = "fixed " + srcLang; }
+  else {
+    const ad = cands.length ? sdk.AutoDetectSourceLanguageConfig.fromLanguages(cands) : sdk.AutoDetectSourceLanguageConfig.fromOpenRange();
+    ad.mode = $("lidMode").value === "continuous" ? sdk.LanguageIdMode.Continuous : sdk.LanguageIdMode.AtStart;
+    r = sdk.TranslationRecognizer.FromConfig(sc, ad, audioFor("A")); mode = (cands.length ? "candidates " + cands.join("/") : "OPEN-RANGE") + ", LID " + $("lidMode").value;
+  }
+  log("config: " + mode + " | target=" + tgt + " | voice=" + (voice || "(none)") + " | variant=" + $("variant").value + " | mic=" + $("micMode").value + " gate=" + $("gate").value + " | segSilence=" + ($("segSil").value || "default") + " segMax=" + ($("segMax").value || "default") + " stable=" + $("stable").checked);
+
+  const tr = res => { try { return res.translations.get(tgt) || ""; } catch (e) { return ""; } };
+  const dumpRaw = (kind, res) => { if ($("raw").checked || rawCount < 4) { rawCount++; log("RAW " + kind + ": " + rawJson(res)); } };
+  r.recognizing = (_, e) => {
+    const now = performance.now();
+    if (!svcOpen) { svcSeg = nextSvc(now); svcOpen = true; }
+    const s = svcSeg; if (s.partial == null) { s.partial = now; log("first partial: orig='" + e.result.text + "' trans='" + tr(e.result) + "'"); dumpRaw("partial", e.result); }
+    s.orig = origFrom(e.result); s.trans = tr(e.result); s.lang = langOf(e.result) || s.lang;
+    $("orig").textContent = s.orig; $("trans").textContent = s.trans; render();
+  };
+  r.recognized = (_, e) => {
+    const now = performance.now(), res = e.result;
+    if (res.reason === sdk.ResultReason.TranslatedSpeech) {
+      if (!svcOpen) svcSeg = nextSvc(now);
+      const s = svcSeg; svcOpen = false;
+      s.final = now; s.orig = origFrom(res); s.trans = tr(res); s.lang = langOf(res) || s.lang;
+      log("final [" + s.lang + "]: orig='" + res.text + "' trans='" + s.trans + "'"); dumpRaw("final", res); render();
+    } else if (res.reason === sdk.ResultReason.NoMatch) log("no match");
+  };
+  r.synthesizing = (_, e) => {
+    const a = e.result.audio, now = performance.now();
+    if (!a || !a.byteLength) { log("synth end (0 bytes)"); return; }
+    if (now - lastChunkAt > 600) { // a new burst of translated voice
+      const s = segs.find(x => x.svc && !x.aud && now - x.t0 < 60000);
+      if (s) { s.aud = true; s.audio = now; log("translated voice began " + Math.round(now - s.t0) + " ms after speech #" + s.n + " started" + (s.tEnd == null || now < s.tEnd ? " (before I stopped)" : "")); render(); }
+      else log("translated voice began but no matching speech found");
+    }
+    lastChunkAt = now;
+    if (!$("mute").checked) play(a);
+  };
+  r.canceled = (_, e) => { log("CANCELED reason=" + e.reason + " code=" + e.errorCode + " " + (e.errorDetails || "")); $("state").textContent = "canceled: " + (e.errorDetails || e.reason); stop(); };
+  r.sessionStarted = () => { sessionStartWall = performance.now(); log("session started"); };
+  r.sessionStopped = () => log("session stopped");
+  rec = r;
+
+  if ($("par").checked) {
+    const pc = $("parCands").value.split(",").map(x => x.trim()).filter(Boolean);
+    const psc = sdk.SpeechConfig.fromAuthorizationToken(tk.token, tk.region);
+    const pr = sdk.SpeechRecognizer.FromConfig(psc, sdk.AutoDetectSourceLanguageConfig.fromLanguages(pc), audioFor("B"));
+    let pStart = 0;
+    pr.sessionStarted = () => { pStart = performance.now(); };
+    pr.recognized = (_, e) => {
+      const res = e.result; if (res.reason !== sdk.ResultReason.RecognizedSpeech || !res.text) return;
+      const at = pStart + res.offset / 10000; // when it was spoken, on the same clock
+      let s = null; for (const x of segs) if (x.t0 <= at + 800) s = x;
+      const lang = (() => { try { return sdk.AutoDetectSourceLanguageResult.fromResult(res).language; } catch (er) { return ""; } })();
+      log("parallel [" + lang + "]: " + res.text);
+      if (s) { s.origPar = (s.origPar ? s.origPar + " " : "") + res.text; s.langPar = lang; render(); }
+    };
+    pr.canceled = (_, e) => log("PARALLEL CANCELED " + e.errorCode + " " + (e.errorDetails || ""));
+    pr.startContinuousRecognitionAsync(() => log("parallel recognizer started"), er => log("parallel start failed: " + er));
+    par = pr;
+  }
+
+  r.startContinuousRecognitionAsync(
+    () => { $("state").textContent = "listening - speak now"; $("stop").disabled = false; log("started"); },
+    err => { log("start failed: " + err); $("state").textContent = "start failed"; stop(); });
+}
+
+function stop() {
+  running = false;
+  try { if (rec) rec.stopContinuousRecognitionAsync(() => { try { rec.close(); } catch (e) {} rec = null; }, () => {}); } catch (e) {}
+  try { if (par) par.stopContinuousRecognitionAsync(() => { try { par.close(); } catch (e) {} par = null; }, () => {}); } catch (e) {}
+  try { if (pushA) pushA.close(); if (pushB) pushB.close(); } catch (e) {}
+  pushA = pushB = null;
+  try { if (proc) proc.onaudioprocess = null; if (micStream) micStream.getTracks().forEach(t => t.stop()); if (micCtx) micCtx.close(); if (playCtx) playCtx.close(); } catch (e) {}
+  $("start").disabled = false; $("stop").disabled = true;
+}
+$("start").onclick = () => start().catch(e => { log("error: " + e.message); $("state").textContent = "error"; $("start").disabled = false; });
+$("stop").onclick = () => { stop(); $("state").textContent = "stopped"; };
+$("csv").onclick = () => {
+  const rows = segs.map(s => [s.n, s.tEnd == null ? "" : Math.round(s.tEnd - s.t0), s.lang, ms(s.partial, s.t0), ms(s.audio, s.t0), s.audio == null ? "" : (s.tEnd == null || s.audio < s.tEnd) ? "before_end" : "after_end", ms(s.final, s.t0), s.orig, s.origPar, s.trans].join("\t")).join("\n");
+  navigator.clipboard.writeText($("sum").innerText + "\nconfig: " + $("log").textContent.split("\n").find(l => l.includes("config:")) + "\nn\tspoke_ms\tlang\tpartial_ms\taudio_ms\taudio_vs_end\tfinal_ms\toriginal\toriginal_parallel\ttranslated\n" + rows); log("copied");
+};
+</script></body></html>

@@ -22,6 +22,7 @@ export const INACTIVE = Object.freeze({
   mode: "notice",
   noticeVersion: DEFAULT_NOTICE_VERSION,
   thresholds: DEFAULT_THRESHOLDS,
+  segmentationSilenceMs: null,
 });
 
 // import.meta.env only exists inside Vite; tests pass their own env.
@@ -42,11 +43,14 @@ export function normalizeServerConfig(data) {
   if (!data || typeof data !== "object" || Array.isArray(data)) return null;
   const noticeVersion =
     typeof data.noticeVersion === "string" && /^[A-Za-z0-9._-]{1,20}$/.test(data.noticeVersion) ? data.noticeVersion : DEFAULT_NOTICE_VERSION;
+  const silence = data.speed && data.speed.segmentationSilenceMs;
   return {
     serverEnabled: data.enabled === true,
     mode: data.mode === "consent" ? "consent" : "notice",
     noticeVersion,
     thresholds: normalizeThresholds(data.confidence),
+    // how much silence ends a sentence (ms); null = leave the Azure default
+    segmentationSilenceMs: Number.isInteger(silence) && silence >= 200 && silence <= 3000 ? silence : null,
   };
 }
 

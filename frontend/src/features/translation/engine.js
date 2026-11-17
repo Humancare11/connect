@@ -35,6 +35,8 @@ const SUSPECT_TRIGGER = 2; // this many of my last 3 sentences heard as the LIST
 const GARBAGE_TRIGGER = 2; // ...and give that language back after this many unclear sentences in a row of the second opinion
 const NO_MATCH_STRETCH_END_MS = 5000; // a run of no-match results ends after this much without another
 const SPEAK_NOTE_MS = 5000;
+const WARM_VOICE_EVERY_MS = 4000; // the connection to the voice service is touched at most this often (while the other person speaks)
+const MAX_TIMING_IDS = 50;
 
 export function createTranscriptionEngine({
   role, // "doctor" | "patient"
@@ -105,6 +107,9 @@ export function createTranscriptionEngine({
   let pipeline = null;
   let recognizer = null;
   let synth = null;
+  let voiceWarmAt = -Infinity;
+  let sentenceFirstPartialPerf = null; // my current sentence: when its first partial words arrived
+  const finalRecvPerf = new Map(); // caption id -> when the finished sentence reached this device (for the timing lines)
   let currentSource = null;
   let sinkFn = null;
   let started = false;
@@ -186,6 +191,11 @@ export function createTranscriptionEngine({
       // Logged: every finished sentence, and the first partial of each sentence. The subtitle outcome says why one did or did not appear.
       if (!t.final && seenPartial.has(t.id)) return;
       if (!t.final) seenPartial.add(t.id); else seenPartial.delete(t.id);
+      if (t.final) {
+        finalRecvPerf.set(t.id, nowPerf());
+        while (finalRecvPerf.size > MAX_TIMING_IDS) finalRecvPerf.delete(finalRecvPerf.keys().next().value);
+        diag("timing: caption received", { id: t.id, relayAgeMs: typeof t.at === "number" ? now() - t.at : null, note: "relayAgeMs uses the server clock, so it is approximate" });
+      } else if (t.outcome === "subtitle") warmVoice("the other person is speaking");
       diag("caption received", { id: t.id, final: t.final, from: t.from, srcLang: t.srcLang, tier: t.tier, iHear: t.myLang, translationsInCaption: t.targets, subtitlesOn: state.subtitlesEnabled, outcome: t.outcome });
       // The speaker's caption has no translation in my language: it never learned my language (a lost lang-changed). Say it again, at most every 5 s.
       if (t.outcome === "no_translation_for_my_language" && t.final && now() - lastReannounceAt > 5000) {
@@ -195,7 +205,12 @@ export function createTranscriptionEngine({
       }
     },
     onSubtitle: (s) => showSubtitle(s),
-    onVoice: (v) => { voiceQueue.enqueue(v); },
+    onVoice: (v) => {
+      // The sound is made at once, while earlier sentences are still speaking, so it is ready the moment its turn comes.
+      const item = { ...v, enqueuedPerf: nowPerf(), captionPerf: finalRecvPerf.has(v.id) ? finalRecvPerf.get(v.id) : nowPerf(), pending: null };
+      if (voiceQueue.isEnabled()) { item.pending = synthesize(item); item.pending.catch(() => {}); }
+      voiceQueue.enqueue(item);
+    },
     onHint: (h) => set({ hint: h }),
     // A finished sentence that will not be spoken (unclear, or no translation): only the message, the real voice is NOT given back.
     onUnspoken: () => { didntCatchUntil = now() + UNCLEAR_HOLD_MS; refreshGuard(); },
@@ -424,10 +439,9 @@ export function createTranscriptionEngine({
   const addGap = ({ reason, startedPerf, durationMs }) => { uploader.addGap({ reason, startedPerf, durationMs }); };
 
   // ---- the translated voice ---------------------------------------------------------------------------------------------
-  async function playVoice(item) {
-    const language = getLanguage(item.lang);
-    const voice = voiceForLanguage(item.lang);
-    if (!language || !voice || !ctx || !sdk) return; // no voice for this language: the subtitle alone is shown
+  // The speech synthesizer is created once per call and its connection is opened ahead of time (see warmVoice), so a sentence does not
+  // pay for a cold start.
+  async function ensureSynth() {
     const { token, region } = await tokens.getToken();
     if (!synth) {
       const sc = sdk.SpeechConfig.fromAuthorizationToken(token, region);
@@ -435,14 +449,50 @@ export function createTranscriptionEngine({
       synth = new sdk.SpeechSynthesizer(sc, null); // audio is returned to us and played through OUR unlocked audio context
     }
     synth.authorizationToken = token;
+    return synth;
+  }
+
+  // Opens the connection to the voice service in advance: when I pick a language, and again whenever the other person starts a sentence.
+  // Throttled, never throws, and costs nothing when the connection is already open.
+  function warmVoice(why) {
+    try {
+      if (!sdk || !tokens || stopped || state.readLang === NONE || !state.voiceEnabled || state.voiceBreakerTripped) return;
+      if (!voiceForLanguage(state.readLang)) return;
+      const t = nowPerf();
+      if (t - voiceWarmAt < WARM_VOICE_EVERY_MS) return;
+      voiceWarmAt = t;
+      if (ctx && ctx.state !== "running" && ctx.resume) Promise.resolve(ctx.resume()).catch(() => {});
+      ensureSynth().then((s) => {
+        const connection = sdk.Connection && sdk.Connection.fromSynthesizer ? sdk.Connection.fromSynthesizer(s) : null;
+        if (connection && connection.openConnection) connection.openConnection();
+        diag("voice warmed", { why });
+      }).catch(() => {});
+    } catch { /* warming is only an optimisation */ }
+  }
+
+  // Makes the sound for one sentence: { audioData, synthMs, cold } or null when this language has no voice (the subtitle alone is shown).
+  function synthesize(item) {
+    const language = getLanguage(item.lang);
+    const voice = voiceForLanguage(item.lang);
+    if (!language || !voice || !ctx || !sdk) return Promise.resolve(null);
+    const t0 = nowPerf();
+    const cold = !synth;
     const text = String(item.text).replace(/&/g, "&amp;").replace(/</g, "&lt;");
     const ssml = `<speak version='1.0' xml:lang='${language.locale}'><voice name='${voice}'>${text}</voice></speak>`;
-    const audioData = await new Promise((resolve, reject) =>
-      synth.speakSsmlAsync(ssml, (r) => (r && r.reason === sdk.ResultReason.SynthesizingAudioCompleted ? resolve(r.audioData) : reject(new Error("synthesis failed"))), reject)
-    );
+    return ensureSynth().then((s) => new Promise((resolve, reject) =>
+      s.speakSsmlAsync(ssml, (r) => (r && r.reason === sdk.ResultReason.SynthesizingAudioCompleted ? resolve({ audioData: r.audioData, synthMs: Math.round(nowPerf() - t0), cold }) : reject(new Error("synthesis failed"))), reject)
+    ));
+  }
+
+  async function playVoice(item) {
+    const turnPerf = nowPerf();
+    const made = await (item.pending || synthesize(item));
+    if (!made) return;
     if (stopped || !voiceQueue.isEnabled()) return;
     if (ctx.state !== "running" && ctx.resume) await ctx.resume().catch(() => {});
-    const buffer = await ctx.decodeAudioData(audioData.slice(0));
+    const decodeStart = nowPerf();
+    const buffer = await ctx.decodeAudioData(made.audioData.slice(0));
+    const decodeMs = Math.round(nowPerf() - decodeStart);
     await new Promise((resolve) => {
       const source = ctx.createBufferSource();
       source.buffer = buffer;
@@ -452,12 +502,22 @@ export function createTranscriptionEngine({
       ducker.duck();
       source.onended = () => { voiceFailedUntil = 0; echo.voiceEnded(handle); if (currentSource === source) currentSource = null; resolve(); };
       source.start();
+      diag("timing: voice started", {
+        id: item.id,
+        captionToVoiceMs: Math.round(nowPerf() - item.captionPerf), // the finished sentence reached this device -> the voice began
+        waitedForEarlierSentencesMs: Math.round(turnPerf - item.enqueuedPerf), // part of that spent behind an earlier sentence
+        synthMs: made.synthMs,
+        decodeMs,
+        audioMs: Math.round(buffer.duration * 1000),
+        coldStart: made.cold,
+      });
     });
   }
 
   // ---- what my own recognizer produces ----------------------------------------------------------------------------------
   function onPartial(p) {
     lastResultPerf = nowPerf();
+    if (sentenceFirstPartialPerf === null) sentenceFirstPartialPerf = lastResultPerf;
     if (state.muted) return;
     if (echo.check({ text: p.text, confidence: null, durationMs: 0 }).echo) return; // our own voice, not a caption
     captionSender.partial({ text: p.text, tr: p.tr, srcLang: p.srcLang });
@@ -465,6 +525,8 @@ export function createTranscriptionEngine({
 
   function onFinal(f) {
     lastResultPerf = nowPerf();
+    const firstPartialAgo = sentenceFirstPartialPerf === null ? null : Math.round(lastResultPerf - sentenceFirstPartialPerf);
+    sentenceFirstPartialPerf = null;
     const tier = confidenceTier(f.confidence, thresholds);
     closeNoMatchStretch(); // words came out again
     noMatchStatusUntil = 0;
@@ -488,6 +550,12 @@ export function createTranscriptionEngine({
     // Always sent (echo excepted). An unclear sentence is not shown or spoken on the other side, but its arrival tells that device that a
     // sentence was not translated, so the real voice is not left muted.
     captionSender.final({ text: f.text, tr: f.tr, srcLang: f.srcLang, confidence: f.confidence });
+    diag("timing: my sentence", {
+      stoppedToFinalMs: pipeline ? pipeline.msSinceLoud(MIC_SPEECH_PEAK) : null, // I stopped speaking -> the finished sentence was sent (null = more than 5 s)
+      firstPartialToFinalMs: firstPartialAgo,
+      spokenMs: f.durationMs,
+      silenceSettingMs: Number.isInteger(config.segmentationSilenceMs) ? config.segmentationSilenceMs : null,
+    });
     diag("caption sent", { srcLang: f.srcLang, confidence: f.confidence, translationsSent: Object.keys(f.tr || {}), recognizerTargets: recognizer ? recognizer.targets() : [] });
 
     // The wrong-language safety net (only when a language was picked): nonsense with low confidence means the pick does not match
@@ -601,6 +669,7 @@ export function createTranscriptionEngine({
           onGap: addGap,
           nowPerf, setTimer, clearTimer, random,
           isUnavailable: () => tokens.isPermanentlyFailed(),
+          segmentationSilenceMs: Number.isInteger(config.segmentationSilenceMs) ? config.segmentationSilenceMs : null,
         });
 
         statusReady = true;
@@ -622,6 +691,7 @@ export function createTranscriptionEngine({
       if (lang === NONE) voiceQueue.clear();
       announcer.announce(lang);
       diag("I hear", { language: lang });
+      if (lang !== NONE) warmVoice("language picked");
       if (lang !== NONE && tokens && tokens.resetServerFailures()) { tokens.refresh().catch(() => {}); set({}); } // picking a language again = try once more
       // What I HEAR does not change what I speak: my own recognizer is left alone.
     },

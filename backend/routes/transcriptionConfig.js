@@ -1,18 +1,20 @@
 const express = require("express");
 const { verifyToken } = require("../middleware/verifyToken");
 const { transcriptionConfigLimiter } = require("../middleware/rateLimiters");
-const { isTranscriptionEnabled, getTranscriptMode, getConfidenceThresholds } = require("../utils/speech/config");
+const { isTranscriptionEnabled, getTranscriptMode, getConfidenceThresholds, getSegmentationSilenceMs } = require("../utils/speech/config");
 const { TRANSCRIPT_NOTICE_VERSION } = require("../utils/speech/transcriptNotice");
 
 // GET /api/transcription/config
 //
 // What the call screen needs to know before it starts the live transcript feature, for any signed-in person:
-//   { enabled, mode, noticeVersion, confidence }
+//   { enabled, mode, noticeVersion, confidence, speed }
 //     enabled        the server switch TRANSCRIPTION_ENABLED (default off). When false the screen must behave exactly as before.
 //     mode           "notice" (people are told) or "consent" (reserved for a later consent screen; today only a label).
 //     noticeVersion  the wording version of the "this call is being transcribed" notice the app should show.
 //     confidence     { unclearBelow, lowBelow }: the same thresholds the server uses when it saves a line, so what the app shows live
 //                    (lighter, or hidden) and what is stored always agree.
+//     speed          { segmentationSilenceMs }: milliseconds of silence that end a sentence (null = Azure default). A tuning knob for how
+//                    soon a finished sentence and its translated voice arrive (TRANSCRIPT_SEGMENTATION_SILENCE_MS).
 // It answers 200 even when the feature is off, so asking is always safe. It never returns the Azure key, a token, or any setting that
 // is not listed above.
 function createTranscriptionConfigRouter({
@@ -21,11 +23,12 @@ function createTranscriptionConfigRouter({
   isEnabled = isTranscriptionEnabled,
   getMode = getTranscriptMode,
   getThresholds = getConfidenceThresholds,
+  getSegmentation = getSegmentationSilenceMs,
 } = {}) {
   const router = express.Router();
   router.get("/", auth, limiter, (req, res) => {
     res.set("Cache-Control", "no-store");
-    res.json({ enabled: isEnabled(), mode: getMode(), noticeVersion: TRANSCRIPT_NOTICE_VERSION, confidence: getThresholds() });
+    res.json({ enabled: isEnabled(), mode: getMode(), noticeVersion: TRANSCRIPT_NOTICE_VERSION, confidence: getThresholds(), speed: { segmentationSilenceMs: getSegmentation() } });
   });
   return router;
 }

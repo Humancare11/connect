@@ -75,7 +75,7 @@ function build(over = {}) {
     },
   };
   const engine = createTranscriptionEngine({
-    role: over.role || "patient", appointmentId: APPT, config: { mode: "notice", noticeVersion: "v1", thresholds: { unclearBelow: 0.4, lowBelow: 0.7 } },
+    role: over.role || "patient", appointmentId: APPT, config: { mode: "notice", noticeVersion: "v1", thresholds: { unclearBelow: 0.4, lowBelow: 0.7 }, ...(over.config || {}) }, ...(over.log ? { log: over.log } : {}),
     http, socket, loadSdk: over.loadSdk || (async () => sdk), createAudioContext: () => audio, getLocalStream: () => stream, getRemoteElements: () => elements,
     browserLanguages: over.browserLanguages || ["en-IN", "hi"], profileCountry: over.profileCountry ?? "IN",
     now: clock.now, nowPerf: clock.perf, setTimer: clock.setTimer, clearTimer: clock.clearTimer, random: () => 0.5, doc: null,
@@ -230,7 +230,7 @@ test("unclear speech (confidence under 0.4) is saved and flagged but never shown
   assert.equal(t.engine.getState().subtitle.unclear, true, "shown lightly, marked unclear");
   assert.equal(t.engine.getState().subtitle.lighter, true);
   await settle();
-  assert.equal(t.sdk.log.synths.length, 0, "but not spoken");
+  assert.equal(t.sdk.log.synths.flatMap((s) => s.requests).length, 0, "but not spoken");
   t.socket.receive("caption", { appointmentId: APPT, from: "doctor", id: "l1", final: true, text: "so so", srcLang: "en-US", conf: 0.55, tr: { de: "naja" }, at: 2 });
   assert.equal(t.engine.getState().subtitle.lighter, true);
 
@@ -536,4 +536,97 @@ test("the Speech SDK is imported in exactly one place, lazily", () => {
   const src = fs.readFileSync(path.join(dir, "loadSpeechSdk.js"), "utf8");
   assert.match(src, /import\("microsoft-cognitiveservices-speech-sdk"\)/);
   assert.equal(/^import .* from ["']microsoft-cognitiveservices-speech-sdk["']/m.test(src), false, "no static import");
+});
+
+
+// ------------------------------------------------------------------------------------------------------------------ speed
+test("speed: the sentence-end silence setting reaches the recognizer (and nothing is set when the server says use the default)", async () => {
+  const withSetting = await running({ config: { segmentationSilenceMs: 600 } });
+  assert.equal(withSetting.rec().cfg.props.SEGSIL, "600");
+  const without = await running({ config: { segmentationSilenceMs: null } });
+  assert.equal(Object.hasOwn(without.rec().cfg.props, "SEGSIL"), false);
+  const unset = await running();
+  assert.equal(Object.hasOwn(unset.rec().cfg.props, "SEGSIL"), false);
+});
+
+test("speed: picking a language warms the voice (synthesizer created, connection opened, nothing spoken); picking none does not", async () => {
+  const t = await running();
+  assert.equal(t.sdk.log.synths.length, 0, "Real voice: nothing to warm");
+  t.engine.setReadLanguage("de");
+  await settle();
+  assert.equal(t.sdk.log.synths.length, 1);
+  assert.equal(t.sdk.log.synths[0].connectionOpened, 1);
+  assert.equal(t.sdk.log.synths[0].requests.length, 0, "warming speaks nothing");
+  t.engine.setReadLanguage("none");
+  await settle();
+  assert.equal(t.sdk.log.synths.length, 1);
+});
+
+test("speed: the other person's first partial words warm the voice again (throttled) and the first real sentence reuses the same synthesizer", async () => {
+  const t = await running();
+  t.engine.setReadLanguage("de");
+  await settle();
+  await t.clock.advance(5000);
+  t.socket.receive("caption", { appointmentId: APPT, from: "doctor", id: "d1-0", final: false, text: "How", srcLang: "en-US", conf: null, tr: { de: "Wie" }, at: 1 });
+  await settle();
+  assert.equal(t.sdk.log.synths.length, 1, "one synthesizer for the whole call");
+  assert.equal(t.sdk.log.synths[0].connectionOpened, 2);
+  t.socket.receive("caption", { appointmentId: APPT, from: "doctor", id: "d1-1", final: false, text: "How are", srcLang: "en-US", conf: null, tr: { de: "Wie geht" }, at: 2 });
+  await settle();
+  assert.equal(t.sdk.log.synths[0].connectionOpened, 2, "throttled: not touched again within 4 s");
+  t.socket.receive("caption", { appointmentId: APPT, from: "doctor", id: "d1-0", final: true, text: "How are you?", srcLang: "en-US", conf: 0.9, tr: { de: "Wie geht es Ihnen?" }, at: 3 });
+  await settle(); await settle();
+  assert.equal(t.sdk.log.synths.length, 1);
+  assert.equal(t.sdk.log.synths[0].requests.length, 1);
+});
+
+test("speed: the sound of waiting sentences is made while an earlier one is still speaking, and they are still spoken one after the other", async () => {
+  const t = await running();
+  t.engine.setReadLanguage("de");
+  await settle();
+  const cap = (id, text, de, at) => t.socket.receive("caption", { appointmentId: APPT, from: "doctor", id, final: true, text, srcLang: "en-US", conf: 0.9, tr: { de }, at });
+  cap("a", "One", "Eins", 1); cap("b", "Two", "Zwei", 2);
+  await settle(); await settle();
+  assert.equal(t.sdk.log.synths[0].requests.length, 2, "both made already");
+  assert.equal(t.audio.bufferSources.length, 1, "but only the first is playing");
+  t.audio.bufferSources[0].finish();
+  await settle(); await settle();
+  assert.equal(t.audio.bufferSources.length, 2);
+  assert.equal(t.audio.bufferSources[1].started, true);
+});
+
+test("speed: a sentence that was made but not heard because the voice was switched off is not played afterwards", async () => {
+  const t = await running();
+  t.engine.setReadLanguage("de");
+  await settle();
+  t.socket.receive("caption", { appointmentId: APPT, from: "doctor", id: "a", final: true, text: "One", srcLang: "en-US", conf: 0.9, tr: { de: "Eins" }, at: 1 });
+  t.engine.setVoiceEnabled(false);
+  await settle(); await settle();
+  assert.equal(t.audio.bufferSources.filter((s) => s.started).length, 0);
+});
+
+test("speed: timing lines - my sentence (stopped -> final), the caption arriving, the voice starting; numbers only, never any words", async () => {
+  const lines = [];
+  const t = await running({ log: (what, data) => lines.push([what, data]) });
+  t.engine.setReadLanguage("de");
+  await settle();
+  feedAudio(t.audio, 2); // I am speaking (loud chunks)
+  t.rec().say("Guten", { en: "Good" }, { lang: "de-DE" });
+  await t.clock.advance(300);
+  say(t, "Guten Tag zusammen", { en: "Good day everyone" }, { lang: "de-DE", conf: 0.9, durationMs: 1800 });
+  const mine = lines.find(([w]) => w === "[tr-diag] timing: my sentence");
+  assert.ok(mine, "the speaker-side timing line exists");
+  assert.equal(typeof mine[1].stoppedToFinalMs, "number");
+  assert.equal(typeof mine[1].firstPartialToFinalMs, "number");
+  assert.equal(mine[1].spokenMs, 1800);
+  t.socket.receive("caption", { appointmentId: APPT, from: "doctor", id: "d1-0", final: true, text: "How are you?", srcLang: "en-US", conf: 0.9, tr: { de: "Wie geht es Ihnen?" }, at: t.clock.now() - 120 });
+  await settle(); await settle();
+  const got = lines.find(([w]) => w === "[tr-diag] timing: caption received");
+  assert.ok(got && got[1].relayAgeMs >= 0 && got[1].relayAgeMs < 5000, "relay age is reported");
+  const started = lines.find(([w]) => w === "[tr-diag] timing: voice started");
+  assert.ok(started, "the voice-started line exists");
+  for (const k of ["captionToVoiceMs", "waitedForEarlierSentencesMs", "synthMs", "decodeMs", "audioMs"]) assert.equal(typeof started[1][k], "number", k);
+  assert.equal(started[1].coldStart, false, "the synthesizer was warmed when the language was picked");
+  const everything = JSON.stringify(lines);
+  for (const word of ["Guten Tag", "Good day", "How are you", "Wie geht"]) assert.equal(everything.includes(word), false, `no words in the diagnostics: ${word}`);
 });
