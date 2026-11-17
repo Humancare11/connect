@@ -1,5 +1,5 @@
 // What the translation screens show, worked out from the engine state. Pure functions, so they are tested without a browser.
-import { LANGUAGE_LIST, NONE, UNSUPPORTED_SPEECH_NOTE, canTranscribeLanguage, getLanguage, languageBase, searchLanguages } from "./languages.js";
+import { LANGUAGE_LIST, NONE, UNSUPPORTED_SPEECH_NOTE, canTranscribeLanguage, getLanguage, isTranscribableLocale, languageBase, searchLanguages } from "./languages.js";
 
 export const REAL_VOICE_LABEL = "Real voice (no translation)";
 export const REAL_VOICE_HELP = "You hear the other person's own voice. No subtitles, no translated voice.";
@@ -47,10 +47,11 @@ export function selectedNote(code) {
   return `You will hear and read the other person in ${l.name}.`;
 }
 
-// The doctor's banner: the patient picked a language Azure cannot listen to, so the patient's own speech will not be transcribed.
-export function peerUnsupportedNote(role, peerReadLang) {
-  if (role !== "doctor" || !peerReadLang || peerReadLang === NONE) return "";
-  return getLanguage(peerReadLang) && !canTranscribeLanguage(peerReadLang) ? UNSUPPORTED_SPEECH_NOTE : "";
+// The doctor's banner: the patient speaks a language Azure cannot transcribe.
+// peerSpeechLang: the language the patient's latest sentence was DETECTED in (from the captions), never the language they picked to hear.
+export function peerUnsupportedNote(role, peerSpeechLang) {
+  if (role !== "doctor" || !peerSpeechLang || peerSpeechLang === NONE) return "";
+  return isTranscribableLocale(peerSpeechLang) ? "" : UNSUPPORTED_SPEECH_NOTE;
 }
 
 export function formatClock(ms) {

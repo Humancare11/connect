@@ -28,6 +28,8 @@ export const isKnownLanguage = (code) => getLanguage(code) !== null;
 export const localeForLanguage = (code) => getLanguage(code)?.locale || null;
 export const voiceForLanguage = (code) => getLanguage(code)?.voice || null;
 export const canTranscribeLanguage = (code) => Boolean(getLanguage(code)?.canTranscribe);
+// A speech locale ("hi-IN") Azure can really transcribe. An empty or unknown locale is not "cannot be transcribed": nothing is known about it.
+export const isTranscribableLocale = (locale) => typeof locale === "string" && [...STT_LOCALES].some((l) => l.toLowerCase() === locale.toLowerCase());
 export const languageName = (code) => getLanguage(code)?.name || String(code || "");
 
 // Search for the LANGUAGE panel: English name, native name, or the code. Empty query = everything, in the table's (A to Z) order.

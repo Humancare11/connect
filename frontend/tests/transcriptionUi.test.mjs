@@ -38,7 +38,7 @@ after(() => { if (outDir) fs.rmSync(outDir, { recursive: true, force: true }); }
 const h = (...a) => React.createElement(...a);
 const noop = () => {};
 const actions = { unlockAudio: noop, setReadLanguage: noop, setSubtitlesEnabled: noop, setVoiceEnabled: noop, dismissHint: noop };
-const baseState = { phase: "running", readLang: "none", subtitlesEnabled: true, voiceEnabled: true, voiceBreakerTripped: false, subtitle: null, transcript: [], hint: null, peerReadLang: "none", reconnecting: false };
+const baseState = { phase: "running", readLang: "none", subtitlesEnabled: true, voiceEnabled: true, voiceBreakerTripped: false, subtitle: null, transcript: [], hint: null, peerReadLang: "none", peerSpeechLang: "", reconnecting: false };
 
 // ---------- uiModel ----------
 test("language list: Real voice is first, also while searching, and is the selected row by default", () => {
@@ -58,13 +58,15 @@ test("language rows carry the notes for languages without speech or voice", () =
   assert.ok(rows.some((r) => r.note === ui.NO_SPEECH_NOTE_OWN));
 });
 
-test("doctor banner only for a doctor whose patient picked a language that cannot be transcribed", () => {
-  const { rows } = ui.buildLanguageRows({});
-  const unsupported = rows.find((r) => r.note === ui.NO_SPEECH_NOTE_OWN).code;
-  assert.equal(ui.peerUnsupportedNote("doctor", unsupported), "Patient's speech in this language cannot be transcribed.");
-  assert.equal(ui.peerUnsupportedNote("patient", unsupported), "");
-  assert.equal(ui.peerUnsupportedNote("doctor", "de"), "");
+test("doctor banner only for a doctor, and only when the patient's DETECTED speech language cannot be transcribed", () => {
+  const note = "Patient's speech in this language cannot be transcribed.";
+  assert.equal(ui.peerUnsupportedNote("doctor", "ht-HT"), note, "a language Azure has no speech recognition for");
+  assert.equal(ui.peerUnsupportedNote("patient", "ht-HT"), "");
+  assert.equal(ui.peerUnsupportedNote("doctor", "de-DE"), "");
+  assert.equal(ui.peerUnsupportedNote("doctor", "hi-IN"), "");
+  assert.equal(ui.peerUnsupportedNote("doctor", "en-us"), "", "locale case does not matter");
   assert.equal(ui.peerUnsupportedNote("doctor", "none"), "");
+  assert.equal(ui.peerUnsupportedNote("doctor", ""), "", "nothing detected yet: nothing is claimed");
 });
 
 test("transcript list hides echo, unclear and unfinished lines; translation shown only when different", () => {
@@ -161,11 +163,17 @@ test("overlay: badge and notice while running; reconnecting, banner and hint onl
   const rec = render(h(O, { state: { ...baseState, reconnecting: true }, actions, role: "patient" }));
   assert.match(rec, /Subtitles unavailable, reconnecting…/);
 
+  // The banner follows the DETECTED speech language of the patient, never the language the patient picked to hear.
   const unsupported = ui.buildLanguageRows({}).rows.find((r) => r.note === ui.NO_SPEECH_NOTE_OWN).code;
-  const doc = render(h(O, { state: { ...baseState, peerReadLang: unsupported }, actions, role: "doctor" }));
+  const picked = render(h(O, { state: { ...baseState, peerReadLang: unsupported }, actions, role: "doctor" }));
+  assert.doesNotMatch(picked, /cannot be transcribed/, "the patient only picked a language to hear: no banner");
+  const spokenOk = render(h(O, { state: { ...baseState, peerReadLang: unsupported, peerSpeechLang: "hi-IN" }, actions, role: "doctor" }));
+  assert.doesNotMatch(spokenOk, /cannot be transcribed/, "Hindi is detected and transcribed: no banner");
+  const doc = render(h(O, { state: { ...baseState, peerSpeechLang: "ht-HT" }, actions, role: "doctor" }));
   assert.match(doc, /Patient&#x27;s speech in this language cannot be transcribed\./);
-  const pat = render(h(O, { state: { ...baseState, peerReadLang: unsupported }, actions, role: "patient" }));
+  const pat = render(h(O, { state: { ...baseState, peerSpeechLang: "ht-HT" }, actions, role: "patient" }));
   assert.doesNotMatch(pat, /Patient&#x27;s speech/);
+  assert.equal(ui.peerUnsupportedNote("doctor", ""), "", "nothing detected yet");
 
   const hint = { code: "hi", name: "Hindi" };
   const d = render(h(O, { state: { ...baseState, hint }, actions, role: "doctor" }));

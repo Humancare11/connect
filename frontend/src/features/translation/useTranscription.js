@@ -15,6 +15,7 @@ export const OFF_STATE = Object.freeze({
   voiceEnabled: true,
   voiceBreakerTripped: false,
   peerReadLang: "none",
+  peerSpeechLang: "",
   muted: false,
   subtitle: null,
   hint: null,

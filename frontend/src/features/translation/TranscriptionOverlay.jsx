@@ -81,7 +81,7 @@ export default function TranscriptionOverlay({ state, actions, role, ownLanguage
   const [noticeClosed, setNoticeClosed] = useState(false);
   if (!state || !SHOWN_PHASES.has(state.phase)) return null;
 
-  const banner = peerUnsupportedNote(role, state.peerReadLang);
+  const banner = peerUnsupportedNote(role, state.peerSpeechLang);
   const turnOn = () => {
     actions.unlockAudio(); // inside the tap
     actions.setReadLanguage(ownLanguageCode);
