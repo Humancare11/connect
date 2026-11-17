@@ -119,7 +119,7 @@ test("evaluateGuard: every failure gives the real voice back, with the message",
 
 test("the message text is exactly as specified; the language panel text too", () => {
   assert.equal(TRANSLATION_UNAVAILABLE, "Translation unavailable - you are hearing the original voice");
-  assert.equal(LANGUAGE_HELP, "Choose the language YOU speak. You will hear and read the other person in this language. The other person's original voice is muted while translation is on.");
+  assert.equal(LANGUAGE_HELP, "Choose the language you want to HEAR. If you also choose the language you speak, recognition is more accurate.");
 });
 
 // ------------------------------------------------------------------------------------------------------------------ the muting itself

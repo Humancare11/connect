@@ -63,6 +63,7 @@ export function createTranscriptionEngine({
     voiceEnabled: true,
     voiceBreakerTripped: false,
     peerReadLang: NONE,
+    peerSpeechLang: "", // the language the other person's latest sentence was detected in (the real voice is muted per sentence from this)
     muted: false,
     subtitle: null,
     hint: null,
@@ -164,7 +165,7 @@ export function createTranscriptionEngine({
   // ---- one voice at a time -----------------------------------------------------------------------------------------------
   function guardInputs() {
     return {
-      readLang: state.readLang, peerReadLang: state.peerReadLang, voiceEnabled: state.voiceEnabled, breakerTripped: state.voiceBreakerTripped,
+      readLang: state.readLang, peerReadLang: state.peerReadLang, peerSpeechLang: state.peerSpeechLang, voiceEnabled: state.voiceEnabled, breakerTripped: state.voiceBreakerTripped,
       phase: state.phase, recognizerStatus: state.recognizerStatus, reconnecting: state.reconnecting,
       tokenFailed: Boolean(tokens && tokens.isPermanentlyFailed()),
       audioState: ctx ? ctx.state : "none", levelAvailable: lastLevelAvailable,
@@ -381,6 +382,8 @@ export function createTranscriptionEngine({
     if (!mine(msg) || stopped) return;
     lastCaptionAt = now();
     if (stalledLatch) stalledLatch = false; // translation is arriving again: the real voice goes quiet again
+    // Per sentence: what language did they just speak? Same as mine = real voice, different = muted and translated (see realVoiceGuard).
+    if (typeof msg.srcLang === "string" && msg.srcLang && msg.srcLang !== state.peerSpeechLang) set({ peerSpeechLang: msg.srcLang });
     receiver.handle(msg);
   }
 

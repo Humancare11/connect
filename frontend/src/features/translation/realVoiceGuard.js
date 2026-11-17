@@ -1,5 +1,7 @@
 // "Only one voice is ever heard": while translation is on and the other person speaks a different language, their REAL voice is muted
-// on this device and only the translated voice plays. The patient-safety rule behind it: whenever translation cannot deliver, the real
+// on this device and only the translated voice plays. Only the LISTENER's choice decides whether translation is on: the speaker does not
+// have to pick anything. What the speaker speaks is the language their recognizer detected in their latest sentence (peerSpeechLang);
+// the same language as mine = real voice, a different one = real voice muted, translated voice only. The patient-safety rule behind it: whenever translation cannot deliver, the real
 // voice is UNMUTED again at once, so the doctor never misses what the patient says.
 //
 // Three small parts, all plain JavaScript (tested without a browser):
@@ -22,18 +24,23 @@ export const TRANSLATING_TEXT = "Translating…";
 export const SPEAKING_TEXT = "Speaking the translation";
 
 // peerStatus: what the other person's recognizer reported (ok | stalled | backgrounded | interrupted | down).
-// i: { readLang, peerReadLang, voiceEnabled, breakerTripped, phase, recognizerStatus, reconnecting, tokenFailed, audioState, levelAvailable,
-//      stalled, voiceFailed, unclearHold }
+// i: { readLang, peerSpeechLang, peerReadLang, voiceEnabled, breakerTripped, phase, recognizerStatus, reconnecting, tokenFailed, audioState,
+//      levelAvailable, stalled, voiceFailed, unclearHold }
+//   readLang        the language I chose to HEAR ("none" = Real voice)
+//   peerSpeechLang  the language the other person's latest sentence was detected in ("" = nothing heard yet). When it is unknown, what they
+//                   picked themselves (peerReadLang) is the best guess; with neither, the real voice is left on until a sentence says otherwise.
 // -> { expected, mute, reason, showMessage }
-//   expected   translation is supposed to be doing the talking (both picked a language, and they differ)
+//   expected   translation is supposed to be doing the talking (I picked a language and the other person speaks a different one)
 //   mute       the other person's real voice should be muted
 //   reason     why it is NOT muted although it was expected (null when muted or not expected)
 //   showMessage  show "Translation unavailable - you are hearing the original voice"
 export function evaluateGuard(i) {
   const mine = i.readLang;
-  const theirs = i.peerReadLang;
   const picked = (c) => c && c !== NONE && getLanguage(c);
-  const expected = Boolean(picked(mine) && picked(theirs) && languageBase(mine) !== languageBase(theirs));
+  const heard = i.peerSpeechLang ? String(i.peerSpeechLang) : "";
+  const guessed = !heard && picked(i.peerReadLang) ? i.peerReadLang : "";
+  const theirs = heard || guessed; // the language I expect them to speak: "" = not known yet
+  const expected = Boolean(picked(mine) && theirs && languageBase(mine) !== languageBase(theirs));
   if (!expected) return { expected: false, mute: false, reason: null, showMessage: false };
   // The person switched the translated voice off themselves: they chose the real voice. Not a fault, no message.
   if (!i.voiceEnabled && !i.breakerTripped) return { expected: false, mute: false, reason: null, showMessage: false };
@@ -41,7 +48,7 @@ export function evaluateGuard(i) {
   const fail = (reason, showMessage = true) => ({ expected: true, mute: false, reason, showMessage });
   if (i.breakerTripped) return fail("echo_breaker");
   if (!voiceForLanguage(mine)) return fail("no_voice_for_my_language");
-  if (!canTranscribeLanguage(theirs)) return fail("peer_language_not_transcribable");
+  if (guessed && !canTranscribeLanguage(guessed)) return fail("peer_language_not_transcribable"); // only a guess: a heard language was transcribed
   if (i.phase !== "running") return fail("engine_unavailable");
   if (i.reconnecting || i.recognizerStatus === "unavailable" || i.recognizerStatus === "reconnecting") return fail("reconnecting");
   if (i.tokenFailed) return fail("token_failed");

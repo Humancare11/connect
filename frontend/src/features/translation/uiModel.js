@@ -8,7 +8,7 @@ export const NOTICE_LINE_1 = "This call is being transcribed.";
 export const NOTICE_LINE_2 = "Please keep the call in a quiet place. Other voices nearby may be transcribed.";
 export const RECONNECTING_TEXT = "Subtitles unavailable, reconnecting…";
 export const NO_SPEECH_NOTE_OWN = "Subtitles only: your own speech in this language cannot be transcribed.";
-export const LANGUAGE_HELP = "Choose the language YOU speak. You will hear and read the other person in this language. The other person's original voice is muted while translation is on.";
+export const LANGUAGE_HELP = "Choose the language you want to HEAR. If you also choose the language you speak, recognition is more accurate.";
 export const DIDNT_CATCH_TEXT = "Didn't catch that - please ask them to repeat";
 export const NOT_UNDERSTOOD_TEXT = "Not understood - please repeat";
 export const WRONG_LANGUAGE_HINT = "You may be speaking a different language than selected";
@@ -44,7 +44,7 @@ export function selectedNote(code) {
   if (!l) return REAL_VOICE_HELP;
   if (!l.canTranscribe) return NO_SPEECH_NOTE_OWN;
   if (!l.hasVoice) return NO_VOICE_NOTE;
-  return `You speak ${l.name}. You will hear and read the other person in ${l.name}.`;
+  return `You will hear and read the other person in ${l.name}.`;
 }
 
 // The doctor's banner: the patient picked a language Azure cannot listen to, so the patient's own speech will not be transcribed.
