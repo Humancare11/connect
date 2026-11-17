@@ -532,13 +532,13 @@ test("the thresholds come from the server", () => {
   assert.equal(out.voices.length, 0);
 });
 
-test("the voice is not spoken when it is switched off, or when the speaker already speaks my language", () => {
+test("the voice is not spoken when it is switched off; a speaker who already speaks my language is spoken too (ONE voice, the AI voice)", () => {
   const off = receiverSetup({ myLang: "de", voiceOn: false });
   off.rx.handle(caption());
   assert.deepEqual([off.out.subtitles.length, off.out.voices.length], [1, 0]);
   const same = receiverSetup({ myLang: "en" });
   same.rx.handle(caption());
-  assert.deepEqual([same.out.subtitles.length, same.out.voices.length], [1, 0], "subtitle yes, but no voice repeating what I heard in my own language");
+  assert.deepEqual([same.out.subtitles.length, same.out.voices.length], [1, 1], "subtitle and the AI voice: the real voice is muted, so this is the only voice");
 });
 
 test("junk captions are ignored", () => {

@@ -15,7 +15,7 @@ import { confidenceTier, normalizeThresholds, safetyNetTriggered } from "./confi
 import { defaultLog } from "./diagnostics.js";
 import { createDucker } from "./ducker.js";
 import { createEchoBreaker, createEchoFilter } from "./echoFilter.js";
-import { NONE, canTranscribeLanguage, getLanguage, languageBase, localeForLanguage, voiceForLanguage } from "./languages.js";
+import { NONE, canTranscribeLanguage, getLanguage, isTranscribableLocale, languageBase, localeForLanguage, voiceForLanguage } from "./languages.js";
 import { createMicPipeline } from "./micPipeline.js";
 import { createNoticeSender } from "./noticeSender.js";
 import { createRecognizerController } from "./recognizerController.js";
@@ -30,6 +30,7 @@ const MIC_SPEECH_PEAK = 0.1; // my microphone is "clearly speaking" above this
 const NO_MATCH_TRIGGER = 3; // this many loud no-match results...
 const NO_MATCH_WINDOW_MS = 30000; // ...within this time switch to automatic language detection
 const SILENT_RESULT_MS = 6000; // my microphone is loud but the recognizer has said nothing at all (not even "no match") for this long
+const LOCK_SINGLE_CONF = 0.8; // one sentence this sure locks the speaker's language
 const SUSPECT_TRIGGER = 2; // this many of my last 3 sentences heard as the LISTENER's language with low confidence: ask again without that language
 const GARBAGE_TRIGGER = 2; // ...and give that language back after this many unclear sentences in a row of the second opinion
 const NO_MATCH_STRETCH_END_MS = 5000; // a run of no-match results ends after this much without another
@@ -62,11 +63,18 @@ export function createTranscriptionEngine({
   let lastReannounceAt = -Infinity;
   const seenPartial = new Set(); // sentence ids whose first partial was already logged
   const listeners = new Set();
+  // The language to highlight in Which-language-will-you-speak: from the browser (Hindi or English), else nothing.
+  const firstBrowserBase = languageBase((Array.isArray(browserLanguages) && browserLanguages[0]) || "");
+  const speakSuggestion = ["hi", "en"].includes(firstBrowserBase) ? firstBrowserBase : "";
   let state = {
     phase: "idle", // idle | running | stopped | unavailable
     recognizerStatus: "idle",
     reconnecting: false, // true = show "Subtitles unavailable, reconnecting…"
-    readLang: NONE,
+    readLang: NONE, // the language I want to HEAR ("none" = Real voice)
+    speakLang: NONE, // the language I SPEAK, when I said so ("none" = detected automatically)
+    speakAsked: false, // the one-tap "Which language will you speak?" was answered or skipped
+    speakSuggestion, // the language to highlight in that question, from the browser
+    lockedLang: "", // the language detection locked on (a locale), or ""
     subtitlesEnabled: true,
     voiceEnabled: true,
     voiceBreakerTripped: false,
@@ -184,18 +192,18 @@ export function createTranscriptionEngine({
     onSubtitle: (s) => showSubtitle(s),
     onVoice: (v) => { voiceQueue.enqueue(v); },
     onHint: (h) => set({ hint: h }),
-    // A finished sentence that will not be spoken (unclear, or no translation): its real voice was muted, so give the real voice back for a while.
-    onUnspoken: () => { unclearUntil = now() + UNCLEAR_HOLD_MS; didntCatchUntil = unclearUntil; refreshGuard(); },
+    // A finished sentence that will not be spoken (unclear, or no translation): only the message, the real voice is NOT given back.
+    onUnspoken: () => { didntCatchUntil = now() + UNCLEAR_HOLD_MS; refreshGuard(); },
   });
 
   // ---- one voice at a time -----------------------------------------------------------------------------------------------
   function guardInputs() {
     return {
-      readLang: state.readLang, peerReadLang: state.peerReadLang, peerSpeechLang: state.peerSpeechLang, voiceEnabled: state.voiceEnabled, breakerTripped: state.voiceBreakerTripped,
+      readLang: state.readLang, voiceEnabled: state.voiceEnabled, breakerTripped: state.voiceBreakerTripped,
       phase: state.phase, recognizerStatus: state.recognizerStatus, reconnecting: state.reconnecting,
       tokenFailed: Boolean(tokens && tokens.isPermanentlyFailed()),
-      audioState: ctx ? ctx.state : "none", levelAvailable: lastLevelAvailable,
-      peerStatus, stalled: stalledLatch, voiceFailed: now() < voiceFailedUntil, unclearHold: now() < unclearUntil,
+      audioState: ctx ? ctx.state : "none",
+      peerStatus, voiceFailed: now() < voiceFailedUntil,
     };
   }
 
@@ -211,6 +219,8 @@ export function createTranscriptionEngine({
       else if (verdict.mute) status = voiceQueue.isSpeaking() ? "speaking" : now() < waitingUntil || voiceQueue.waitingCount() > 0 ? "waiting" : "ready";
       const listenNote = !stopped && now() < didntCatchUntil && state.readLang !== NONE ? "didnt_catch" : null;
       const speakNote = !stopped && now() < speakNoteUntil ? "not_understood" : null;
+      if (state.realVoiceMuted !== verdict.mute && (verdict.mute || state.realVoiceMuted || verdict.expected)) diag(verdict.mute ? "real voice muted" : "real voice unmuted", { why: verdict.mute ? "translation is working" : verdict.reason || "no translation expected", iHear: state.readLang });
+      else if (state.fallbackReason !== verdict.reason && verdict.reason) diag("real voice stays on", { why: verdict.reason, iHear: state.readLang });
       if (state.realVoiceMuted !== verdict.mute || state.translationStatus !== status || state.fallbackReason !== verdict.reason || state.listenNote !== listenNote || state.speakNote !== speakNote) {
         state = { ...state, realVoiceMuted: verdict.mute, translationStatus: status, fallbackReason: verdict.reason, listenNote, speakNote };
         emit();
@@ -249,7 +259,8 @@ export function createTranscriptionEngine({
     lastResultPerf = t;
     if (recognizer && noMatchTimes.length >= NO_MATCH_TRIGGER) {
       noMatchTimes.length = 0;
-      if (recognizer.mode() === "fixed") fallBackToDetection();
+      if (state.lockedLang) unlockLanguage("nothing understood");
+      else if (recognizer.mode() === "fixed") fallBackToDetection();
       else rotateDetection("nothing understood", languageBase((Array.isArray(browserLanguages) && browserLanguages[0]) || "") || "en");
     }
     diag("speech not recognised", { empty: Boolean(r && r.empty), silent: Boolean(r && r.silent), mode: recognizer ? recognizer.mode() : null });
@@ -309,7 +320,6 @@ export function createTranscriptionEngine({
         else if (p - lastMicLoudPerf > QUIET_GAP_MS) loudSince = null;
         if (loudSince !== null && p - Math.max(loudSince, lastResultPerf) > SILENT_RESULT_MS) { loudSince = p; onNoMatch({ durationMs: SILENT_RESULT_MS, silent: true }); }
       } else loudSince = null;
-      if (state.realVoiceMuted && speechStart !== null && t - Math.max(speechStart, lastCaptionAt) > STALL_MS) stalledLatch = true; // latched until a caption arrives
     } catch { /* ignore */ }
     refreshMyStatus();
     refreshGuard();
@@ -346,12 +356,52 @@ export function createTranscriptionEngine({
     return list;
   }
 
+  // The locale to listen for when the person SAID what they speak (the English choice for an Indian profile is en-IN).
+  function speakLocale(code) {
+    return languageBase(code) === "en" ? englishChoice({ browserLanguages, profileCountry }).locale : localeForLanguage(code);
+  }
+
+  // What my own recognizer listens for: the language I said I speak; else the language detection locked on; else automatic detection.
   function recognitionConfig() {
-    const lang = state.readLang;
+    const lang = state.speakLang;
     const targets = targetsFor(state.peerReadLang);
-    if (lang !== NONE && canTranscribeLanguage(lang)) return { mode: "fixed", locale: localeForLanguage(lang), candidates: [], targets };
+    if (lang !== NONE && canTranscribeLanguage(lang) && !state.fellBackToDetection) return { mode: "fixed", locale: speakLocale(lang), candidates: [], targets };
+    if (state.lockedLang) return { mode: "fixed", locale: state.lockedLang, candidates: [], targets };
     const candidates = candidatesNow();
     return { mode: "detect", locale: null, candidates, targets };
+  }
+
+  // ---- sticky speaker language ------------------------------------------------------------------------------------------------
+  // Detection among several candidates wobbles (Hindi heard as te, en, gu...). Once a language was heard with normal confidence in 2 of
+  // the first 3 sentences, or once in a sentence of 0.8 or more, listen for THAT language only (applied at the next pause).
+  const lockHistory = []; // the first 3 sentences while detecting: { lang, conf }
+  const lockMisses = []; // while locked: was each of my last 3 sentences low or unclear?
+  function maybeLockLanguage(f) {
+    if (state.lockedLang || (state.speakLang !== NONE && !state.fellBackToDetection) || typeof f.confidence !== "number" || !f.srcLang) return false;
+    if (!isTranscribableLocale(f.srcLang)) return false;
+    let why = null;
+    if (f.confidence >= LOCK_SINGLE_CONF) why = "one confident sentence";
+    else if (lockHistory.length < 3) {
+      lockHistory.push({ lang: f.srcLang, conf: f.confidence });
+      if (lockHistory.filter((h) => h.lang === f.srcLang && h.conf >= thresholds.lowBelow).length >= 2) why = "2 of the first 3 sentences";
+    }
+    if (!why) return false;
+    lockLanguage(f.srcLang, why);
+    return true;
+  }
+  function lockLanguage(locale, why) {
+    lockHistory.length = 0; lockMisses.length = 0; recentSuspect.length = 0; noMatchTimes.length = 0;
+    set({ lockedLang: locale });
+    diag("language locked", { locale, why });
+    if (recognizer) recognizer.requestRestart(recognitionConfig());
+  }
+  function unlockLanguage(why) {
+    if (!state.lockedLang) return;
+    const was = state.lockedLang;
+    lockHistory.length = 0; lockMisses.length = 0; noMatchTimes.length = 0;
+    set({ lockedLang: "" });
+    diag("language unlocked", { was, why });
+    if (recognizer) recognizer.requestRestart(recognitionConfig());
   }
 
   const addGap = ({ reason, startedPerf, durationMs }) => { uploader.addGap({ reason, startedPerf, durationMs }); };
@@ -404,7 +454,7 @@ export function createTranscriptionEngine({
     if (tier === "unclear") speakNoteUntil = now() + SPEAK_NOTE_MS; // "Not understood - please repeat"
     const verdict = echo.check({ text: f.text, confidence: f.confidence, durationMs: f.durationMs });
     const unsupported = state.unsupportedSpeech;
-    const languageSource = state.readLang !== NONE && canTranscribeLanguage(state.readLang) && !state.fellBackToDetection ? "declared" : "auto";
+    const languageSource = state.speakLang !== NONE && canTranscribeLanguage(state.speakLang) && !state.fellBackToDetection ? "declared" : "auto";
 
     // Always saved, flags and all (the transcript is our proof). Echo and unclear lines are saved but never shown live or sent on.
     uploader.addLine({
@@ -425,9 +475,16 @@ export function createTranscriptionEngine({
 
     // The wrong-language safety net (only when a language was picked): nonsense with low confidence means the pick does not match
     // what is spoken, so listen with detection instead, at the next pause.
-    if (recognizer.mode() === "fixed") {
+    if (state.lockedLang) {
+      // Locked: unlock when 2 of my last 3 sentences are low or unclear.
+      lockMisses.push(typeof f.confidence === "number" && f.confidence < thresholds.lowBelow);
+      while (lockMisses.length > 3) lockMisses.shift();
+      if (lockMisses.filter(Boolean).length >= 2) unlockLanguage("low confidence in 2 of 3 sentences");
+    } else if (recognizer.mode() === "fixed") {
       recentConfidences.push(f.confidence);
       if (safetyNetTriggered(recentConfidences)) fallBackToDetection();
+    } else if (maybeLockLanguage(f)) {
+      // locked on a language: nothing else to check
     } else if (typeof f.confidence === "number") {
       // Detection: a low-confidence sentence "heard" as the listener's own language (or mine) is probably another language forced into it.
       if (detectExcluded.length === 0) {
@@ -449,7 +506,7 @@ export function createTranscriptionEngine({
   function handleIncomingStatus(msg) {
     if (!mine(msg) || stopped || typeof msg.status !== "string") return;
     if (msg.status === "no_match") { // the other person is clearly speaking but nothing was understood: that sentence is lost
-      unclearUntil = now() + UNCLEAR_HOLD_MS; didntCatchUntil = unclearUntil;
+      didntCatchUntil = now() + UNCLEAR_HOLD_MS; // only the message: the real voice is NOT given back
     } else {
       peerStatus = msg.status;
     }
@@ -466,15 +523,8 @@ export function createTranscriptionEngine({
   function handleIncomingCaption(msg) {
     if (!mine(msg) || stopped) return;
     lastCaptionAt = now();
-    if (stalledLatch) stalledLatch = false; // translation is arriving again: the real voice goes quiet again
     // Per sentence: what language did they just speak? Same as mine = real voice, different = muted and translated (see realVoiceGuard).
-    // A low-confidence sentence "heard" as MY language is not trusted as the same language ("und" = uncertain: translated and muted anyway).
-    if (typeof msg.srcLang === "string" && msg.srcLang) {
-      const tier = confidenceTier(typeof msg.conf === "number" ? msg.conf : null, thresholds);
-      const doubtful = Boolean(msg.final) && (tier === "low" || tier === "unclear") && state.readLang !== NONE && languageBase(msg.srcLang) === languageBase(state.readLang);
-      const heard = doubtful ? "und" : msg.srcLang;
-      if (heard !== state.peerSpeechLang) set({ peerSpeechLang: heard });
-    }
+    if (typeof msg.srcLang === "string" && msg.srcLang && msg.srcLang !== state.peerSpeechLang) set({ peerSpeechLang: msg.srcLang }); // for the doctor's banner
     receiver.handle(msg);
   }
 
@@ -549,13 +599,23 @@ export function createTranscriptionEngine({
     setReadLanguage(code) {
       const lang = code === NONE || getLanguage(code) ? code : NONE;
       if (lang === state.readLang) return;
-      const unsupported = lang !== NONE && !canTranscribeLanguage(lang);
-      recentConfidences.length = 0;
-      set({ readLang: lang, unsupportedSpeech: unsupported, fellBackToDetection: false, subtitle: lang === NONE ? null : state.subtitle });
+      set({ readLang: lang, subtitle: lang === NONE ? null : state.subtitle });
       if (lang === NONE) voiceQueue.clear();
       announcer.announce(lang);
+      diag("I hear", { language: lang });
       if (lang !== NONE && tokens && tokens.resetServerFailures()) { tokens.refresh().catch(() => {}); set({}); } // picking a language again = try once more
-      if (recognizer) recognizer.requestRestart(recognitionConfig()); // my own language changed: applied at the next pause
+      // What I HEAR does not change what I speak: my own recognizer is left alone.
+    },
+
+    // The one-tap question at the start ("Which language will you speak?") or the panel: what I SPEAK. "none" = not said (detected automatically).
+    setSpeakLanguage(code) {
+      const lang = code === NONE || getLanguage(code) ? code : NONE;
+      const unsupported = lang !== NONE && !canTranscribeLanguage(lang);
+      recentConfidences.length = 0;
+      set({ speakLang: lang, speakAsked: true, unsupportedSpeech: unsupported, fellBackToDetection: false, lockedLang: "" });
+      lockHistory.length = 0; lockMisses.length = 0;
+      diag(lang === NONE ? "speaking language not given (detected automatically)" : "language locked", { locale: lang === NONE ? null : speakLocale(lang), why: "the person said so" });
+      if (recognizer) recognizer.requestRestart(recognitionConfig()); // applied at the next pause, never mid-sentence
     },
 
     setSubtitlesEnabled(on) {

@@ -94,7 +94,7 @@ const say = (t, text, tr, extra) => t.rec().finish(text, tr, extra);
 const flushUploads = async (t) => { await t.clock.advance(2100); };
 
 // ------------------------------------------------------------------------------------------------------------------ starting
-test("start: the notice is recorded, a token is fetched once, the recognizer listens with detection among 10 candidates (Hindi included) and translates to English, the language is announced", async () => {
+test("start: the notice is recorded, a token is fetched once, the recognizer listens with detection among a short candidate list (Hindi included) and translates to English, the language is announced", async () => {
   const t = await running();
   assert.equal(t.engine.getState().phase, "running");
   assert.equal(t.calls.notices.length, 1);
@@ -105,7 +105,7 @@ test("start: the notice is recorded, a token is fetched once, the recognizer lis
   assert.deepEqual(t.calls.gets[0].options, { params: { appointmentId: APPT } });
   const r = t.rec();
   assert.equal(r.cfg.props.LIDMODE, "Continuous");
-  assert.equal(r.auto.languages.length, 10);
+  assert.ok(r.auto.languages.length >= 2 && r.auto.languages.length <= 5);
   assert.ok(r.auto.languages.includes("hi-IN") && r.auto.languages.includes("en-IN"));
   assert.deepEqual(r.cfg.targets, ["en"]);
   assert.deepEqual(t.sent("lang-changed"), [{ appointmentId: APPT, lang: "none" }], "the other person is told: Real voice");
@@ -246,14 +246,14 @@ test("unclear speech (confidence under 0.4) is saved and flagged but never shown
 
 test("a language with no speech support: the pick works, the person's speech is flagged 'language not in list' in the saved transcript", async () => {
   const t = await running();
-  t.engine.setReadLanguage("ht"); // Haitian Creole: Azure cannot transcribe it
+  t.engine.setSpeakLanguage("ht"); // I say I speak Haitian Creole: Azure cannot transcribe it
   assert.equal(t.engine.getState().unsupportedSpeech, true);
   say(t, "bonjou", { en: "hello" }, { lang: "fr-FR", conf: 0.3 });
   await settle();
   assert.equal(t.rec().cfg.speechRecognitionLanguage, null, "no fixed locale exists, so detection stays on");
   await flushUploads(t);
   assert.equal(t.calls.items[0].flags.languageNotInList, true);
-  t.engine.setReadLanguage("none");
+  t.engine.setSpeakLanguage("none");
   assert.equal(t.engine.getState().unsupportedSpeech, false);
 });
 
@@ -288,10 +288,10 @@ test("going back to Real voice clears the subtitle and the queued voice, and tel
 
 test("the wrong-language safety net: a picked language that keeps coming out as nonsense switches to detection at the next pause", async () => {
   const t = await running();
-  t.engine.setReadLanguage("en");
+  t.engine.setSpeakLanguage("en"); // I said I speak English
   say(t, "fine", { en: "fine" }, { lang: "en-US", conf: 0.9 });
   await settle();
-  assert.equal(t.rec().cfg.speechRecognitionLanguage, "en-US");
+  assert.equal(t.rec().cfg.speechRecognitionLanguage, "en-IN", "English for an Indian profile is en-IN");
   assert.equal(t.rec().auto, null);
   say(t, "garbled one", { en: "garbled one" }, { lang: "en-US", conf: 0.05 });
   const before = t.sdk.log.recognizers.length;
@@ -300,7 +300,7 @@ test("the wrong-language safety net: a picked language that keeps coming out as 
   assert.equal(t.sdk.log.recognizers.length, before + 1);
   assert.equal(t.rec().cfg.props.LIDMODE, "Continuous", "now listening with detection");
   assert.equal(t.engine.getState().fellBackToDetection, true);
-  assert.equal(t.engine.getState().readLang, "en", "what the person READS is unchanged");
+  assert.equal(t.engine.getState().speakLang, "en", "what the person said they speak is unchanged");
   say(t, "mujhe dard hai", { en: "I am in pain" }, { lang: "hi-IN", conf: 0.88 });
   await flushUploads(t);
   assert.equal(t.calls.items.at(-1).languageSource, "auto", "and the saved line says the language was detected, not declared");

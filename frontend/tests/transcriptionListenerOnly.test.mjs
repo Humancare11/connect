@@ -1,7 +1,7 @@
-// The LISTENER's choice alone decides: the speaker does not have to pick a language.
-//   speaker picked nothing + listener picked a language  -> real voice muted for sentences in another language, translated voice + subtitle
-//   speaker speaks the listener's language               -> real voice plays, nothing is translated or muted
-//   language switch in the middle of the call            -> the very next sentence follows the new language
+// STRICT "one voice, always": the LISTENER's pick alone decides. From the moment a language is picked the other person's real voice is
+// muted and only the AI voice is heard (translated, or the speaker's own words when they already speak the listener's language).
+// The real voice comes back ONLY on a hard failure (Azure / token / reconnecting / the other side down, stalled or in the background / echo
+// breaker / no voice for the language), with "Translation unavailable - you are hearing the original voice".
 // Run: node --test tests/transcriptionListenerOnly.test.mjs (from frontend/)
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -45,26 +45,28 @@ async function running(over = {}) {
   const audio = fakeAudio();
   const els = [iosElement()];
   const peer = { level: 0 };
+  const logs = [];
+  let tokenFails = false;
   const other = over.role === "patient" ? "doctor" : "patient";
   const http = {
     async post(url, body) {
       if (url.endsWith("/transcript-notice")) return { data: { recorded: true } };
       return { data: { accepted: body.items.length, duplicates: 0, rejected: [] } };
     },
-    async get() { return { data: { token: "tok", region: "eastus", expiresInSeconds: 600 } }; },
+    async get() { if (tokenFails) throw httpError(403); return { data: { token: "tok", region: "eastus", expiresInSeconds: 600 } }; },
   };
   const engine = createTranscriptionEngine({
     role: over.role || "doctor", appointmentId: APPT, config: { mode: "notice", noticeVersion: "v1", thresholds: { unclearBelow: 0.4, lowBelow: 0.7 } },
     http, socket, loadSdk: async () => sdk, createAudioContext: () => audio, getLocalStream: () => ({ getAudioTracks: () => [{ addEventListener() {}, removeEventListener() {} }] }),
     getRemoteElements: () => els, browserLanguages: over.browserLanguages || ["en-IN"], profileCountry: "IN",
-    getPeerLevel: () => peer.level,
+    getPeerLevel: () => peer.level, log: (...a) => logs.push(a),
     now: clock.now, nowPerf: clock.perf, setTimer: clock.setTimer, clearTimer: clock.clearTimer, random: () => 0.5, doc: null,
   });
   engine.unlockAudio();
   await engine.start();
   await settle();
   return {
-    engine, clock, sdk, socket, audio, els, peer, st: () => engine.getState(), rec: () => sdk.log.recognizers.at(-1),
+    engine, clock, sdk, socket, audio, els, peer, logs, failTokens: () => { tokenFails = true; }, st: () => engine.getState(), rec: () => sdk.log.recognizers.at(-1),
     peerLang: (lang) => socket.receive("lang-changed", { appointmentId: APPT, lang, from: other }),
     caption: (extra = {}) => socket.receive("caption", { appointmentId: APPT, from: other, id: "c" + Math.random(), final: true, text: "x", srcLang: "en-US", conf: 0.9, tr: {}, at: 1, ...extra }),
     tick: async (ms = 500) => { await clock.advance(ms); },
@@ -74,96 +76,168 @@ async function running(over = {}) {
 }
 
 const spokenTexts = (t) => t.sdk.log.synths.flatMap((s) => s.requests);
-const sentCaptions = (t) => t.socket.emitted.filter(([e]) => e === "caption").map(([, p]) => p);
+const diagLines = (t, re) => t.logs.filter((l) => re.test(l[0]));
 
-// ---------------------------------------------------------------------------------------------------------------- the rule
-const guard = { readLang: "en", peerSpeechLang: "", peerReadLang: "none", voiceEnabled: true, breakerTripped: false, phase: "running", recognizerStatus: "running", reconnecting: false, tokenFailed: false, audioState: "running", levelAvailable: true, stalled: false, voiceFailed: false, unclearHold: false };
-
-test("evaluateGuard: my pick alone decides; the language the speaker was heard in says mute or not", () => {
-  assert.equal(evaluateGuard(guard).mute, false, "nothing heard yet: the real voice is never cut off blindly");
-  assert.deepEqual(evaluateGuard({ ...guard, peerSpeechLang: "hi-IN" }), { expected: true, mute: true, reason: null, showMessage: false }, "Hindi heard, I hear English: muted");
-  assert.equal(evaluateGuard({ ...guard, peerSpeechLang: "en-IN" }).mute, false, "English heard, I hear English: real voice");
-  assert.equal(evaluateGuard({ ...guard, peerSpeechLang: "en-US" }).expected, false);
-  assert.equal(evaluateGuard({ ...guard, readLang: "none", peerSpeechLang: "hi-IN" }).mute, false, "I picked Real voice");
-  assert.equal(evaluateGuard({ ...guard, peerSpeechLang: "hi-IN", peerReadLang: "en" }).mute, true, "what was heard beats what they picked");
-  assert.equal(evaluateGuard({ ...guard, peerSpeechLang: "en-US", peerReadLang: "hi" }).mute, false, "what was heard beats what they picked");
-  // the safety fallbacks still apply to a heard language
-  const failing = evaluateGuard({ ...guard, peerSpeechLang: "hi-IN", stalled: true });
-  assert.deepEqual([failing.mute, failing.reason, failing.showMessage], [false, "no_translation_arriving", true]);
-  assert.equal(evaluateGuard({ ...guard, peerSpeechLang: "hi-IN", unclearHold: true }).reason, "sentence_not_spoken");
-  assert.equal(evaluateGuard({ ...guard, peerSpeechLang: "hi-IN", peerStatus: "down" }).reason, "peer_down");
-});
-
-test("receiver: the speaker spoke MY language: their own words are the subtitle (not marked unclear), nothing is spoken, no fallback", () => {
-  const out = { subtitle: [], voice: [], unspoken: 0 };
-  const r = createCaptionReceiver({ role: "doctor", getMyLang: () => "en", onSubtitle: (s) => out.subtitle.push(s), onVoice: (v) => out.voice.push(v), onUnspoken: () => { out.unspoken += 1; } });
-  r.handle({ id: "a", from: "patient", final: true, text: "I have a headache", srcLang: "en-US", conf: 0.9, tr: {} });
-  assert.deepEqual(out.subtitle.map((s) => [s.text, Boolean(s.unclear)]), [["I have a headache", false]]);
-  assert.equal(out.voice.length, 0);
-  assert.equal(out.unspoken, 0);
-  r.handle({ id: "b", from: "patient", final: true, text: "मुझे सिरदर्द है", srcLang: "hi-IN", conf: 0.9, tr: { en: "I have a headache" } });
-  assert.deepEqual(out.voice.map((v) => [v.text, v.lang]), [["I have a headache", "en"]]);
-});
-
-// ---------------------------------------------------------------------------------------------------------------- listener side
-test("patient picked NOTHING, doctor picked English: Hindi is muted and heard only as the English voice, in any language, with a subtitle", async () => {
+// ---------------------------------------------------------------------------------------------------------------- rule 1: muted from the moment a language is picked
+test("STRICT 1: the real voice is muted from the moment the listener picks a language - before the speaker said anything or picked anything", async () => {
   const t = await running({ role: "doctor" });
-  t.engine.setReadLanguage("en"); // the doctor opened LANGUAGE and picked English; the patient never opened it
-  await t.tick();
-  assert.equal(t.st().peerReadLang, "none");
-  assert.equal(t.els[0].muted, false, "before anything is heard the real voice is left on");
-  await t.speaking();
-  t.caption({ id: "p1", final: false, text: "मुझे सिर", srcLang: "hi-IN", conf: null, tr: { en: "I have a head" } });
-  await t.tick();
-  assert.equal(t.els[0].muted, true, "Hindi detected: the real voice is muted");
-  t.caption({ id: "p1", text: "मुझे सिरदर्द है", srcLang: "hi-IN", conf: 0.9, tr: { en: "I have a headache" } });
-  await settle(); await settle();
-  assert.deepEqual(spokenTexts(t).map((s) => /I have a headache/.test(s)), [true], "the English voice speaks the translation");
-  assert.equal(t.st().subtitle.text, "I have a headache");
-  assert.equal(t.els[0].muted, true);
-  // a second language from the same patient: still only the English voice
-  t.audio.bufferSources[0].finish(); await settle();
-  t.caption({ id: "p2", text: "j'ai mal à la tête", srcLang: "fr-FR", conf: 0.9, tr: { en: "my head hurts" } });
-  await settle(); await settle();
-  assert.equal(spokenTexts(t).length, 2);
-  assert.equal(t.els[0].muted, true);
+  assert.equal(t.els[0].muted, false, "Real voice (no translation) is the default");
+  t.engine.setReadLanguage("en");
+  assert.equal(t.els[0].muted, true, "muted at once");
+  assert.equal(t.st().realVoiceMuted, true);
+  assert.equal(t.st().peerReadLang, "none", "the patient never opened the LANGUAGE panel");
+  await t.tick(); await t.speaking(5000);
+  assert.equal(t.els[0].muted, true, "and it stays muted while the patient speaks");
+  assert.ok(diagLines(t, /real voice muted/).length >= 1, "[tr-diag] says it was muted");
 });
 
-test("patient speaks ENGLISH, doctor picked English: the real voice plays, nothing is translated, nothing is muted", async () => {
+// ---------------------------------------------------------------------------------------------------------------- rule 2: same language = AI voice, never the real voice
+test("STRICT 2: the patient speaks ENGLISH, the doctor picked English: still muted - the AI voice speaks the original text and it is the subtitle", async () => {
   const t = await running({ role: "doctor" });
   t.engine.setReadLanguage("en");
   await t.speaking();
-  t.caption({ id: "e1", final: false, text: "I have a", srcLang: "en-IN", conf: null, tr: { en: "I have a" } });
-  t.caption({ id: "e1", text: "I have a headache", srcLang: "en-IN", conf: 0.9, tr: { en: "I have a headache" } });
+  t.caption({ id: "e1", text: "I have a headache since monday", srcLang: "en-IN", conf: 0.94, tr: {} });
   await settle(); await settle(); await t.tick();
-  assert.equal(t.els[0].muted, false);
-  assert.equal(t.st().realVoiceMuted, false);
-  assert.equal(spokenTexts(t).length, 0, "no AI voice for a sentence already in my language");
-  assert.equal(t.st().fallbackReason, null);
-  assert.equal(t.st().translationStatus, "off");
-  assert.equal(t.st().subtitle.text, "I have a headache", "the subtitle is still there");
+  assert.equal(t.els[0].muted, true, "the real voice is NOT unmuted for a same-language sentence");
+  assert.equal(spokenTexts(t).length, 1, "the AI voice speaks it");
+  assert.match(spokenTexts(t)[0], /I have a headache since monday/);
+  assert.match(spokenTexts(t)[0], /xml:lang='en-/);
+  assert.equal(t.st().subtitle.text, "I have a headache since monday");
+  assert.equal(Boolean(t.st().subtitle.unclear), false);
+  // the same with a translation that Azure gave for the same language: the translation is spoken, once
+  t.audio.bufferSources[0].finish(); await settle();
+  t.caption({ id: "e2", text: "it started yesterday", srcLang: "en-GB", conf: 0.9, tr: { en: "it started yesterday" } });
+  await settle(); await settle();
+  assert.equal(spokenTexts(t).length, 2);
+  assert.equal(t.els[0].muted, true);
 });
 
-test("language switch mid-call: Hindi (muted + English voice), then English (real voice), then Hindi again, per sentence", async () => {
+test("STRICT 2b: Hindi, English, Hindi in a row: always muted, always exactly one AI voice per sentence", async () => {
   const t = await running({ role: "doctor" });
   t.engine.setReadLanguage("en");
   await t.speaking();
-  t.caption({ id: "a", text: "मुझे बुखार है", srcLang: "hi-IN", conf: 0.9, tr: { en: "I have a fever" } });
-  await settle(); await settle();
-  assert.equal(t.els[0].muted, true);
-  assert.equal(spokenTexts(t).length, 1);
-  t.audio.bufferSources[0].finish(); await settle();
-  t.caption({ id: "b", text: "and it started yesterday", srcLang: "en-IN", conf: 0.9, tr: { en: "and it started yesterday" } });
-  await settle(); await settle();
-  assert.equal(t.els[0].muted, false, "the patient switched to English: the real voice is back");
-  assert.equal(spokenTexts(t).length, 1, "and nothing more is spoken");
-  t.caption({ id: "c", text: "बहुत दर्द है", srcLang: "hi-IN", conf: 0.9, tr: { en: "it hurts a lot" } });
-  await settle(); await settle();
-  assert.equal(t.els[0].muted, true);
-  assert.equal(spokenTexts(t).length, 2);
+  const seq = [["a", "hi-IN", "मुझे बुखार है", "I have a fever"], ["b", "en-IN", "and since yesterday", "and since yesterday"], ["c", "hi-IN", "बहुत दर्द है", "it hurts a lot"]];
+  for (const [id, lang, text, en] of seq) {
+    t.caption({ id, text, srcLang: lang, conf: 0.9, tr: { en } });
+    await settle(); await settle();
+    assert.equal(t.els[0].muted, true, id);
+    t.audio.bufferSources.at(-1).finish(); await settle();
+  }
+  assert.equal(spokenTexts(t).length, 3);
 });
 
-test("the listener changes language mid-call: the new language is announced and the very next sentence is spoken in it", async () => {
+// ---------------------------------------------------------------------------------------------------------------- rule 3: no short unmutes
+test("STRICT 3: an unclear sentence shows only 'Didn't catch that - please ask them to repeat'; the real voice is NOT unmuted", async () => {
+  const t = await running({ role: "doctor" });
+  t.engine.setReadLanguage("en");
+  await t.speaking();
+  t.caption({ id: "u1", text: "mm", srcLang: "hi-IN", conf: 0.1, tr: { en: "mm" } });
+  await settle(); await settle();
+  assert.equal(t.st().listenNote, "didnt_catch");
+  assert.equal(t.els[0].muted, true);
+  assert.equal(t.st().translationStatus === "unavailable", false, "no 'Translation unavailable' either");
+  assert.equal(spokenTexts(t).length, 0, "not spoken");
+  await t.tick(7000);
+  assert.equal(t.st().listenNote, null, "the message fades by itself");
+  assert.equal(t.els[0].muted, true);
+});
+
+test("STRICT 3b: the other side reports 'no match' (it could not understand a sentence): the same message, the real voice stays muted", async () => {
+  const t = await running({ role: "doctor" });
+  t.engine.setReadLanguage("en");
+  await t.tick();
+  t.socket.receive("tr-status", { appointmentId: APPT, status: "no_match", from: "patient" });
+  assert.equal(t.st().listenNote, "didnt_catch");
+  assert.equal(t.els[0].muted, true);
+});
+
+test("STRICT 3c: the speaker side: my own unclear sentence shows 'Not understood - please repeat' and nothing else changes", async () => {
+  const t = await running({ role: "patient" });
+  t.rec().finish("mm", { en: "mm" }, { lang: "hi-IN", conf: 0.1, durationMs: 800 });
+  await settle();
+  assert.equal(t.st().speakNote, "not_understood");
+});
+
+test("STRICT 3d: NO 8-second rule: the patient keeps speaking for 40 s and nothing arrives - the real voice stays muted", async () => {
+  const t = await running({ role: "doctor" });
+  t.engine.setReadLanguage("en");
+  await t.speaking(40000);
+  assert.equal(t.els[0].muted, true);
+  assert.equal(t.st().fallbackReason, null);
+  assert.notEqual(t.st().translationStatus, "unavailable");
+});
+
+// ---------------------------------------------------------------------------------------------------------------- rule 4: hard failures only
+test("STRICT 4: hard failures give the real voice back with 'Translation unavailable - you are hearing the original voice', and mute again on recovery", async () => {
+  const MESSAGE = "unavailable";
+  for (const [name, fail, recover, reason] of [
+    ["the other side's recognizer is down", (t) => t.socket.receive("tr-status", { appointmentId: APPT, status: "down", from: "patient" }), (t) => t.socket.receive("tr-status", { appointmentId: APPT, status: "ok", from: "patient" }), "peer_down"],
+    ["the other side is stalled", (t) => t.socket.receive("tr-status", { appointmentId: APPT, status: "stalled", from: "patient" }), (t) => t.socket.receive("tr-status", { appointmentId: APPT, status: "ok", from: "patient" }), "peer_stalled"],
+    ["the other side is in the background", (t) => t.socket.receive("tr-status", { appointmentId: APPT, status: "backgrounded", from: "patient" }), (t) => t.socket.receive("tr-status", { appointmentId: APPT, status: "ok", from: "patient" }), "peer_backgrounded"],
+    ["my own recognizer is reconnecting (Azure down)", (t) => t.rec().fail(), null, "reconnecting"],
+    ["audio is blocked", (t) => { t.audio.state = "suspended"; }, (t) => { t.audio.state = "running"; }, "audio_blocked"],
+  ]) {
+    const t = await running({ role: "doctor" });
+    t.engine.setReadLanguage("en");
+    await t.tick();
+    assert.equal(t.els[0].muted, true, name + ": muted before");
+    fail(t); await settle(); await t.tick();
+    assert.equal(t.els[0].muted, false, name + ": real voice back");
+    assert.equal(t.st().fallbackReason, reason, name);
+    assert.equal(t.st().translationStatus, MESSAGE, name);
+    assert.ok(diagLines(t, /real voice (unmuted|stays on)/).length >= 1, name + ": [tr-diag] says why");
+    if (recover) { recover(t); await settle(); await t.tick(); assert.equal(t.els[0].muted, true, name + ": muted again"); assert.equal(t.st().translationStatus === MESSAGE, false); }
+  }
+});
+
+test("STRICT 4b: the echo breaker and a language without a voice also give the real voice back", async () => {
+  const t = await running({ role: "doctor" });
+  t.engine.setReadLanguage("ht"); // Haitian Creole has no voice
+  await t.tick();
+  assert.equal(t.els[0].muted, false);
+  assert.equal(t.st().fallbackReason, "no_voice_for_my_language");
+  t.engine.setReadLanguage("en");
+  await t.tick();
+  assert.equal(t.els[0].muted, true);
+});
+
+test("STRICT 4c: the token is refused for good: the real voice comes back", async () => {
+  const t = await running({ role: "doctor" });
+  t.engine.setReadLanguage("en");
+  await t.tick();
+  assert.equal(t.els[0].muted, true);
+  t.failTokens(); // the scheduled token refresh is refused (403) for good
+  await t.quiet(700000); await settle();
+  assert.equal(t.els[0].muted, false);
+  assert.equal(t.st().fallbackReason, "token_failed");
+  assert.equal(t.st().translationStatus, "unavailable");
+});
+
+// ---------------------------------------------------------------------------------------------------------------- rule 5
+test("STRICT 5: 'Real voice (no translation)': the real voice plays normally and there is no AI voice", async () => {
+  const t = await running({ role: "doctor" });
+  t.engine.setReadLanguage("en");
+  assert.equal(t.els[0].muted, true);
+  t.engine.setReadLanguage("none");
+  assert.equal(t.els[0].muted, false);
+  await t.speaking();
+  t.caption({ id: "r1", text: "मुझे बुखार है", srcLang: "hi-IN", conf: 0.9, tr: { en: "I have a fever" } });
+  await settle(); await settle();
+  assert.equal(spokenTexts(t).length, 0);
+  assert.equal(t.st().subtitle, null);
+  assert.equal(t.els[0].muted, false);
+});
+
+test("the listener switches 'Hear translated voice' off: that is a choice, the real voice plays, no alarm", async () => {
+  const t = await running({ role: "doctor" });
+  t.engine.setReadLanguage("en");
+  t.engine.setVoiceEnabled(false);
+  assert.equal(t.els[0].muted, false);
+  assert.notEqual(t.st().translationStatus, "unavailable");
+});
+
+// ---------------------------------------------------------------------------------------------------------------- the listener's pick reaches the speaker
+test("the listener changes language mid-call: it is announced and the next sentence is spoken in the new language", async () => {
   const t = await running({ role: "doctor" });
   t.engine.setReadLanguage("en");
   t.engine.setReadLanguage("de");
@@ -173,68 +247,20 @@ test("the listener changes language mid-call: the new language is announced and 
   await settle(); await settle();
   assert.match(spokenTexts(t)[0], /Ich habe Fieber/);
   assert.match(spokenTexts(t)[0], /xml:lang='de-DE'/);
-});
-
-test("safety fallbacks still hold with the speaker picking nothing: an unclear sentence and a stalled translation give the real voice back", async () => {
-  const t = await running({ role: "doctor" });
-  t.engine.setReadLanguage("en");
-  await t.speaking();
-  t.caption({ id: "s1", text: "मुझे बुखार है", srcLang: "hi-IN", conf: 0.9, tr: { en: "I have a fever" } });
-  await settle(); await settle();
-  t.audio.bufferSources[0].finish(); await settle();
   assert.equal(t.els[0].muted, true);
-  // an unclear sentence is not spoken: the real voice comes back for a moment, with the "didn't catch" note
-  t.caption({ id: "s2", text: "mm", srcLang: "hi-IN", conf: 0.1, tr: { en: "mm" } });
-  await settle(); await settle();
-  assert.equal(t.els[0].muted, false);
-  assert.equal(t.st().listenNote, "didnt_catch");
-  // the patient's device says its recognizer is down: the real voice stays on, with the message
-  await t.tick(7000);
-  t.socket.receive("tr-status", { appointmentId: APPT, status: "down", from: "patient" });
-  await t.tick();
-  assert.equal(t.els[0].muted, false);
-  assert.equal(t.st().fallbackReason, "peer_down");
-  assert.equal(t.st().translationStatus, "unavailable");
 });
 
-test("the 8-second rule still holds: the patient keeps speaking and nothing arrives -> real voice back, with the message", async () => {
-  const t = await running({ role: "doctor" });
-  t.engine.setReadLanguage("en");
-  await t.speaking();
-  t.caption({ id: "s1", text: "मुझे बुखार है", srcLang: "hi-IN", conf: 0.9, tr: { en: "I have a fever" } });
-  await settle(); await settle();
-  t.audio.bufferSources[0].finish(); await settle();
-  assert.equal(t.els[0].muted, true);
-  await t.speaking(9000);
-  assert.equal(t.els[0].muted, false);
-  assert.equal(t.st().fallbackReason, "no_translation_arriving");
-});
-
-// ---------------------------------------------------------------------------------------------------------------- speaker side
-test("SPEAKER picked nothing: the device translates into the listener's language as soon as they pick it, detects the spoken language, and follows a switch", async () => {
+test("SPEAKER picked nothing: the device translates into the listener's language as soon as they pick it, and follows a switch without a restart", async () => {
   const t = await running({ role: "patient", browserLanguages: ["hi-IN", "en-IN"] });
   const rec = t.rec();
   assert.equal(t.st().readLang, "none");
-  assert.notEqual(rec.auto, null, "automatic language detection (nobody picked a language)");
-  assert.equal(rec.auto.languages.length, 10, "the 10-slot candidate list");
-  assert.ok(rec.auto.languages.includes("hi-IN") && rec.auto.languages.includes("en-IN"));
-  assert.deepEqual(rec.targetLanguages, ["en"], "the English record only until someone listens in another language");
-
-  t.peerLang("de"); // the doctor picks German; the patient has picked nothing
-  assert.deepEqual([...rec.targetLanguages].sort(), ["de", "en"]);
-  assert.equal(rec.removed.length, 0);
-  rec.finish("मुझे बुखार है", { en: "I have a fever", de: "Ich habe Fieber" }, { lang: "hi-IN", conf: 0.9, durationMs: 1500 });
-  await settle();
-  const sent = sentCaptions(t).filter((c) => c.final);
-  assert.equal(sent.length, 1);
-  assert.equal(sent[0].srcLang, "hi-IN");
-  assert.deepEqual(sent[0].tr, { en: "I have a fever", de: "Ich habe Fieber" });
-
-  t.peerLang("fr"); // switch mid-call: no restart, German out, French in
-  assert.deepEqual([...rec.targetLanguages].sort(), ["en", "fr"]);
-  assert.equal(t.sdk.log.recognizers.length, 1, "the same recognizer: no restart");
-  t.peerLang("en");
+  assert.notEqual(rec.auto, null, "automatic language detection");
   assert.deepEqual(rec.targetLanguages, ["en"]);
+  t.peerLang("de");
+  assert.deepEqual([...rec.targetLanguages].sort(), ["de", "en"]);
+  t.peerLang("fr");
+  assert.deepEqual([...rec.targetLanguages].sort(), ["en", "fr"]);
   t.peerLang("none");
-  assert.deepEqual(rec.targetLanguages, ["en"], "Real voice on their side: only the English record");
+  assert.deepEqual(rec.targetLanguages, ["en"]);
+  assert.equal(t.sdk.log.recognizers.length, 1, "no restart");
 });

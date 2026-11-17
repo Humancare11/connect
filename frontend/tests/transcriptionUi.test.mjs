@@ -219,3 +219,26 @@ test("overlay: the lost-sentence messages, the wrong-language hint, the translat
   assert.match(unclear, /Gemurmel/);
   assert.doesNotMatch(render(h(mods.overlay.Subtitles, { subtitle: { id: "y", text: "Hallo", final: true } })), /unclear/);
 });
+
+test("the one-tap 'Which language will you speak?': shown until answered, with Hindi / English / Other / Skip, the browser's language suggested", () => {
+  const O = mods.overlay.default;
+  const open = render(h(O, { state: { ...baseState, speakAsked: false, speakSuggestion: "hi" }, actions, role: "patient" }));
+  assert.match(open, /Which language will you speak\?/);
+  for (const label of ["Hindi", "English", "Other…", "Skip"]) assert.match(open, new RegExp(label));
+  assert.match(open, /aria-pressed="true"[^>]*>Hindi</, "the suggestion is highlighted");
+  assert.match(open, /aria-pressed="false"[^>]*>English</);
+  const answered = render(h(O, { state: { ...baseState, speakAsked: true }, actions, role: "patient" }));
+  assert.doesNotMatch(answered, /Which language will you speak/);
+  const notRunning = render(h(O, { state: { ...baseState, speakAsked: false, phase: "unavailable" }, actions, role: "patient" }));
+  assert.doesNotMatch(notRunning, /Which language will you speak/, "only while the engine runs");
+});
+
+test("the question's buttons answer through setSpeakLanguage with the language code ('none' = skip), separate from setReadLanguage", () => {
+  const src = fs.readFileSync(path.join(root, "src/features/translation/TranscriptionOverlay.jsx"), "utf8");
+  assert.match(src, /onClick=\{\(\) => onAnswer\(code\)\}/);
+  assert.match(src, /onAnswer\("none"\)/);
+  assert.match(src, /btn\("hi", "Hindi"\)/);
+  assert.match(src, /btn\("en", "English"\)/);
+  assert.match(src, /actions\.setSpeakLanguage\(code\)/);
+  assert.doesNotMatch(src.slice(src.indexOf("export function SpeakPrompt"), src.indexOf("export function TranscribingBadge")), /setReadLanguage/);
+});

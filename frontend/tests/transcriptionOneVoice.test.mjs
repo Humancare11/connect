@@ -81,29 +81,32 @@ async function translating(over) {
 }
 
 // ------------------------------------------------------------------------------------------------------------------ the rule itself
-const base = { readLang: "de", peerReadLang: "en", voiceEnabled: true, breakerTripped: false, phase: "running", recognizerStatus: "running", reconnecting: false, tokenFailed: false, audioState: "running", levelAvailable: true, stalled: false, voiceFailed: false, unclearHold: false };
+const base = { readLang: "de", voiceEnabled: true, breakerTripped: false, phase: "running", recognizerStatus: "running", reconnecting: false, tokenFailed: false, audioState: "running", voiceFailed: false };
 
-test("evaluateGuard: mutes only when both picked a language, the languages differ and everything works", () => {
+test("evaluateGuard: the listener's pick alone decides - muted from the moment a language is picked, whoever speaks whatever", () => {
   assert.deepEqual(evaluateGuard(base), { expected: true, mute: true, reason: null, showMessage: false });
   assert.equal(evaluateGuard({ ...base, readLang: "none" }).mute, false, "I picked Real voice");
-  assert.equal(evaluateGuard({ ...base, peerReadLang: "none" }).mute, false, "they did not pick a language");
-  assert.equal(evaluateGuard({ ...base, peerReadLang: "de" }).mute, false, "same language");
-  assert.equal(evaluateGuard({ ...base, readLang: "en", peerReadLang: "en-GB" }).expected, false, "same base language");
-  for (const r of [evaluateGuard({ ...base, readLang: "none" }), evaluateGuard({ ...base, peerReadLang: "de" })]) assert.equal(r.showMessage, false, "no alarm when real voice is by design");
+  // what the speaker picked, or speaks, makes no difference to the mute
+  for (const extra of [{ peerReadLang: "none" }, { peerReadLang: "de" }, { peerReadLang: "en" }, { peerSpeechLang: "de-DE" }, { peerSpeechLang: "hi-IN" }, { peerSpeechLang: "" }, { peerReadLang: "ht" }]) {
+    assert.equal(evaluateGuard({ ...base, ...extra }).mute, true, JSON.stringify(extra));
+  }
+  assert.equal(evaluateGuard({ ...base, readLang: "en" }).mute, true, "English listener, speaker's language unknown or English: still muted, the AI voice speaks");
+  assert.equal(evaluateGuard({ ...base, readLang: "none" }).showMessage, false, "no alarm when the real voice is by design");
 });
 
-test("evaluateGuard: every failure gives the real voice back, with the message", () => {
+test("evaluateGuard: ONLY a hard failure gives the real voice back, with the message", () => {
   const cases = {
     echo_breaker: { breakerTripped: true },
     no_voice_for_my_language: { readLang: "ht" },
-    peer_language_not_transcribable: { peerReadLang: "ht" },
     engine_unavailable: { phase: "unavailable" },
     reconnecting: { reconnecting: true },
     token_failed: { tokenFailed: true },
     audio_blocked: { audioState: "suspended" },
     voice_failed: { voiceFailed: true },
-    cannot_measure_peer: { levelAvailable: false },
-    no_translation_arriving: { stalled: true },
+    peer_down: { peerStatus: "down" },
+    peer_stalled: { peerStatus: "stalled" },
+    peer_backgrounded: { peerStatus: "backgrounded" },
+    peer_interrupted: { peerStatus: "interrupted" },
   };
   for (const [reason, patch] of Object.entries(cases)) {
     const r = evaluateGuard({ ...base, ...patch });
@@ -111,8 +114,8 @@ test("evaluateGuard: every failure gives the real voice back, with the message",
     assert.equal(r.reason, reason);
     assert.equal(r.showMessage, true, reason);
   }
-  const unclear = evaluateGuard({ ...base, unclearHold: true });
-  assert.deepEqual([unclear.mute, unclear.reason, unclear.showMessage], [false, "sentence_not_spoken", false], "a brief unmute for one unspoken sentence is quiet");
+  // the short unmutes are GONE: these inputs no longer exist and change nothing
+  for (const gone of [{ stalled: true }, { unclearHold: true }, { levelAvailable: false }]) assert.equal(evaluateGuard({ ...base, ...gone }).mute, true, JSON.stringify(gone));
   const off = evaluateGuard({ ...base, voiceEnabled: false });
   assert.deepEqual([off.mute, off.showMessage], [false, false], "the person switched the translated voice off themselves");
 });
@@ -155,16 +158,19 @@ test("doctor speaks English, patient picked German: the patient's device mutes t
   assert.equal(t.st().translationStatus, "off");
 });
 
-test("nothing is muted by default, or when the other person has not picked a language, or when both speak the same language", async () => {
+test("STRICT: nothing is muted by default; from the moment a language is picked the real voice is muted, whatever the other person picked or speaks", async () => {
   const t = await running();
   t.peerLang("en"); await t.tick();
   assert.equal(t.els[0].muted, false, "I am on Real voice");
-  t.engine.setReadLanguage("de"); t.peerLang("none"); await t.tick();
-  assert.equal(t.els[0].muted, false, "they are on Real voice / no language");
+  t.engine.setReadLanguage("de");
+  assert.equal(t.els[0].muted, true, "muted at once, before anything was heard");
+  t.peerLang("none"); await t.tick();
+  assert.equal(t.els[0].muted, true, "they picked nothing");
   t.peerLang("de"); await t.tick();
-  assert.equal(t.els[0].muted, false, "same language");
-  t.peerLang("en"); await t.tick();
-  assert.equal(t.els[0].muted, true);
+  assert.equal(t.els[0].muted, true, "they hear German too");
+  t.engine.setReadLanguage("none");
+  assert.equal(t.els[0].muted, false, "Real voice (no translation): the real voice, no AI voice");
+  assert.equal(t.audio.bufferSources.length, 0);
 });
 
 test("an element that was already muted is left muted when translation stops", async () => {
@@ -229,14 +235,6 @@ test("FALLBACK the translated voice cannot be made (Azure speech fails): real vo
   assert.equal(t.els[0].muted, true);
 });
 
-test("FALLBACK the other person's language is subtitles-only (no speech support): real voice stays on, with the message", async () => {
-  const t = await running();
-  t.engine.setReadLanguage("de"); t.peerLang("ht"); await t.tick();
-  assert.equal(t.els[0].muted, false);
-  assert.equal(t.st().fallbackReason, "peer_language_not_transcribable");
-  assert.equal(t.st().translationStatus, "unavailable");
-});
-
 test("FALLBACK my language has no voice (subtitles only): real voice stays on", async () => {
   const t = await running();
   t.engine.setReadLanguage("ht"); t.peerLang("en"); await t.tick();
@@ -265,43 +263,30 @@ test("the person switched 'Hear translated voice' off: real voice plays, no alar
   assert.equal(t.els[0].muted, true);
 });
 
-test("FALLBACK 8 seconds of the other person clearly speaking with nothing arriving: real voice back; muted again as soon as a caption arrives", async () => {
+test("NO 8-second rule: the other person speaks for a long time and nothing arrives - the real voice stays muted (only a reported failure unmutes)", async () => {
   const t = await translating();
-  await t.speaking(STALL_MS - 1500);
-  assert.equal(t.els[0].muted, true, "not yet");
-  await t.speaking(2500);
-  assert.equal(t.els[0].muted, false);
-  assert.equal(t.st().fallbackReason, "no_translation_arriving");
-  assert.equal(t.st().translationStatus, "unavailable");
-  await t.quiet(5000);
-  assert.equal(t.els[0].muted, false, "stays unmuted until translation is seen working again");
-  t.caption({ id: "back" }); await settle();
-  await t.tick();
+  await t.speaking(30000);
   assert.equal(t.els[0].muted, true);
+  assert.equal(t.st().fallbackReason, null);
+  assert.notEqual(t.st().translationStatus, "unavailable");
 });
 
-test("the 8-second rule does not fire while captions keep arriving, nor when the other person is quiet", async () => {
-  const t = await translating();
-  for (let i = 0; i < 6; i++) { await t.speaking(2000); t.caption({ id: "k" + i, final: false, text: "I have", tr: { de: "Ich habe" } }); }
-  assert.equal(t.els[0].muted, true);
-  await t.quiet(30000);
-  assert.equal(t.els[0].muted, true, "silence is not a stall");
-});
-
-test("FALLBACK a sentence that is too unclear to be spoken: the real voice is unmuted for a moment so nothing is lost, then muted again", async () => {
+test("STRICT: a sentence too unclear to be spoken shows only the message - the real voice stays muted, no unmute at all", async () => {
   const t = await translating();
   t.caption({ id: "u1", conf: 0.2, text: "mumble", tr: { de: "Gemurmel" } });
-  assert.equal(t.els[0].muted, false);
-  assert.notEqual(t.st().translationStatus, "unavailable", "no alarming message for one unclear sentence");
+  assert.equal(t.els[0].muted, true);
+  assert.equal(t.st().listenNote, "didnt_catch");
+  assert.equal(t.audio.bufferSources.length, 0, "the unclear sentence was not spoken");
   await t.quiet(UNCLEAR_HOLD_MS + 1000);
   assert.equal(t.els[0].muted, true);
-  assert.equal(t.audio.bufferSources.length, 0, "the unclear sentence was not spoken");
+  assert.equal(t.st().listenNote, null, "the message goes away by itself");
 });
 
-test("a sentence with no translation for my language also gives the real voice back for a moment", async () => {
+test("STRICT: a sentence with no translation for my language shows the message and does not unmute", async () => {
   const t = await translating();
-  t.caption({ id: "n1", tr: { en: "I have a headache" } });
-  assert.equal(t.els[0].muted, false);
+  t.caption({ id: "n1", tr: { en: "I have a headache" }, srcLang: "hi-IN" });
+  assert.equal(t.els[0].muted, true);
+  assert.equal(t.st().listenNote, "didnt_catch");
 });
 
 test("FALLBACK the translated voice cannot play at all (audio suspended): real voice stays on, back to muted when audio runs", async () => {
@@ -314,10 +299,10 @@ test("FALLBACK the translated voice cannot play at all (audio suspended): real v
   assert.equal(t.els[0].muted, true);
 });
 
-test("FAIL-SAFE the other person's stream cannot be measured: never muted", async () => {
+test("the other person's stream does not need to be measurable: still muted (the level only drives the 'Translating...' hint)", async () => {
   const t = await translating({ noMeter: true });
-  assert.equal(t.els[0].muted, false);
-  assert.equal(t.st().fallbackReason, "cannot_measure_peer");
+  assert.equal(t.els[0].muted, true);
+  assert.equal(t.st().fallbackReason, null);
 });
 
 test("FAIL-SAFE the speech engine could not load at all: never muted", async () => {

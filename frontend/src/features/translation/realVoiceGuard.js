@@ -23,41 +23,36 @@ export const TRANSLATION_UNAVAILABLE = "Translation unavailable - you are hearin
 export const TRANSLATING_TEXT = "Translating…";
 export const SPEAKING_TEXT = "Speaking the translation";
 
+// STRICT: one voice, always. As soon as the listener picked a language, the other person's REAL voice is muted on this device and only the
+// AI voice (translated, or the speaker's own words when they already speak the listener's language) is heard. No per-sentence unmute, no
+// "unclear sentence" unmute, no 8-second rule. The real voice comes back ONLY on a hard failure where translation is truly not working:
+// the echo breaker, no voice for the listener's language, the engine / Azure / token down or reconnecting, audio blocked, the translated
+// voice failing to play, or the other person's recognizer reporting down / stalled / backgrounded / interrupted. It is muted again the
+// moment that is over.
+//
 // peerStatus: what the other person's recognizer reported (ok | stalled | backgrounded | interrupted | down).
-// i: { readLang, peerSpeechLang, peerReadLang, voiceEnabled, breakerTripped, phase, recognizerStatus, reconnecting, tokenFailed, audioState,
-//      levelAvailable, stalled, voiceFailed, unclearHold }
-//   readLang        the language I chose to HEAR ("none" = Real voice)
-//   peerSpeechLang  the language the other person's latest sentence was detected in ("" = nothing heard yet). When it is unknown, what they
-//                   picked themselves (peerReadLang) is the best guess; with neither, the real voice is left on until a sentence says otherwise.
+// i: { readLang, voiceEnabled, breakerTripped, phase, recognizerStatus, reconnecting, tokenFailed, audioState, voiceFailed, peerStatus }
 // -> { expected, mute, reason, showMessage }
-//   expected   translation is supposed to be doing the talking (I picked a language and the other person speaks a different one)
+//   expected   translation is supposed to be doing the talking (the listener picked a language, and keeps the translated voice on)
 //   mute       the other person's real voice should be muted
 //   reason     why it is NOT muted although it was expected (null when muted or not expected)
 //   showMessage  show "Translation unavailable - you are hearing the original voice"
 export function evaluateGuard(i) {
   const mine = i.readLang;
-  const picked = (c) => c && c !== NONE && getLanguage(c);
-  const heard = i.peerSpeechLang ? String(i.peerSpeechLang) : "";
-  const guessed = !heard && picked(i.peerReadLang) ? i.peerReadLang : "";
-  const theirs = heard || guessed; // the language I expect them to speak: "" = not known yet
-  const expected = Boolean(picked(mine) && theirs && languageBase(mine) !== languageBase(theirs));
-  if (!expected) return { expected: false, mute: false, reason: null, showMessage: false };
+  const picked = Boolean(mine && mine !== NONE && getLanguage(mine));
+  if (!picked) return { expected: false, mute: false, reason: null, showMessage: false }; // Real voice (no translation)
   // The person switched the translated voice off themselves: they chose the real voice. Not a fault, no message.
   if (!i.voiceEnabled && !i.breakerTripped) return { expected: false, mute: false, reason: null, showMessage: false };
 
-  const fail = (reason, showMessage = true) => ({ expected: true, mute: false, reason, showMessage });
+  const fail = (reason) => ({ expected: true, mute: false, reason, showMessage: true });
   if (i.breakerTripped) return fail("echo_breaker");
   if (!voiceForLanguage(mine)) return fail("no_voice_for_my_language");
-  if (guessed && !canTranscribeLanguage(guessed)) return fail("peer_language_not_transcribable"); // only a guess: a heard language was transcribed
   if (i.phase !== "running") return fail("engine_unavailable");
   if (i.reconnecting || i.recognizerStatus === "unavailable" || i.recognizerStatus === "reconnecting") return fail("reconnecting");
   if (i.tokenFailed) return fail("token_failed");
   if (i.audioState !== "running") return fail("audio_blocked");
   if (i.voiceFailed) return fail("voice_failed");
-  if (!i.levelAvailable) return fail("cannot_measure_peer");
   if (i.peerStatus && i.peerStatus !== "ok") return fail("peer_" + i.peerStatus);
-  if (i.stalled) return fail("no_translation_arriving");
-  if (i.unclearHold) return fail("sentence_not_spoken", false); // brief and expected: no alarming message
   return { expected: true, mute: true, reason: null, showMessage: false };
 }
 

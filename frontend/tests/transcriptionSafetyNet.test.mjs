@@ -77,12 +77,12 @@ async function listening() { // German patient listening to the English doctor, 
 }
 
 // ------------------------------------------------------------------------------------------------------------------ 1. lost sentence
-test("LISTENER: a sentence too unclear to speak shows 'Didn't catch that - please ask them to repeat', an 'unclear' subtitle with the text, and the real voice for 6 s", async () => {
+test("LISTENER: a sentence too unclear to speak shows 'Didn't catch that - please ask them to repeat', an 'unclear' subtitle with the text, and the real voice stays muted", async () => {
   const t = await listening();
   assert.equal(t.el.muted, true);
   t.caption({ id: "u1", conf: 0.2, text: "mumble", tr: { de: "Gemurmel" } });
   assert.equal(t.st().listenNote, "didnt_catch");
-  assert.equal(t.el.muted, false, "the 6 s unmute is kept");
+  assert.equal(t.el.muted, true, "STRICT: no unmute for an unclear sentence, only the message");
   assert.deepEqual([t.st().subtitle.text, t.st().subtitle.unclear, t.st().subtitle.lighter], ["Gemurmel", true, true]);
   assert.equal(t.audio.bufferSources.length, 0, "never spoken");
   await t.clock.advance(UNCLEAR_HOLD_MS + 600);
@@ -97,11 +97,11 @@ test("LISTENER: an unclear sentence with no translation still shows its original
   assert.equal(t.st().subtitle.unclear, true);
 });
 
-test("LISTENER: the other side reports no-match while clearly speaking (tr-status): same message and the real voice for 6 s, then muted again", async () => {
+test("LISTENER: the other side reports no-match while clearly speaking (tr-status): the same message, the real voice stays muted", async () => {
   const t = await listening();
   t.peerStatus("no_match");
   assert.equal(t.st().listenNote, "didnt_catch");
-  assert.equal(t.el.muted, false);
+  assert.equal(t.el.muted, true);
   assert.notEqual(t.st().translationStatus, "unavailable");
   await t.clock.advance(UNCLEAR_HOLD_MS + 600);
   assert.equal(t.st().listenNote, null);
@@ -177,7 +177,7 @@ test("the transcript view names the gap", () => {
 // ------------------------------------------------------------------------------------------------------------------ 3. wrong language
 test("SAFETY NET: three no-match results while clearly speaking, with a language picked, switch to automatic detection and show the hint", async () => {
   const t = await running();
-  t.engine.setReadLanguage("de");
+  t.engine.setSpeakLanguage("de"); // I said I speak German
   await settle();
   const before = t.sdk.log.recognizers.length;
   t.noMatch(); await t.clock.advance(2000); t.noMatch();
@@ -187,7 +187,7 @@ test("SAFETY NET: three no-match results while clearly speaking, with a language
   await t.clock.advance(2000); await settle();
   assert.ok(t.sdk.log.recognizers.length > before);
   assert.equal(t.rec().cfg.props.LIDMODE, "Continuous", "now listening with detection");
-  assert.equal(t.st().readLang, "de", "what the person reads is unchanged");
+  assert.equal(t.st().speakLang, "de", "what the person said they speak is unchanged");
 });
 
 test("SAFETY NET: not triggered by quiet no-match, by spread-out ones, or when already detecting", async () => {
@@ -211,7 +211,7 @@ test("SAFETY NET: not triggered by quiet no-match, by spread-out ones, or when a
 
 test("SAFETY NET: the low-confidence route still works", async () => {
   const t = await running();
-  t.engine.setReadLanguage("de");
+  t.engine.setSpeakLanguage("de");
   t.rec().finish("fine", { en: "fine" }, { lang: "de-DE", conf: 0.9 }); // the language change is applied at the first pause
   await settle();
   t.rec().finish("a", { en: "a" }, { lang: "de-DE", conf: 0.1 });
@@ -314,12 +314,9 @@ test("DIAGNOSTICS: the candidate locale list is logged (codes only) when the rec
   assert.equal(/[A-Za-z]{5,} [A-Za-z]{5,}/.test(JSON.stringify(started[0][1])), false, "codes only");
 });
 
-test("an English browser (en-GB) still has Hindi and the main Indian languages in the 10-slot list", async () => {
+test("an English browser (en-GB) still has Hindi in the short candidate list", async () => {
   const t = await running({ browserLanguages: ["en-GB"], profileCountry: "" });
-  const list = candidatesOf(t.rec());
-  assert.equal(list.length, 10);
-  for (const l of ["en-GB", "hi-IN", "bn-IN", "ta-IN", "te-IN", "mr-IN"]) assert.ok(list.includes(l), l);
-  assert.ok(list.indexOf("hi-IN") <= 1, "Hindi sits right after English");
+  assert.deepEqual(candidatesOf(t.rec()), ["en-GB", "hi-IN"]);
 });
 
 test("DETECTION: two low-confidence sentences heard as the listener's language (English) -> detection is asked again WITHOUT English, and Hindi is found", async () => {
@@ -339,12 +336,13 @@ test("DETECTION: two low-confidence sentences heard as the listener's language (
   assert.deepEqual([sent.srcLang, sent.tr.en], ["hi-IN", "I have a headache"]);
 });
 
-test("DETECTION: a confident English sentence is never second-guessed, and an unclear second opinion gives English back", async () => {
+test("DETECTION: a confident English sentence is never second-guessed (it locks English instead), and an unclear second opinion gives English back", async () => {
   const ok = await running({ browserLanguages: ["en-GB"], profileCountry: "" });
   ok.peerLang("en");
   for (let i = 0; i < 4; i++) ok.rec().finish("I have a headache", { en: "I have a headache" }, { lang: "en-GB", conf: 0.92 });
   await ok.clock.advance(3000);
-  assert.equal(ok.sdk.log.recognizers.length, 1);
+  assert.equal(ok.logs.some((l) => /detection asked again/.test(l[0])), false, "no second opinion");
+  assert.equal(ok.st().lockedLang, "en-GB", "the language is locked instead");
 
   const t = await running({ browserLanguages: ["en-GB"], profileCountry: "" });
   t.peerLang("en");

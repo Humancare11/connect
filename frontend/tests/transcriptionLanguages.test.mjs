@@ -75,36 +75,32 @@ test("browser tags become exact Azure locales; nonsense becomes null", () => {
   for (const bad of ["", "x", "xx", "klingon", "en-", "<b>", null, undefined, 5, {}]) assert.equal(normalizeBrowserLanguage(bad), null, String(bad));
 });
 
-test("an Indian patient: the browser's exact English, Hindi, and the country's languages, 10 in all, Hindi included", () => {
+test("an Indian patient: Indian English, Hindi, and at most two more languages of the country - a SHORT list (max 5)", () => {
   const list = buildCandidateLocales({ browserLanguages: ["en-IN", "hi"], profileCountry: "IN" });
-  assert.equal(list.length, MAX_CANDIDATES);
+  assert.ok(list.length <= MAX_CANDIDATES && MAX_CANDIDATES === 5);
   assert.deepEqual(list.slice(0, 2), ["en-IN", "hi-IN"]);
-  for (const l of ["hi-IN", "ta-IN", "te-IN", "bn-IN", "mr-IN", "gu-IN", "kn-IN", "ml-IN", "pa-IN"]) assert.ok(list.includes(l), l);
+  assert.deepEqual(list, ["en-IN", "hi-IN", "bn-IN", "ta-IN"], "the two languages of India that sound least like Hindi, not all of them");
+  for (const l of ["te-IN", "gu-IN", "mr-IN", "kn-IN", "ml-IN", "pa-IN", "ur-IN"]) assert.ok(!list.includes(l), l + " would confuse Hindi");
 });
 
-test("an English-only US browser: English, then the common languages (Hindi and Arabic among them)", () => {
+test("an English-only US browser: English, Hindi, and the country's own second language", () => {
   const list = buildCandidateLocales({ browserLanguages: ["en-US"], profileCountry: "US" });
-  assert.equal(list.length, MAX_CANDIDATES);
-  assert.equal(list[0], "en-US");
-  assert.ok(list.includes("es-US") || list.includes("es-ES"));
-  assert.ok(list.includes("hi-IN") && list.includes("ar-SA"));
+  assert.deepEqual(list, ["en-US", "hi-IN", "es-US"]);
 });
 
-test("a German browser that also lists English: German first, English kept, then fillers", () => {
+test("a German browser that also lists English: English, Hindi, German", () => {
   const list = buildCandidateLocales({ browserLanguages: ["de-DE", "en"] });
-  assert.deepEqual(list.slice(0, 2), ["de-DE", "en-US"]);
-  assert.equal(list.length, MAX_CANDIDATES);
+  assert.deepEqual(list, ["en-US", "hi-IN", "de-DE"]);
 });
 
-test("no browser languages at all: still a full, English-containing list", () => {
+test("no browser languages at all: English and Hindi", () => {
   for (const input of [{}, { browserLanguages: [] }, { browserLanguages: undefined }, { browserLanguages: "en" }, { browserLanguages: [null, 5, {}, "zz"] }]) {
     const list = buildCandidateLocales(input);
-    assert.equal(list.length, MAX_CANDIDATES);
-    assert.ok(bases(list).includes("en"));
+    assert.deepEqual(list, ["en-US", "hi-IN"]);
   }
 });
 
-test("never two locales of the same language, never more than 10, only locales Azure supports", () => {
+test("never two locales of the same language, never more than 5, only locales Azure supports", () => {
   const inputs = [
     { browserLanguages: ["en-US", "en-GB", "en-IN", "en-AU"], profileCountry: "GB" },
     { browserLanguages: ["zh-CN", "zh-TW", "zh-HK"], profileCountry: "HK" },
@@ -117,15 +113,17 @@ test("never two locales of the same language, never more than 10, only locales A
     assert.ok(list.length <= MAX_CANDIDATES);
     assert.equal(new Set(bases(list)).size, list.length, "one locale per language: " + list.join(","));
     for (const l of list) assert.ok(STT_LOCALES.has(l), l + " is a real Azure locale");
+    assert.ok(bases(list).includes("en") && list.includes("hi-IN"));
   }
 });
 
-test("English is always in the list, even when ten other languages come first", () => {
-  const ten = ["hi", "ta", "te", "bn", "mr", "gu", "kn", "ml", "pa", "ur", "fr", "de", "es"];
-  const list = buildCandidateLocales({ browserLanguages: ten, profileCountry: "IN" });
-  assert.equal(list.length, MAX_CANDIDATES);
+test("English and Hindi are in the list however many other languages the browser has; the browser adds at most 2", () => {
+  const many = ["hi", "ta", "te", "bn", "mr", "gu", "kn", "ml", "pa", "ur", "fr", "de", "es"];
+  const list = buildCandidateLocales({ browserLanguages: many, profileCountry: "IN" });
+  assert.ok(list.length <= MAX_CANDIDATES);
   assert.ok(bases(list).includes("en"), list.join(","));
-  assert.equal(list[0], "hi-IN", "the person's own first language stays first");
+  assert.ok(list.includes("hi-IN"));
+  assert.deepEqual(list, ["en-IN", "hi-IN", "ta-IN", "te-IN", "bn-IN"], "the browser's first two other languages come before the country's");
 });
 
 test("a picked language goes first, and a country's own English is preferred", () => {
@@ -137,9 +135,9 @@ test("a picked language goes first, and a country's own English is preferred", (
 });
 
 test("a smaller max is respected and unknown countries do no harm", () => {
-  assert.equal(buildCandidateLocales({ browserLanguages: ["fr"], max: 4 }).length, 4);
-  assert.equal(buildCandidateLocales({ profileCountry: "ZZ" }).length, MAX_CANDIDATES);
-  assert.equal(buildCandidateLocales({ profileCountry: 5 }).length, MAX_CANDIDATES);
+  assert.equal(buildCandidateLocales({ browserLanguages: ["fr"], max: 2 }).length, 2);
+  assert.deepEqual(buildCandidateLocales({ profileCountry: "ZZ" }), ["en-US", "hi-IN"]);
+  assert.deepEqual(buildCandidateLocales({ profileCountry: 5 }), ["en-US", "hi-IN"]);
   assert.ok(Object.keys(COUNTRY_LOCALES).length > 40);
 });
 
@@ -183,19 +181,17 @@ test("the wrong-language safety net: two of the last three finals below 0.4", ()
   assert.equal(safetyNetTriggered([0.5, 0.45], 0.5), false, "exactly at the limit is not below it");
 });
 
-test("Hindi is ALWAYS a candidate, next to English, whatever the browser says; the main Indian languages follow within the 10 slots", () => {
+test("Hindi is ALWAYS a candidate, next to English, whatever the browser says", () => {
   for (const browserLanguages of [["en-GB"], ["en-US"], ["en"], ["de-DE", "en"], ["ar-SA"], ["fr-FR", "es-ES", "pt-BR", "de-DE"], [], ["en-GB", "en-US", "fr", "es", "de", "it", "ja"]]) {
     for (const profileCountry of ["", "US", "GB", "IN", "DE"]) {
       const list = buildCandidateLocales({ browserLanguages, profileCountry });
       assert.ok(list.includes("hi-IN"), JSON.stringify({ browserLanguages, profileCountry }) + " -> " + list.join(","));
       assert.ok(list.some((l) => l.startsWith("en")), "English too");
       assert.ok(list.length <= MAX_CANDIDATES);
-      assert.ok(["bn-IN", "ta-IN", "te-IN", "mr-IN"].filter((l) => list.includes(l)).length >= 3, "the main Indian languages: " + list.join(","));
     }
   }
   const gb = buildCandidateLocales({ browserLanguages: ["en-GB"] });
-  assert.equal(gb[0], "en-GB");
-  assert.equal(gb[1], "hi-IN");
+  assert.deepEqual(gb, ["en-GB", "hi-IN"]);
   assert.equal(new Set(gb.map((l) => l.split("-")[0])).size, gb.length, "no two locales of the same language");
 });
 
@@ -203,7 +199,7 @@ test("excludeBases leaves a language out (second opinion), but never the picked 
   const list = buildCandidateLocales({ browserLanguages: ["en-GB"], excludeBases: ["en"] });
   assert.ok(!list.some((l) => l.startsWith("en")));
   assert.ok(list.includes("hi-IN"));
-  assert.equal(list.length, MAX_CANDIDATES);
+  assert.deepEqual(list, ["hi-IN", "es-ES"], "a second opinion without English: Hindi, plus one common language (detection needs two)");
   assert.ok(buildCandidateLocales({ pickedLocale: "en-GB", excludeBases: ["en"] }).includes("en-GB"));
 });
 

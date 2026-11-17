@@ -83,7 +83,7 @@ test("EXACT staging case: doctor picked English, subtitles ticked, patient picke
   assert.equal(c.doctor.st().transcript.filter((e) => e.who === "peer").length, 2);
 });
 
-test("the speaker already speaks the listener's language: the speaker's own words are the subtitle", async () => {
+test("the speaker already speaks the listener's language: the speaker's own words are the subtitle AND the AI voice speaks them (one voice)", async () => {
   const c = await call();
   c.doctor.engine.setReadLanguage("en");
   await settle();
@@ -91,7 +91,10 @@ test("the speaker already speaks the listener's language: the speaker's own word
   await settle(); await settle();
   assert.equal(c.doctor.st().subtitle.text, "I have a headache since monday");
   assert.equal(Boolean(c.doctor.st().subtitle.unclear), false);
-  assert.equal(c.doctor.st().realVoiceMuted, false);
+  await c.clock.advance(600);
+  assert.equal(c.doctor.st().realVoiceMuted, true, "the real voice stays muted");
+  assert.equal(c.doctor.audio.bufferSources.length, 1, "the AI voice speaks the original text");
+  assert.match(c.doctor.sdk.log.synths[0].requests[0], /I have a headache since monday/);
 });
 
 test("subtitles switched OFF by the listener: nothing is shown, and the diagnostics say why", async () => {
@@ -159,7 +162,6 @@ test("EXACT staging case 2: patient picked nothing, browser en-GB, speaks Hindi;
   // 1st and 2nd sentence: Hindi heard as English, low confidence (what Azure did on staging)
   c.finish("Hello. Hello.", { en: "Hello. Hello." }, { lang: "en-GB", conf: 0.55 });
   await settle(); await settle();
-  assert.equal(c.doctor.st().peerSpeechLang, "und", "'English' at low confidence is NOT trusted as the same language");
   assert.equal(c.doctor.st().realVoiceMuted, true, "translated and muted anyway");
   assert.equal(c.doctor.audio.bufferSources.length, 1, "the English voice speaks it");
   assert.equal(c.doctor.st().subtitle.text, "Hello. Hello.");
@@ -183,7 +185,7 @@ test("EXACT staging case 2: patient picked nothing, browser en-GB, speaks Hindi;
   assert.equal(c.doctor.st().transcript.filter((e) => e.who === "peer" && e.srcLang === "hi-IN").length, 1, "and it is in the transcript");
 });
 
-test("real English at LOW confidence from a patient is translated and muted too (never silently called 'the same language')", async () => {
+test("English from a patient, confident or not: the real voice stays muted, the AI voice speaks (one voice, always)", async () => {
   const c = await call({ patientBrowser: ["en-GB"] });
   c.doctor.engine.setReadLanguage("en");
   await settle(); await c.clock.advance(600);
@@ -194,10 +196,11 @@ test("real English at LOW confidence from a patient is translated and muted too 
   c.doctor.audio.bufferSources[0].finish(); await settle();
   c.finish("It started on monday", { en: "It started on Monday" }, { lang: "en-GB", conf: 0.93 });
   await settle(); await settle();
-  assert.equal(c.doctor.st().realVoiceMuted, false, "a confident English sentence: the real voice again");
+  assert.equal(c.doctor.st().realVoiceMuted, true, "a confident English sentence: still muted");
+  assert.equal(c.doctor.audio.bufferSources.length, 2, "and spoken by the AI voice");
 });
 
-test("INDIAN patient speaking ENGLISH (browser hi-IN + en-GB): the English candidate is en-IN only, it is detected at 0.94, and the English doctor keeps the real voice", async () => {
+test("INDIAN patient speaking ENGLISH (browser hi-IN + en-GB): the English candidate is en-IN only, it is detected at 0.94, and the English doctor hears the AI voice only", async () => {
   const c = await call({ patientBrowser: ["hi-IN", "en-GB"], patientCountry: "" }); // no profile country: the Indian browser locale decides
   c.doctor.engine.setReadLanguage("en");
   await settle(); await c.clock.advance(600);
@@ -211,10 +214,11 @@ test("INDIAN patient speaking ENGLISH (browser hi-IN + en-GB): the English candi
   c.finish("I have a headache since monday", {}, { lang: "en-IN", conf: 0.94 });
   await settle(); await settle(); await c.clock.advance(600);
   assert.equal(c.doctor.st().peerSpeechLang, "en-IN");
-  assert.equal(c.doctor.st().realVoiceMuted, false, "the real voice");
-  assert.equal(c.doctor.audio.bufferSources.length, 0, "no AI voice");
+  assert.equal(c.doctor.st().realVoiceMuted, true, "the real voice stays muted");
+  assert.equal(c.doctor.audio.bufferSources.length, 1, "the AI voice speaks the original English text: one voice");
   assert.equal(c.doctor.st().subtitle.text, "I have a headache since monday");
-  assert.equal(c.patient.sdk.log.recognizers.length, 1, "no second opinion: nothing was suspect");
+  assert.equal(c.patient.logs.some((l) => /detection asked again/.test(l[0])), false, "no second opinion: nothing was suspect");
+  assert.equal(c.patient.st().lockedLang, "en-IN", "a confident sentence locks the speaker on Indian English");
   // and the same patient in Hindi is still found, in the same list
   c.finish("मुझे सिरदर्द है", { en: "I have a headache" }, { lang: "hi-IN", conf: 0.9 });
   await settle(); await settle(); await c.clock.advance(600);
