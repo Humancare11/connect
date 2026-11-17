@@ -29,6 +29,9 @@ const SUBTITLE_HOLD_MS = 6000;
 const MIC_SPEECH_PEAK = 0.1; // my microphone is "clearly speaking" above this
 const NO_MATCH_TRIGGER = 3; // this many loud no-match results...
 const NO_MATCH_WINDOW_MS = 30000; // ...within this time switch to automatic language detection
+const SILENT_RESULT_MS = 6000; // my microphone is loud but the recognizer has said nothing at all (not even "no match") for this long
+const SUSPECT_TRIGGER = 2; // this many of my last 3 sentences heard as the LISTENER's language with low confidence: ask again without that language
+const GARBAGE_TRIGGER = 2; // ...and give that language back after this many unclear sentences in a row of the second opinion
 const NO_MATCH_STRETCH_END_MS = 5000; // a run of no-match results ends after this much without another
 const SPEAK_NOTE_MS = 5000;
 
@@ -120,6 +123,12 @@ export function createTranscriptionEngine({
   let peerStatus = "ok"; // the other person's recognizer health, as they reported it
   let didntCatchUntil = 0;
   let speakNoteUntil = 0;
+  let detectExcluded = []; // languages (base codes) left out of the detection list while asking for a second opinion
+  const recentSuspect = []; // my last 3 finals in detection mode: heard as the listener's language with low confidence?
+  let garbageRun = 0;
+  let lastResultPerf = -Infinity; // the last time the recognizer said anything at all (partial, final or no-match)
+  let loudSince = null; // my microphone has been loud since (perf time; null = quiet)
+  let lastMicLoudPerf = -Infinity;
   const noMatchTimes = []; // loud no-match results of mine, for the wrong-language safety net
   let noMatchStretch = null; // { start, last } perf times of a run of no-match results, saved as ONE gap
   let myStall = null; // why my microphone stopped delivering sound (mic_stalled | backgrounded | interrupted)
@@ -237,7 +246,13 @@ export function createTranscriptionEngine({
     statusAnnouncer.set("no_match", { force: true }); // each one is an event for the listener
     noMatchTimes.push(t);
     while (noMatchTimes.length && t - noMatchTimes[0] > NO_MATCH_WINDOW_MS) noMatchTimes.shift();
-    if (recognizer && recognizer.mode() === "fixed" && noMatchTimes.length >= NO_MATCH_TRIGGER) { noMatchTimes.length = 0; fallBackToDetection(); }
+    lastResultPerf = t;
+    if (recognizer && noMatchTimes.length >= NO_MATCH_TRIGGER) {
+      noMatchTimes.length = 0;
+      if (recognizer.mode() === "fixed") fallBackToDetection();
+      else rotateDetection("nothing understood", languageBase((Array.isArray(browserLanguages) && browserLanguages[0]) || "") || "en");
+    }
+    diag("speech not recognised", { empty: Boolean(r && r.empty), silent: Boolean(r && r.silent), mode: recognizer ? recognizer.mode() : null });
     refreshGuard();
   }
 
@@ -245,7 +260,30 @@ export function createTranscriptionEngine({
   function fallBackToDetection() {
     recentConfidences.length = 0;
     set({ fellBackToDetection: true });
-    recognizer.requestRestart({ mode: "detect", locale: null, candidates: buildCandidateLocales({ browserLanguages, profileCountry }) });
+    recognizer.requestRestart({ mode: "detect", locale: null, candidates: candidatesNow() });
+  }
+
+  const candidatesNow = () => buildCandidateLocales({ browserLanguages, profileCountry, excludeBases: detectExcluded });
+
+  // Detection keeps hearing the wrong language (Hindi heard as English at low confidence, or nothing understood at all): ask again.
+  // First without the language it keeps picking; if that gives nonsense too, with the normal list again.
+  function rotateDetection(reason, heardBase) {
+    if (!recognizer || recognizer.mode() !== "detect") return;
+    if (detectExcluded.length) detectExcluded = [];
+    else if (heardBase) detectExcluded = [heardBase];
+    else return;
+    recentSuspect.length = 0; recentConfidences.length = 0; noMatchTimes.length = 0; garbageRun = 0;
+    diag("detection asked again", { why: reason, leftOut: [...detectExcluded] });
+    recognizer.requestRestart({ mode: "detect", locale: null, candidates: candidatesNow() });
+  }
+
+  // The language(s) the listener hears / I myself would be assumed to speak: a low-confidence sentence heard as one of these is suspect.
+  function ownBases() {
+    const set = new Set();
+    if (state.peerReadLang && state.peerReadLang !== NONE) set.add(languageBase(state.peerReadLang));
+    const mine = languageBase((Array.isArray(browserLanguages) && browserLanguages[0]) || "");
+    if (mine) set.add(mine);
+    return set;
   }
 
   // Twice a second: is the other person speaking, and is anything arriving? (the 8-second rule)
@@ -264,6 +302,13 @@ export function createTranscriptionEngine({
         speechStart = null;
       }
       if (noMatchStretch && nowPerf() - noMatchStretch.last > NO_MATCH_STRETCH_END_MS) closeNoMatchStretch();
+      // My microphone is loud but the recognizer has said nothing at all (no sentence, no "no match"): count it as speech not recognised.
+      if (pipeline && !state.muted && recognizer && recognizer.status() === "running") {
+        const p = nowPerf();
+        if (pipeline.recentPeak(1000) >= MIC_SPEECH_PEAK) { lastMicLoudPerf = p; if (loudSince === null) loudSince = p; }
+        else if (p - lastMicLoudPerf > QUIET_GAP_MS) loudSince = null;
+        if (loudSince !== null && p - Math.max(loudSince, lastResultPerf) > SILENT_RESULT_MS) { loudSince = p; onNoMatch({ durationMs: SILENT_RESULT_MS, silent: true }); }
+      } else loudSince = null;
       if (state.realVoiceMuted && speechStart !== null && t - Math.max(speechStart, lastCaptionAt) > STALL_MS) stalledLatch = true; // latched until a caption arrives
     } catch { /* ignore */ }
     refreshMyStatus();
@@ -305,7 +350,7 @@ export function createTranscriptionEngine({
     const lang = state.readLang;
     const targets = targetsFor(state.peerReadLang);
     if (lang !== NONE && canTranscribeLanguage(lang)) return { mode: "fixed", locale: localeForLanguage(lang), candidates: [], targets };
-    const candidates = buildCandidateLocales({ browserLanguages, profileCountry });
+    const candidates = candidatesNow();
     return { mode: "detect", locale: null, candidates, targets };
   }
 
@@ -345,12 +390,14 @@ export function createTranscriptionEngine({
 
   // ---- what my own recognizer produces ----------------------------------------------------------------------------------
   function onPartial(p) {
+    lastResultPerf = nowPerf();
     if (state.muted) return;
     if (echo.check({ text: p.text, confidence: null, durationMs: 0 }).echo) return; // our own voice, not a caption
     captionSender.partial({ text: p.text, tr: p.tr, srcLang: p.srcLang });
   }
 
   function onFinal(f) {
+    lastResultPerf = nowPerf();
     const tier = confidenceTier(f.confidence, thresholds);
     closeNoMatchStretch(); // words came out again
     noMatchStatusUntil = 0;
@@ -381,6 +428,16 @@ export function createTranscriptionEngine({
     if (recognizer.mode() === "fixed") {
       recentConfidences.push(f.confidence);
       if (safetyNetTriggered(recentConfidences)) fallBackToDetection();
+    } else if (typeof f.confidence === "number") {
+      // Detection: a low-confidence sentence "heard" as the listener's own language (or mine) is probably another language forced into it.
+      if (detectExcluded.length === 0) {
+        recentSuspect.push(f.confidence < thresholds.lowBelow && ownBases().has(languageBase(f.srcLang)));
+        while (recentSuspect.length > 3) recentSuspect.shift();
+        if (recentSuspect.filter(Boolean).length >= SUSPECT_TRIGGER) rotateDetection("low confidence in the listener's language", languageBase(f.srcLang));
+      } else {
+        garbageRun = f.confidence < thresholds.unclearBelow ? garbageRun + 1 : 0;
+        if (garbageRun >= GARBAGE_TRIGGER) rotateDetection("the second opinion was unclear too");
+      }
     }
   }
 
@@ -411,7 +468,13 @@ export function createTranscriptionEngine({
     lastCaptionAt = now();
     if (stalledLatch) stalledLatch = false; // translation is arriving again: the real voice goes quiet again
     // Per sentence: what language did they just speak? Same as mine = real voice, different = muted and translated (see realVoiceGuard).
-    if (typeof msg.srcLang === "string" && msg.srcLang && msg.srcLang !== state.peerSpeechLang) set({ peerSpeechLang: msg.srcLang });
+    // A low-confidence sentence "heard" as MY language is not trusted as the same language ("und" = uncertain: translated and muted anyway).
+    if (typeof msg.srcLang === "string" && msg.srcLang) {
+      const tier = confidenceTier(typeof msg.conf === "number" ? msg.conf : null, thresholds);
+      const doubtful = Boolean(msg.final) && (tier === "low" || tier === "unclear") && state.readLang !== NONE && languageBase(msg.srcLang) === languageBase(state.readLang);
+      const heard = doubtful ? "und" : msg.srcLang;
+      if (heard !== state.peerSpeechLang) set({ peerSpeechLang: heard });
+    }
     receiver.handle(msg);
   }
 
@@ -464,6 +527,7 @@ export function createTranscriptionEngine({
           getToken: async (force) => { if (force) await tokens.refresh().catch(() => {}); return tokens.getToken(); },
           attachSink: (fn) => { sinkFn = fn; },
           onPartial, onFinal, onNoMatch,
+          onSessionConfig: (c) => diag("recognizer listening", { mode: c.mode, locale: c.locale, candidates: c.candidates, targets: c.targets }),
           onStatus: (status) => { set({ recognizerStatus: status, reconnecting: status === "reconnecting" }); refreshMyStatus(); },
           onGap: addGap,
           nowPerf, setTimer, clearTimer, random,

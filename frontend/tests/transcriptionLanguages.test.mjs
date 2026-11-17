@@ -182,3 +182,27 @@ test("the wrong-language safety net: two of the last three finals below 0.4", ()
   assert.equal(safetyNetTriggered([0.49, 0.45], 0.5), true, "the limit can be changed");
   assert.equal(safetyNetTriggered([0.5, 0.45], 0.5), false, "exactly at the limit is not below it");
 });
+
+test("Hindi is ALWAYS a candidate, next to English, whatever the browser says; the main Indian languages follow within the 10 slots", () => {
+  for (const browserLanguages of [["en-GB"], ["en-US"], ["en"], ["de-DE", "en"], ["ar-SA"], ["fr-FR", "es-ES", "pt-BR", "de-DE"], [], ["en-GB", "en-US", "fr", "es", "de", "it", "ja"]]) {
+    for (const profileCountry of ["", "US", "GB", "IN", "DE"]) {
+      const list = buildCandidateLocales({ browserLanguages, profileCountry });
+      assert.ok(list.includes("hi-IN"), JSON.stringify({ browserLanguages, profileCountry }) + " -> " + list.join(","));
+      assert.ok(list.some((l) => l.startsWith("en")), "English too");
+      assert.ok(list.length <= MAX_CANDIDATES);
+      assert.ok(["bn-IN", "ta-IN", "te-IN", "mr-IN"].filter((l) => list.includes(l)).length >= 3, "the main Indian languages: " + list.join(","));
+    }
+  }
+  const gb = buildCandidateLocales({ browserLanguages: ["en-GB"] });
+  assert.equal(gb[0], "en-GB");
+  assert.equal(gb[1], "hi-IN");
+  assert.equal(new Set(gb.map((l) => l.split("-")[0])).size, gb.length, "no two locales of the same language");
+});
+
+test("excludeBases leaves a language out (second opinion), but never the picked language; Hindi and the rest stay", () => {
+  const list = buildCandidateLocales({ browserLanguages: ["en-GB"], excludeBases: ["en"] });
+  assert.ok(!list.some((l) => l.startsWith("en")));
+  assert.ok(list.includes("hi-IN"));
+  assert.equal(list.length, MAX_CANDIDATES);
+  assert.ok(buildCandidateLocales({ pickedLocale: "en-GB", excludeBases: ["en"] }).includes("en-GB"));
+});

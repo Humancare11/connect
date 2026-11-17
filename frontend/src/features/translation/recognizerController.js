@@ -27,6 +27,7 @@ export function createRecognizerController({
   onStatus = () => {},
   onGap = () => {}, // ({ reason: "recognizer_down", startedPerf, durationMs })
   onSessionStarted = () => {},
+  onSessionConfig = () => {}, // ({ mode, locale, candidates, targets }) every time a session starts listening: first start, a change, a reconnect
   nowPerf = () => (typeof performance !== "undefined" ? performance.now() : Date.now()),
   setTimer = (fn, ms) => setTimeout(fn, ms),
   clearTimer = (id) => clearTimeout(id),
@@ -97,7 +98,7 @@ export function createRecognizerController({
       if (reason === sdk.ResultReason.NoMatch) { onNoMatch({ durationMs: Math.round((Number(e.result.duration) || 0) / 10000) }); return; }
       if (reason !== sdk.ResultReason.TranslatedSpeech) return;
       const r = extract(e.result, cfg);
-      if (!r.text) return;
+      if (!r.text.replace(/[\s.,!?]/g, "")) { onNoMatch({ durationMs: r.durationMs, empty: true }); return; } // "" or "." is not a sentence: speech that was not understood
       onFinal(r);
       maybeApplyPending();
     };
@@ -121,6 +122,7 @@ export function createRecognizerController({
 
   function adoptSession(s) {
     session = s;
+    try { onSessionConfig({ mode: s.cfg.mode, locale: s.cfg.locale || null, candidates: [...(s.cfg.candidates || [])], targets: [...(s.cfg.targets || [])] }); } catch { /* diagnostics must never break the call */ }
     attachSink((ab) => { try { s.push.write(ab); } catch { /* the stream was closed under us */ } });
   }
 

@@ -132,7 +132,8 @@ export function createCaptionReceiver({
 
       if (!myLang || myLang === "none") { trace("no_language_picked"); return; } // Real voice: no subtitles, no translated voice
       // The speaker did not need to pick a language: when they spoke MY language, their own words are the text (no translation, not "unclear").
-      const sameLanguage = Boolean(entry.srcLang) && languageBase(entry.srcLang) === languageBase(myLang);
+      // ...unless the sentence was heard with low confidence: Hindi forced into English is "the same language" only on paper.
+      const sameLanguage = Boolean(entry.srcLang) && languageBase(entry.srcLang) === languageBase(myLang) && !(entry.final && tier === "low");
       const text = translationFor(entry.tr, myLang) || (sameLanguage ? entry.text : "");
       if (!text || !showLive(tier)) { // unclear (or no translation): never spoken. The text, if any, is shown lightly marked "unclear".
         if (entry.final) onUnspoken(entry);
@@ -143,7 +144,7 @@ export function createCaptionReceiver({
       }
       trace(sameLanguage ? "subtitle_same_language" : "subtitle");
       onSubtitle({ id: entry.id, text, final: entry.final, lighter: showLighter(tier), from: entry.from });
-      if (entry.final && speakAloud(tier) && isVoiceOn() && languageBase(entry.srcLang) !== languageBase(myLang)) {
+      if (entry.final && speakAloud(tier) && isVoiceOn() && !sameLanguage) {
         onVoice({ id: entry.id, text, lang: myLang });
       }
     },

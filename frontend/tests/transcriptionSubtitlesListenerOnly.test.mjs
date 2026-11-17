@@ -36,10 +36,10 @@ function person(role, clock, browserLanguages) {
 }
 
 // Joins the two through the server's own parsers. `dropLang` simulates a lost lang-changed from one side.
-async function call({ dropLangFrom = null } = {}) {
+async function call({ dropLangFrom = null, patientBrowser = ["en-US"] } = {}) {
   const clock = createClock(Date.parse("2026-11-12T10:00:00Z"));
   const doctor = person("doctor", clock, ["en-US"]);
-  const patient = person("patient", clock, ["en-US"]);
+  const patient = person("patient", clock, patientBrowser);
   const wire = (from, to) => {
     from.socket.emit = (event, payload) => {
       if (event === "caption") {
@@ -147,4 +147,51 @@ test("diagnostics: caption received (with the languages in it), the listener's l
   const got = c.doctor.logs.find((l) => /caption received/.test(l[0]) && l[1].final);
   assert.deepEqual([got[1].iHear, got[1].translationsInCaption, got[1].subtitlesOn, got[1].outcome], ["en", ["en"], true, "subtitle"]);
   noText([...c.doctor.logs, ...c.patient.logs], "सिरदर्द", "headache");
+});
+
+test("EXACT staging case 2: patient picked nothing, browser en-GB, speaks Hindi; Azure first hears it as English with low confidence. The doctor (English) still gets the English translation, and Hindi is detected next", async () => {
+  const c = await call({ patientBrowser: ["en-GB"] });
+  c.doctor.engine.setReadLanguage("en");
+  await settle(); await c.clock.advance(600); // the first half-second check of the other side's level
+  assert.ok(c.patient.rec().auto.languages.includes("hi-IN"), "Hindi is a candidate although the browser says English");
+
+  // 1st and 2nd sentence: Hindi heard as English, low confidence (what Azure did on staging)
+  c.finish("Hello. Hello.", { en: "Hello. Hello." }, { lang: "en-GB", conf: 0.55 });
+  await settle(); await settle();
+  assert.equal(c.doctor.st().peerSpeechLang, "und", "'English' at low confidence is NOT trusted as the same language");
+  assert.equal(c.doctor.st().realVoiceMuted, true, "translated and muted anyway");
+  assert.equal(c.doctor.audio.bufferSources.length, 1, "the English voice speaks it");
+  assert.equal(c.doctor.st().subtitle.text, "Hello. Hello.");
+  c.doctor.audio.bufferSources[0].finish(); await settle();
+  c.finish("Hello.", { en: "Hello." }, { lang: "en-GB", conf: 0.5 });
+  await settle(); await c.clock.advance(2000); await settle();
+
+  // the patient's device asked detection again, without English
+  assert.equal(c.patient.sdk.log.recognizers.length, 2);
+  assert.ok(!c.patient.rec().auto.languages.some((l) => l.startsWith("en")));
+  assert.ok(c.patient.logs.some((l) => /detection asked again/.test(l[0])));
+  assert.deepEqual([...c.patient.rec().targetLanguages], ["en"], "the English target survived the restart");
+
+  // Hindi is detected now: the doctor gets the translation as subtitle AND voice, with the real voice muted
+  c.patient.rec().finish("मुझे तीन दिन से सिरदर्द है", { en: "I have had a headache for three days" }, { lang: "hi-IN", conf: 0.9, durationMs: 2500 });
+  await settle(); await settle();
+  assert.equal(c.doctor.st().peerSpeechLang, "hi-IN");
+  assert.equal(c.doctor.st().subtitle.text, "I have had a headache for three days");
+  assert.equal(c.doctor.audio.bufferSources.length, 2);
+  assert.equal(c.doctor.st().realVoiceMuted, true);
+  assert.equal(c.doctor.st().transcript.filter((e) => e.who === "peer" && e.srcLang === "hi-IN").length, 1, "and it is in the transcript");
+});
+
+test("real English at LOW confidence from a patient is translated and muted too (never silently called 'the same language')", async () => {
+  const c = await call({ patientBrowser: ["en-GB"] });
+  c.doctor.engine.setReadLanguage("en");
+  await settle(); await c.clock.advance(600);
+  c.finish("I have a head ache", { en: "I have a headache" }, { lang: "en-GB", conf: 0.6 });
+  await settle(); await settle();
+  assert.equal(c.doctor.st().realVoiceMuted, true);
+  assert.equal(c.doctor.audio.bufferSources.length, 1);
+  c.doctor.audio.bufferSources[0].finish(); await settle();
+  c.finish("It started on monday", { en: "It started on Monday" }, { lang: "en-GB", conf: 0.93 });
+  await settle(); await settle();
+  assert.equal(c.doctor.st().realVoiceMuted, false, "a confident English sentence: the real voice again");
 });

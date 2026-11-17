@@ -42,6 +42,7 @@ async function running(over = {}) {
   const audio = fakeAudio();
   const el = element();
   const items = [];
+  const logs = [];
   const http = {
     async post(url, body) { if (url.endsWith("/transcript-notice")) return { data: { recorded: true } }; items.push(...body.items); return { data: { accepted: body.items.length, duplicates: 0, rejected: [] } }; },
     async get() { return { data: { token: "tok", region: "eastus", expiresInSeconds: 600 } }; },
@@ -49,14 +50,14 @@ async function running(over = {}) {
   const engine = createTranscriptionEngine({
     role: over.role || "patient", appointmentId: APPT, config: { mode: "notice", noticeVersion: "v1", thresholds: { unclearBelow: 0.4, lowBelow: 0.7 } },
     http, socket, loadSdk: async () => sdk, createAudioContext: () => audio, getLocalStream: () => ({ getAudioTracks: () => [{ addEventListener() {}, removeEventListener() {} }] }),
-    getRemoteElements: () => [el], browserLanguages: ["en-IN"], profileCountry: "IN", getPeerLevel: () => 0,
+    getRemoteElements: () => [el], browserLanguages: over.browserLanguages || ["en-IN"], profileCountry: over.profileCountry === undefined ? "IN" : over.profileCountry, getPeerLevel: () => 0, log: (...a) => logs.push(a),
     now: clock.now, nowPerf: clock.perf, setTimer: clock.setTimer, clearTimer: clock.clearTimer, random: () => 0.5, doc: null,
   });
   engine.unlockAudio();
   await engine.start();
   await settle();
   const t = {
-    engine, clock, sdk, socket, audio, el, items, st: () => engine.getState(), rec: () => sdk.log.recognizers.at(-1),
+    engine, clock, sdk, socket, audio, el, items, logs, st: () => engine.getState(), rec: () => sdk.log.recognizers.at(-1),
     sentStatuses: () => socket.emitted.filter(([e]) => e === "tr-status").map(([, p]) => p.status),
     peerLang: (lang) => socket.receive("lang-changed", { appointmentId: APPT, lang, from: "doctor" }),
     peerStatus: (status) => socket.receive("tr-status", { appointmentId: APPT, status, from: "doctor" }),
@@ -203,8 +204,9 @@ test("SAFETY NET: not triggered by quiet no-match, by spread-out ones, or when a
   const auto = await running(); // never picked a language: already detecting
   const n = auto.sdk.log.recognizers.length;
   for (let i = 0; i < 4; i++) { auto.noMatch(); await auto.clock.advance(1000); }
-  assert.equal(auto.st().fellBackToDetection, false);
-  assert.equal(auto.sdk.log.recognizers.length, n);
+  assert.equal(auto.st().fellBackToDetection, false, "no 'wrong language picked' message: nobody picked a language");
+  await auto.clock.advance(2000);
+  assert.equal(auto.sdk.log.recognizers.length, n + 1, "but detection is asked again (second opinion)");
 });
 
 test("SAFETY NET: the low-confidence route still works", async () => {
@@ -289,4 +291,98 @@ test("status announcer: only changes are sent", () => {
   assert.deepEqual(sent, ["down", "ok"], "ok is the starting state: nothing is sent for it");
   a.set("no_match", { force: true }); a.set("no_match", { force: true });
   assert.deepEqual(sent.slice(2), ["no_match", "no_match"]);
+});
+
+// ------------------------------------------------------------------------------------------------------------------ staging: Hindi heard as English
+const candidatesOf = (rec) => rec.auto.languages;
+const unclearEnglish = (t, n = 1) => { for (let i = 0; i < n; i++) t.rec().finish("hello hello", { en: "hello hello" }, { lang: "en-GB", conf: 0.5, durationMs: 1500 }); };
+
+test("DIAGNOSTICS: the candidate locale list is logged (codes only) when the recognizer starts, and again when it changes", async () => {
+  const t = await running({ browserLanguages: ["en-GB"], profileCountry: "" });
+  const started = t.logs.filter((l) => /recognizer listening/.test(l[0]));
+  assert.equal(started.length, 1);
+  assert.equal(started[0][1].mode, "detect");
+  assert.deepEqual(started[0][1].candidates, candidatesOf(t.rec()));
+  assert.ok(started[0][1].candidates.includes("hi-IN"));
+  assert.deepEqual(started[0][1].targets, ["en"]);
+  t.engine.setReadLanguage("de");
+  t.rec().finish("fine", { en: "fine" }, { lang: "de-DE", conf: 0.9 });
+  await settle();
+  const all = t.logs.filter((l) => /recognizer listening/.test(l[0]));
+  assert.equal(all.length, 2);
+  assert.deepEqual([all[1][1].mode, all[1][1].locale, all[1][1].candidates], ["fixed", "de-DE", []]);
+  assert.equal(/[A-Za-z]{5,} [A-Za-z]{5,}/.test(JSON.stringify(started[0][1])), false, "codes only");
+});
+
+test("an English browser (en-GB) still has Hindi and the main Indian languages in the 10-slot list", async () => {
+  const t = await running({ browserLanguages: ["en-GB"], profileCountry: "" });
+  const list = candidatesOf(t.rec());
+  assert.equal(list.length, 10);
+  for (const l of ["en-GB", "hi-IN", "bn-IN", "ta-IN", "te-IN", "mr-IN"]) assert.ok(list.includes(l), l);
+  assert.ok(list.indexOf("hi-IN") <= 1, "Hindi sits right after English");
+});
+
+test("DETECTION: two low-confidence sentences heard as the listener's language (English) -> detection is asked again WITHOUT English, and Hindi is found", async () => {
+  const t = await running({ browserLanguages: ["en-GB"], profileCountry: "" });
+  t.peerLang("en"); // the doctor listens in English
+  unclearEnglish(t, 2);
+  await t.clock.advance(2000);
+  await settle();
+  const second = t.rec();
+  assert.equal(t.sdk.log.recognizers.length, 2, "a new recognizer took over");
+  assert.ok(!candidatesOf(second).some((l) => l.startsWith("en")), "English left out of the second opinion");
+  assert.ok(candidatesOf(second).includes("hi-IN"));
+  assert.ok(t.logs.some((l) => /detection asked again/.test(l[0]) && l[1].leftOut[0] === "en"));
+  second.finish("मुझे सिरदर्द है", { en: "I have a headache" }, { lang: "hi-IN", conf: 0.9 });
+  await settle();
+  const sent = t.socket.emitted.filter(([e, p]) => e === "caption" && p.final).at(-1)[1];
+  assert.deepEqual([sent.srcLang, sent.tr.en], ["hi-IN", "I have a headache"]);
+});
+
+test("DETECTION: a confident English sentence is never second-guessed, and an unclear second opinion gives English back", async () => {
+  const ok = await running({ browserLanguages: ["en-GB"], profileCountry: "" });
+  ok.peerLang("en");
+  for (let i = 0; i < 4; i++) ok.rec().finish("I have a headache", { en: "I have a headache" }, { lang: "en-GB", conf: 0.92 });
+  await ok.clock.advance(3000);
+  assert.equal(ok.sdk.log.recognizers.length, 1);
+
+  const t = await running({ browserLanguages: ["en-GB"], profileCountry: "" });
+  t.peerLang("en");
+  unclearEnglish(t, 2); await t.clock.advance(2000); await settle();
+  assert.equal(t.sdk.log.recognizers.length, 2);
+  for (let i = 0; i < 2; i++) t.rec().finish("xx", { en: "xx" }, { lang: "ta-IN", conf: 0.1 });
+  await t.clock.advance(2000); await settle();
+  assert.equal(t.sdk.log.recognizers.length, 3);
+  assert.ok(candidatesOf(t.rec()).some((l) => l.startsWith("en")), "the normal list is back");
+});
+
+test("NO-MATCH in detection: three loud no-match results ask detection again, and are saved as ONE 'Speech not recognised' gap", async () => {
+  const t = await running({ browserLanguages: ["en-GB"], profileCountry: "" });
+  t.noMatch(); await t.clock.advance(1000); t.noMatch(); await t.clock.advance(1000); t.noMatch();
+  await t.clock.advance(2000); await settle();
+  assert.equal(t.sdk.log.recognizers.length, 2, "second opinion");
+  assert.ok(!candidatesOf(t.rec()).some((l) => l.startsWith("en")));
+  await t.clock.advance(6000); await t.clock.advance(2100);
+  assert.equal(t.gaps().filter((g) => g.reason === "not_recognised").length, 1);
+});
+
+test("SILENT recognizer: my microphone is loud for 6 s and Azure says NOTHING (no sentence, no no-match) -> counted and saved as 'Speech not recognised'", async () => {
+  const t = await running({ browserLanguages: ["en-GB"], profileCountry: "" });
+  for (let i = 0; i < 24; i++) { t.mic(0.3); await t.clock.advance(500); } // 12 s of speech, no result at all
+  await t.clock.advance(6000); await t.clock.advance(2100);
+  const gaps = t.gaps().filter((g) => g.reason === "not_recognised");
+  assert.ok(gaps.length >= 1, "a gap was saved");
+  assert.ok(t.logs.some((l) => /speech not recognised/.test(l[0]) && l[1].silent === true));
+  assert.equal(t.sentStatuses().includes("no_match"), true, "the listener is told too");
+});
+
+test("an empty or '.' result from Azure counts as speech not recognised, not as a sentence", async () => {
+  const t = await running({ browserLanguages: ["en-GB"], profileCountry: "" });
+  t.mic(0.3);
+  t.rec().finish(".", {}, { lang: "en-GB", conf: 0.1 });
+  t.mic(0.3);
+  t.rec().finish("  ", {}, { lang: "en-GB", conf: 0.1 });
+  await t.clock.advance(6000); await t.clock.advance(2100);
+  assert.equal(t.items.filter((i) => i.type === "line").length, 0, "no sentence was saved");
+  assert.equal(t.gaps().filter((g) => g.reason === "not_recognised").length, 1);
 });

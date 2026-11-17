@@ -8,8 +8,10 @@
 //   1. the language they picked (if any; the engine then listens for that one language directly and this list is not used)
 //   2. their browser languages, with the exact locale (en-IN stays en-IN, "hi" becomes hi-IN)
 //   3. English (their country's English if it has one), so an English speaker is always understood
-//   4. the languages of their profile country (India: Hindi, Tamil, Telugu, Bengali, Marathi, Gujarati, Kannada, Malayalam, Punjabi, Urdu)
-//   5. common languages, until there are 10
+//   4. HINDI, always (many of our patients are Indian: an English browser must never push it out, measured on staging: Hindi heard as
+//      English at low confidence), a few more browser languages, then the main Indian languages (Bengali, Tamil, Telugu, Marathi)
+//   5. the languages of their profile country, then common languages (Spanish, Arabic, French...), then the rest of the Indian ones, until
+//      there are 10
 //
 // Only locales Azure can really listen for (STT_LOCALES) are ever returned.
 import { STT_LOCALES, languageBase } from "./languages.js";
@@ -34,6 +36,12 @@ export const COUNTRY_LOCALES = {
   TR: ["tr-TR"], SA: ["ar-SA"], AE: ["ar-AE", "en-IN", "hi-IN"], EG: ["ar-EG"], QA: ["ar-QA"], KW: ["ar-KW"], JO: ["ar-JO"], MA: ["ar-MA"],
   CN: ["zh-CN"], HK: ["zh-HK", "en-HK"], TW: ["zh-TW"], JP: ["ja-JP"], KR: ["ko-KR"], VN: ["vi-VN"], TH: ["th-TH"], ID: ["id-ID"],
 };
+
+// The Indian languages that always get a slot (after English and Hindi), and the rest that fill what is left.
+export const INDIAN_PRIORITY = ["bn-IN", "ta-IN", "te-IN", "mr-IN"];
+export const INDIAN_REST = ["gu-IN", "kn-IN", "ml-IN", "pa-IN", "ur-IN"];
+export const ALWAYS_LOCALE = "hi-IN";
+const MAX_BROWSER_EXTRA = 3; // browser languages beyond English and Hindi that are kept ahead of the Indian ones
 
 // Common languages used to fill the list, most useful first.
 export const FILLERS = [
@@ -78,20 +86,19 @@ function dedupeByLanguage(locales) {
   });
 }
 
-// -> up to `max` locales, no two of the same language, always including an English one.
-export function buildCandidateLocales({ pickedLocale = null, browserLanguages = [], profileCountry = "", max = MAX_CANDIDATES } = {}) {
+// -> up to `max` locales, no two of the same language, always including an English one and Hindi.
+//   excludeBases: languages (base codes, "en") left OUT, to ask the recognizer for a second opinion when it keeps hearing a language with
+//   low confidence (the wrong-language safety net). The picked language is never excluded.
+export function buildCandidateLocales({ pickedLocale = null, browserLanguages = [], profileCountry = "", max = MAX_CANDIDATES, excludeBases = [] } = {}) {
   const countryList = COUNTRY_LOCALES[String(profileCountry || "").toUpperCase()] || [];
   const browser = Array.isArray(browserLanguages) ? browserLanguages.slice(0, 20).map(normalizeBrowserLanguage) : [];
+  const excluded = new Set((excludeBases || []).map((b) => String(b).toLowerCase()));
+  const keep = (l) => l && (l === pickedLocale || !excluded.has(languageBase(l)));
+  const english = browser.find((l) => l && languageBase(l) === "en") || countryList.find((l) => languageBase(l) === "en" && supported(l)) || "en-US";
 
-  // 1 + 2: the picked language and the browser languages
-  let list = dedupeByLanguage([pickedLocale, ...browser]);
-
-  // 3: English is always there (an English speaker must be understood), even if that means dropping the last browser language
-  if (!list.some((l) => languageBase(l) === "en")) {
-    const english = countryList.find((l) => languageBase(l) === "en" && supported(l)) || "en-US";
-    list = [...list.slice(0, Math.max(0, max - 1)), english];
-  }
-
-  // 4 + 5: the profile country's languages, then the common ones, until the list is full
-  return dedupeByLanguage([...list, ...countryList, ...FILLERS]).slice(0, max);
+  // The picked language and the browser languages in their own order (a few of them), then English and Hindi if they were not among them.
+  const own = dedupeByLanguage([pickedLocale, ...browser].filter(keep)).slice(0, MAX_BROWSER_EXTRA + 2);
+  const head = dedupeByLanguage([...own, english, ALWAYS_LOCALE].filter(keep));
+  const rest = [...INDIAN_PRIORITY, ...countryList, ...FILLERS, ...INDIAN_REST].filter(keep);
+  return dedupeByLanguage([...head, ...rest]).slice(0, max);
 }
