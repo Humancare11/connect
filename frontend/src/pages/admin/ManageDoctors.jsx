@@ -3,6 +3,8 @@ import { Country } from "country-state-city";
 import api from "../../api";
 import { describeBlobError } from "../../utils/binaryPayload";
 import { useAdmin } from "../../context/AdminContext";
+import useDoctorFilters from "../../hooks/useDoctorFilters";
+import DoctorFilters from "../../components/admin/DoctorFilters";
 import "./AdminDashboard.css";
 
 const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
@@ -200,6 +202,8 @@ export default function ManageDoctors() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("pending");
   const [toast, setToast] = useState(null);
+  const doctorFilters = useDoctorFilters(enrollments);
+  const { applyFilters } = doctorFilters;
 
   const fetchDoctors = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -283,7 +287,7 @@ export default function ManageDoctors() {
 
   const displayed = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return enrollments.filter((row) => {
+    return applyFilters(enrollments).filter((row) => {
       const name = `${row.firstName || ""} ${row.surname || ""}`.trim() || row.doctorId?.name || "";
       const email = row.email || row.doctorId?.email || "";
       const doctorNumericId = String(row.doctorId?.doctorId || "");
@@ -304,7 +308,7 @@ export default function ManageDoctors() {
       if (filter === "delete_requests") return requestType === "profile_delete";
       return true;
     });
-  }, [enrollments, filter, search]);
+  }, [enrollments, filter, search, applyFilters]);
 
   return (
     <div className="adp-doctors-page">
@@ -357,6 +361,8 @@ export default function ManageDoctors() {
             />
           </div>
         </div>
+
+        <DoctorFilters {...doctorFilters} />
 
         {loading ? (
           <div className="adp-loading">

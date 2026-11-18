@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Country } from "country-state-city";
 import api from "../../api";
+import useDoctorFilters from "../../hooks/useDoctorFilters";
+import DoctorFilters from "../../components/admin/DoctorFilters";
 import "./AdminDashboard.css";
 
 function getCountryName(isoCode) {
@@ -25,11 +26,11 @@ function slugifyDoctorName(name) {
 
 /* ── Main Page ──────────────────────────────────────────────────────────────── */
 export default function OurDoctors() {
-  const navigate = useNavigate();
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const doctorFilters = useDoctorFilters(doctors);
   useEffect(() => {
     api
       .get("/api/admin/approved-doctors")
@@ -42,7 +43,7 @@ export default function OurDoctors() {
     ...new Set(doctors.map((d) => d.specialization).filter(Boolean)),
   ].sort();
 
-  const displayed = doctors.filter((d) => {
+  const displayed = doctorFilters.applyFilters(doctors).filter((d) => {
     const name =
       `${d.firstName || ""} ${d.surname || ""}`.trim() ||
       d.doctorId?.name ||
@@ -113,6 +114,8 @@ export default function OurDoctors() {
           </div>
         </div>
 
+        <DoctorFilters {...doctorFilters} />
+
         {loading ? (
           <div className="adp-loading">
             <div className="adp-spinner" />
@@ -121,9 +124,9 @@ export default function OurDoctors() {
         ) : displayed.length === 0 ? (
           <div className="adp-empty">
             <div className="adp-empty-icon">🩺</div>
-            <h3>No approved doctors found</h3>
+            <h3>No doctors found</h3>
             <p>
-              {search || filter !== "all"
+              {search || filter !== "all" || doctorFilters.active
                 ? "Try adjusting your search or filter."
                 : "No doctors have been approved yet."}
             </p>
@@ -248,17 +251,14 @@ export default function OurDoctors() {
                         )}
                       </td>
                       <td>
-                        <button
+                        <a
                           className="adp-btn adp-btn--view"
-                          onClick={() =>
-                            navigate(
-                              `/admin-dashboard/doctor-profile/${d._id}`,
-                              { state: { enrollment: d, from: "our-doctors" } },
-                            )
-                          }
+                          href={`/admin-dashboard/doctor-profile/${d._id}?from=our-doctors`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                         >
                           View Profile
-                        </button>
+                        </a>
                       </td>
                       <td className="adp-end">
                         <span

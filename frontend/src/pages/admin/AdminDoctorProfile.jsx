@@ -2817,7 +2817,10 @@ export default function AdminDoctorProfile() {
   const [busy, setBusy] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  const from = location.state?.from || "manage-doctors";
+  const from =
+    location.state?.from ||
+    new URLSearchParams(location.search).get("from") ||
+    "manage-doctors";
   const backPath =
     from === "our-doctors"
       ? "/admin-dashboard/our-doctors"
