@@ -1757,6 +1757,8 @@ export default function DoctorOnboardingWizard({
     city: "",
     zip: "",
     address: "",
+    referralSource: "",
+    referralSourceOther: "",
   });
   const [countryApi, setCountryApi] = useState(null);
   const [stateApi, setStateApi] = useState(null);
@@ -1907,6 +1909,8 @@ export default function DoctorOnboardingWizard({
       city: data.city || "",
       zip: data.zip || "",
       address: data.address || "",
+      referralSource: data.referralSource || "",
+      referralSourceOther: data.referralSourceOther || "",
     });
     if (data.countryCode) {
       setPhoneCountryCode(getCountryCodeFromDialCode(data.countryCode));
@@ -2216,6 +2220,8 @@ export default function DoctorOnboardingWizard({
     if (s1.country === "US" && !s1.state.trim()) e.state = "Required for US";
     if (!s1.zip.trim()) e.zip = "Required";
     if (languagesKnown.length === 0) e.languages = "Required";
+    if (!s1.referralSource && regStatus !== "approved")
+      e.referralSource = "Please select how you heard about us.";
     setS1Errors(e);
     return Object.keys(e).length === 0;
   };
@@ -2276,6 +2282,9 @@ export default function DoctorOnboardingWizard({
             zip: s1.zip.trim(),
             address: s1.address.trim(),
             languagesKnown,
+            referralSource: s1.referralSource,
+            referralSourceOther:
+              s1.referralSource === "others" ? s1.referralSourceOther.trim() : "",
             profilePhoto:
               files.profilePhoto?.url || files.profilePhoto?.name || "",
           };
@@ -2480,6 +2489,9 @@ export default function DoctorOnboardingWizard({
       zip: s1.zip.trim(),
       address: s1.address.trim(),
       languagesKnown,
+      referralSource: s1.referralSource,
+      referralSourceOther:
+        s1.referralSource === "others" ? s1.referralSourceOther.trim() : "",
       specialization:
         s2.specialty === "Other"
           ? s2.customSpecialty.trim() || "Other"
@@ -2893,6 +2905,7 @@ export default function DoctorOnboardingWizard({
         >
           Languages
         </h4>
+        <div className="form-grid">
         <div className="field-group">
           <label className="field-label">
             Languages Known <span className="req">*</span>
@@ -2908,6 +2921,52 @@ export default function DoctorOnboardingWizard({
           {s1Errors.languages && (
             <div className="field-error">{s1Errors.languages}</div>
           )}
+        </div>
+        <div className="field-group">
+          <label className="field-label">
+            How did you hear about us? <span className="req">*</span>
+          </label>
+          <select
+            className={`field-select ${s1Errors.referralSource ? "error" : ""}`}
+            value={s1.referralSource}
+            onChange={(e) =>
+              setS1((prev) => ({
+                ...prev,
+                referralSource: e.target.value,
+                referralSourceOther:
+                  e.target.value === "others" ? prev.referralSourceOther : "",
+              }))
+            }
+          >
+            <option value="" disabled>
+              Select an option
+            </option>
+            <option value="indeed">Indeed</option>
+            <option value="facebook">Facebook</option>
+            <option value="instagram">Instagram</option>
+            <option value="ai">AI (ChatGPT, Claude, etc.)</option>
+            <option value="google">Google</option>
+            <option value="others">Others</option>
+          </select>
+          {s1Errors.referralSource && (
+            <div className="field-error">{s1Errors.referralSource}</div>
+          )}
+          {s1.referralSource === "others" && (
+            <input
+              className="field-input"
+              style={{ marginTop: 8 }}
+              placeholder="Please specify (optional)"
+              maxLength={100}
+              value={s1.referralSourceOther}
+              onChange={(e) =>
+                setS1((prev) => ({
+                  ...prev,
+                  referralSourceOther: e.target.value,
+                }))
+              }
+            />
+          )}
+        </div>
         </div>
 
         <div className="btn-row">

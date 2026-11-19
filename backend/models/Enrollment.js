@@ -37,6 +37,12 @@ const enrollmentSchema = new mongoose.Schema({
   aboutDoctor: String,
   consultationMode: String,
   languagesKnown: [String],
+  referralSource: {
+    type: String,
+    enum: ["indeed", "facebook", "instagram", "ai", "google", "others"],
+    default: null,
+  },
+  referralSourceOther: { type: String, trim: true, maxlength: 100, default: "" },
   licensedStates: [String],
   internationalLicenses: [String],
   clinicName: String,
