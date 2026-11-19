@@ -409,6 +409,7 @@ module.exports = {
   signAccessToken,
   signRefreshToken,
   verifyToken,
+  validateDecodedSession,
   verifyUserToken,
   verifyDoctorToken,
   verifyAdminToken,

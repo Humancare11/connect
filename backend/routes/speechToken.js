@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const { verifyToken } = require("../middleware/verifyToken");
 const { speechTokenLimiter } = require("../middleware/rateLimiters");
 const { decideAppointmentAccess } = require("../utils/appointmentRoomAccess");
+const { resolveParticipantAccess, hintFrom } = require("../utils/participantIdentity");
 const { recordSecurityEvent } = require("../utils/securityMonitor");
 const { isTranscriptionEnabled, getMaxTokensPerAppointment } = require("../utils/speech/config");
 const { createSpeechTokenService, SpeechTokenError } = require("../utils/speech/speechTokenService");
@@ -43,13 +44,13 @@ function createSpeechTokenRouter({
       return res.status(400).json({ msg: DENIED.invalid_appointment[1], code: "invalid_appointment" });
     }
 
-    const role = req.user?.role;
-    const userId = req.user?.id ? String(req.user.id) : "";
-    if (!userId || (role !== "user" && role !== "doctor")) {
+    // The browser may hold several logins (doctor + another patient): use the identity that belongs to THIS appointment.
+    const resolved = await resolveParticipantAccess(req, appointmentId, decideAccess, { hint: hintFrom(req) });
+    if (!resolved.identity) {
       return res.status(403).json({ msg: DENIED.not_participant[1], code: "not_participant" });
     }
-
-    const access = await decideAccess({ userId, role }, appointmentId);
+    const { userId } = resolved.identity;
+    const access = resolved.access;
     if (!access.allowed) {
       const [status, msg] = DENIED[access.reason] || DENIED.server_error;
       if (access.reason === "not_participant") {

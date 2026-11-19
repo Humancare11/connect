@@ -360,3 +360,89 @@ describe("GET /api/speech-token", () => {
     }
   });
 });
+
+// ---- several logins in one browser ------------------------------------------------------------------------------------
+describe("multi-login browser (doctor cookie + another patient's cookie)", () => {
+  const { verifyToken, signAccessToken } = require("../middleware/verifyToken");
+  const Session = require("../models/Session");
+  const { resolveParticipantAccess } = require("../utils/participantIdentity");
+  let mongod, server, base, doctorId, patientId, otherPatientId, strangerId, booking;
+
+  async function cookieFor(id, role) {
+    const sid = new mongoose.Types.ObjectId();
+    await Session.collection.insertOne({ _id: sid, userId: String(id), role, lastActivityAt: new Date(), expiresAt: new Date(Date.now() + 3600e3) });
+    return signAccessToken({ _id: id, email: "x@example.com", role }, sid);
+  }
+
+  before(async () => {
+    mongod = await MongoMemoryServer.create();
+    await mongoose.connect(mongod.getUri());
+    doctorId = new mongoose.Types.ObjectId();
+    patientId = new mongoose.Types.ObjectId();
+    otherPatientId = new mongoose.Types.ObjectId();
+    strangerId = new mongoose.Types.ObjectId();
+    await mongoose.connection.collection("users").insertMany([{ _id: patientId }, { _id: otherPatientId }, { _id: strangerId }]);
+    await mongoose.connection.collection("doctors").insertOne({ _id: doctorId });
+    await Enrollment.create({ firstName: "A", surname: "B", doctorId, approvalStatus: "approved" });
+    booking = await Appointment.create({ patientId, doctorId, date: "2026-11-01", time: "10:00 AM", status: "confirmed" });
+    const app = express();
+    app.use(cookieParser());
+    app.use("/api/speech-token", createSpeechTokenRouter({
+      auth: verifyToken,
+      limiter: (q, s, n) => n(),
+      service: createSpeechTokenService({ fetchFn: fakeFetch(), getConfig: goodConfig }),
+      isEnabled: () => true,
+    }));
+    server = await new Promise((r) => { const s = http.createServer(app).listen(0, "127.0.0.1", () => r(s)); });
+    base = `http://127.0.0.1:${server.address().port}`;
+  });
+  after(async () => {
+    await new Promise((r) => server.close(r));
+    await mongoose.disconnect();
+    await mongod.stop();
+  });
+
+  const get = async (cookies, query = "") => {
+    const res = await fetch(`${base}/api/speech-token?appointmentId=${booking._id}${query}`, { headers: { cookie: cookies.join("; ") } });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+
+  test("doctor cookie + a different patient's cookie: the doctor gets the token (either cookie order, with or without a hint)", async () => {
+    const d = `doctorToken=${await cookieFor(doctorId, "doctor")}`;
+    const p = `userToken=${await cookieFor(otherPatientId, "user")}`;
+    for (const cookies of [[d, p], [p, d]]) {
+      assert.equal((await get(cookies)).status, 200);
+      assert.equal((await get(cookies, "&as=doctor")).status, 200);
+      assert.equal((await get(cookies, "&as=patient")).status, 200, "a wrong hint cannot lock the real participant out");
+    }
+  });
+
+  test("the booking's own patient cookie next to a stranger doctor cookie still works", async () => {
+    const d = `doctorToken=${await cookieFor(strangerId, "doctor")}`;
+    const p = `userToken=${await cookieFor(patientId, "user")}`;
+    assert.equal((await get([d, p])).status, 200);
+  });
+
+  test("a stranger is still refused, even with two cookies and a hint claiming to be the doctor", async () => {
+    const d = `doctorToken=${await cookieFor(strangerId, "doctor")}`;
+    const p = `userToken=${await cookieFor(otherPatientId, "user")}`;
+    for (const q of ["", "&as=doctor", "&as=patient"]) {
+      const r = await get([d, p], q);
+      assert.equal(r.status, 403);
+      assert.equal(r.body.code, "not_participant");
+    }
+  });
+
+  test("a forged or revoked cookie never adds an identity", async () => {
+    const p = `userToken=${await cookieFor(otherPatientId, "user")}`;
+    const forged = `doctorToken=${require("jsonwebtoken").sign({ id: String(doctorId), role: "doctor", sid: String(new mongoose.Types.ObjectId()) }, "wrong-secret")}`;
+    assert.equal((await get([p, forged])).status, 403);
+    const noSession = `doctorToken=${signAccessToken({ _id: doctorId, email: "x", role: "doctor" }, new mongoose.Types.ObjectId())}`;
+    assert.equal((await get([p, noSession])).status, 403);
+  });
+
+  test("resolveParticipantAccess: no patient/doctor identity at all -> identity null", async () => {
+    const out = await resolveParticipantAccess({ cookies: {}, user: { id: "a", role: "admin" } }, "x", async () => ({ allowed: true }));
+    assert.equal(out.identity, null);
+  });
+});

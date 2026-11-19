@@ -4,6 +4,7 @@ const { verifyToken } = require("../middleware/verifyToken");
 const { transcriptNoticeLimiter, transcriptWriteLimiter, transcriptReadLimiter } = require("../middleware/rateLimiters");
 const { decideAppointmentAccess, lookupParticipantBooking } = require("../utils/appointmentRoomAccess");
 const { classifyAppointmentLookupError } = require("../utils/roomDenyReason");
+const { resolveParticipantAccess, hintFrom } = require("../utils/participantIdentity");
 const { recordSecurityEvent } = require("../utils/securityMonitor");
 const { isTranscriptionEnabled, getConfidenceThresholds, getLateUploadMinutes, getTranscriptMode } = require("../utils/speech/config");
 const { getClientIp } = require("../utils/clientIp");
@@ -109,11 +110,13 @@ function createAppointmentTranscriptRouter({
     const appointmentId = String(req.params.id || "");
     if (!mongoose.isValidObjectId(appointmentId)) return deny(res, "invalid_appointment");
 
-    const role = req.user?.role;
-    const userId = req.user?.id ? String(req.user.id) : "";
+    // Several logins in one browser: use the identity that is a participant of this appointment.
+    const resolved = await resolveParticipantAccess(req, appointmentId, decideAccess, { hint: hintFrom(req) });
+    const role = resolved.identity?.role;
+    const userId = resolved.identity?.userId || "";
     if (!userId || !noticeRoleKey(role) || !mongoose.isValidObjectId(userId)) return deny(res, "not_participant");
 
-    const access = await decideAccess({ userId, role }, appointmentId);
+    const access = resolved.access;
     if (!access.allowed) {
       if (access.reason === "not_participant") securityEvent(req, "Transcript notice posted for an appointment the user is not part of", appointmentId);
       return deny(res, access.reason);
@@ -155,22 +158,28 @@ function createAppointmentTranscriptRouter({
     const appointmentId = String(req.params.id || "");
     if (!mongoose.isValidObjectId(appointmentId)) return deny(res, "invalid_appointment");
 
-    const role = req.user?.role;
-    const userId = req.user?.id ? String(req.user.id) : "";
-    const speakerRole = noticeRoleKey(role);
-    if (!userId || !speakerRole || !mongoose.isValidObjectId(userId)) return deny(res, "not_participant");
-
     const items = req.body && req.body.items;
     if (!Array.isArray(items) || items.length === 0 || items.length > MAX_BATCH) {
       return bad(res, 400, `Send between 1 and ${MAX_BATCH} items.`, "bad_batch");
     }
 
+    // Several logins in one browser: use the identity that is a participant of this appointment.
     let found;
+    let resolved;
     try {
-      found = await lookupParticipant({ userId, role }, appointmentId);
+      const decideByLookup = async (identity, id) => {
+        const f = await lookupParticipant(identity, id);
+        return { allowed: Boolean(f.appointment && f.allowed), reason: f.appointment ? "not_participant" : "appointment_not_found", found: f };
+      };
+      resolved = await resolveParticipantAccess(req, appointmentId, decideByLookup, { hint: hintFrom(req) });
+      found = resolved.access?.found;
     } catch (err) {
       return deny(res, classifyAppointmentLookupError(err));
     }
+    const role = resolved.identity?.role;
+    const userId = resolved.identity?.userId || "";
+    const speakerRole = noticeRoleKey(role);
+    if (!userId || !speakerRole || !mongoose.isValidObjectId(userId)) return deny(res, "not_participant");
     if (!found.appointment) return deny(res, "appointment_not_found");
     if (!found.allowed) {
       securityEvent(req, "Transcript lines posted for an appointment the user is not part of", appointmentId);
