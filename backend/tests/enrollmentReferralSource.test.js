@@ -74,7 +74,7 @@ describe("enrollment step 1: how did you hear about us (real routes, in-memory M
     call("PATCH", "/api/doctor/enrollment/step", { token, body: { doctorId: String(doctorId), step: 1, data } });
   const stored = (doctorId) => Enrollment.findOne({ doctorId }).lean();
 
-  for (const value of ["indeed", "facebook", "instagram", "ai", "google", "others"]) {
+  for (const value of ["indeed", "facebook", "instagram", "linkedin", "ai", "google", "others"]) {
     test(`step save accepts and stores "${value}"`, async () => {
       const { token, doctorId } = await newDoctor();
       const res = await saveStep1(token, doctorId, { referralSource: value });

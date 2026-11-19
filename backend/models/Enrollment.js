@@ -39,7 +39,7 @@ const enrollmentSchema = new mongoose.Schema({
   languagesKnown: [String],
   referralSource: {
     type: String,
-    enum: ["indeed", "facebook", "instagram", "ai", "google", "others"],
+    enum: ["indeed", "facebook", "instagram", "linkedin", "ai", "google", "others"],
     default: null,
   },
   referralSourceOther: { type: String, trim: true, maxlength: 100, default: "" },
