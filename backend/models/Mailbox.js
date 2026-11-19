@@ -30,6 +30,9 @@ const mailboxSchema = new mongoose.Schema(
     sortOrder: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true, index: true },
 
+    // Email Marketing may send from this Mail ID. Off by default; only a Super Admin changes it.
+    allowedForMarketing: { type: Boolean, default: false },
+
     // Company footer appended to outgoing mail. Company only — never the admin.
     signature: { type: String, default: "Human Care Connect", trim: true, maxlength: 500 },
 
