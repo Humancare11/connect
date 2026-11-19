@@ -72,7 +72,7 @@ async function running(over = {}) {
 const candidatesOf = (rec) => rec.auto.languages;
 const lines = (t, re) => t.logs.filter((l) => re.test(l[0]));
 // a sentence of mine, as Azure's detection reports it
-const say = (t, lang, conf, tr = { en: "x" }) => t.rec().finish("sentence", tr, { lang, conf, durationMs: 1500 });
+const say = (t, lang, conf, tr = { en: "x" }, text = "I have had a bad headache since yesterday morning") => t.rec().finish(text, tr, { lang, conf, durationMs: 1500 });
 const pause = async (t) => { await t.clock.advance(2000); await settle(); };
 
 // ---------------------------------------------------------------------------------------------------------------- short list
@@ -106,7 +106,7 @@ test("STAGING SEQUENCE, with the Hindi sentence recognised confidently: the spea
   const t = await running({ browserLanguages: ["en-GB"], profileCountry: "IN" });
   say(t, "hi-IN", 0.86, { en: "I have a headache" });
   assert.equal(t.st().lockedLang, "hi-IN");
-  assert.deepEqual(lines(t, /language locked/).map((l) => [l[1].locale, l[1].why]), [["hi-IN", "one confident sentence"]]);
+  assert.deepEqual(lines(t, /language locked/).map((l) => [l[1].locale, l[1].why]), [["hi-IN", "one confident long sentence"]]);
   await pause(t);
   const fixed = t.rec();
   assert.equal(fixed.auto, null, "no more detection");
@@ -175,13 +175,13 @@ test("UNLOCK: 2 of my last 3 sentences low or unclear -> back to detection, logg
   assert.notEqual(t.rec().auto, null, "listening with detection again");
 });
 
-test("UNLOCK: the no-match rule (3 loud no-match results) unlocks as well", async () => {
+test("UNLOCK: 2 loud no-match results in a row unlock at once", async () => {
   const t = await running({ browserLanguages: ["en-IN"], profileCountry: "IN" });
   say(t, "hi-IN", 0.9); await pause(t);
   assert.equal(t.st().lockedLang, "hi-IN");
-  t.noMatch(); await t.clock.advance(1000); t.noMatch(); await t.clock.advance(1000); t.noMatch();
+  t.noMatch(); await t.clock.advance(1000); t.noMatch();
   assert.equal(t.st().lockedLang, "");
-  assert.equal(lines(t, /language unlocked/)[0][1].why, "nothing understood");
+  assert.equal(lines(t, /language unlocked/)[0][1].why, "2 results in a row not understood");
   assert.equal(t.st().fellBackToDetection, false, "no 'wrong language picked' hint: nobody picked it, it was a lock");
   await pause(t);
   assert.notEqual(t.rec().auto, null);
@@ -254,4 +254,65 @@ test("[tr-diag]: language lock / unlock lines carry codes only", async () => {
   assert.match(all, /language locked/);
   assert.match(all, /language unlocked/);
   for (const l of lines(t, /language (locked|unlocked)/)) assert.ok(Object.keys(l[1]).every((k) => ["locale", "why", "was"].includes(k)), "only codes and reasons: " + Object.keys(l[1]));
+});
+
+// ---------------------------------------------------------------------------------------------------------------- staging: "Hello" x3
+const hello = (t, conf = 0.9) => t.rec().finish("Hello", { en: "Hello" }, { lang: "hi-IN", conf, durationMs: 800 });
+
+test("STAGING 'Hello' x3 heard as Hindi: never locks, and later English and Hindi sentences are all captioned", async () => {
+  const t = await running({ browserLanguages: ["en-IN"], profileCountry: "IN" });
+  hello(t); hello(t); hello(t);
+  assert.equal(t.st().lockedLang, "", "short greetings never lock");
+  await pause(t);
+  assert.notEqual(t.rec().auto, null, "still detecting");
+  const before = t.st().transcript.filter((r) => r.who === "me").length;
+  say(t, "en-IN", 0.9, { hi: "x" }, "My head has been hurting for two days");
+  say(t, "hi-IN", 0.85, { en: "x" }, "मुझे दो दिन से सिर में दर्द है");
+  const mine = t.st().transcript.filter((r) => r.who === "me");
+  assert.equal(mine.length - before, 2, "both sentences produced captions");
+});
+
+test("LOCK: greetings and fillers never count, even when spoken slowly; 4 words or 1.5 s are needed; the 0.8 shortcut is for long sentences only", async () => {
+  const t = await running({ browserLanguages: ["en-IN"], profileCountry: "IN" });
+  for (const w of ["hello", "hi", "okay", "haan", "हैलो", "नमस्ते", "thank you", "good morning"]) {
+    t.rec().finish(w, { en: w }, { lang: "hi-IN", conf: 0.95, durationMs: 3000 });
+  }
+  assert.equal(t.st().lockedLang, "");
+  t.rec().finish("my head hurts", { en: "x" }, { lang: "hi-IN", conf: 0.95, durationMs: 900 });
+  assert.equal(t.st().lockedLang, "", "3 words and under 1.5 s do not count");
+  t.rec().finish("my head hurts a lot", { en: "x" }, { lang: "hi-IN", conf: 0.95, durationMs: 1800 });
+  assert.equal(t.st().lockedLang, "", "a qualifying sentence of 0.95 that is not long does not lock alone");
+  t.rec().finish("my head hurts a lot", { en: "x" }, { lang: "hi-IN", conf: 0.72, durationMs: 1800 });
+  assert.equal(t.st().lockedLang, "hi-IN", "2 qualifying sentences at >= 0.7 lock");
+});
+
+test("UNLOCK: locked on Hindi but the person speaks English -> 2 no-match results unlock at once and detection resumes", async () => {
+  const t = await running({ browserLanguages: ["en-IN"], profileCountry: "IN" });
+  say(t, "hi-IN", 0.9); await pause(t);
+  assert.equal(t.st().lockedLang, "hi-IN");
+  t.noMatch(); assert.equal(t.st().lockedLang, "hi-IN", "one is not enough");
+  t.noMatch(); assert.equal(t.st().lockedLang, "");
+  assert.match(lines(t, /language unlocked/)[0][1].why, /not understood/);
+  await pause(t);
+  assert.notEqual(t.rec().auto, null);
+});
+
+test("UNLOCK: 2 unclear or empty sentences in a row unlock; a good one in between resets the count", async () => {
+  const t = await running({ browserLanguages: ["en-IN"], profileCountry: "IN" });
+  say(t, "hi-IN", 0.9); await pause(t);
+  t.rec().finish("a b", { en: "x" }, { lang: "hi-IN", conf: 0.3 });
+  say(t, "hi-IN", 0.9); say(t, "hi-IN", 0.9);
+  t.rec().finish("c d", { en: "x" }, { lang: "hi-IN", conf: 0.3 });
+  assert.equal(t.st().lockedLang, "hi-IN", "not in a row");
+  t.rec().finish("e f", { en: "x" }, { lang: "hi-IN", conf: 0.2 });
+  assert.equal(t.st().lockedLang, "", "two unclear in a row");
+});
+
+test("UNLOCK: a loud microphone with no result at all for ~5 s unlocks immediately", async () => {
+  const t = await running({ browserLanguages: ["en-IN"], profileCountry: "IN" });
+  say(t, "hi-IN", 0.9); await pause(t);
+  assert.equal(t.st().lockedLang, "hi-IN");
+  for (let i = 0; i < 12; i++) { t.mic(0.3); await t.clock.advance(500); }
+  assert.equal(t.st().lockedLang, "");
+  assert.match(lines(t, /language unlocked/)[0][1].why, /no result/);
 });

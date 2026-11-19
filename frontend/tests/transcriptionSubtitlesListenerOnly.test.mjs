@@ -211,7 +211,7 @@ test("INDIAN patient speaking ENGLISH (browser hi-IN + en-GB): the English candi
   assert.deepEqual([listening[1].english, listening[1].englishWhy], ["en-IN", "Indian locale in the browser"], "the diagnostics line says which English and why");
   assert.ok(listening[1].candidates.includes("en-IN"));
 
-  c.finish("I have a headache since monday", {}, { lang: "en-IN", conf: 0.94 });
+  c.finish("I have a headache since monday", {}, { lang: "en-IN", conf: 0.94, durationMs: 3200 });
   await settle(); await settle(); await c.clock.advance(600);
   assert.equal(c.doctor.st().peerSpeechLang, "en-IN");
   assert.equal(c.doctor.st().realVoiceMuted, true, "the real voice stays muted");

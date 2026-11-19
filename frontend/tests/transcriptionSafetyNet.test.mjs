@@ -306,7 +306,7 @@ test("DIAGNOSTICS: the candidate locale list is logged (codes only) when the rec
   assert.ok(started[0][1].candidates.includes("hi-IN"));
   assert.deepEqual(started[0][1].targets, ["en"]);
   t.engine.setReadLanguage("de");
-  t.rec().finish("fine", { en: "fine" }, { lang: "de-DE", conf: 0.9 });
+  t.rec().finish("Guten Tag, ich habe seit gestern starke Kopfschmerzen", { en: "fine" }, { lang: "de-DE", conf: 0.9 });
   await settle();
   const all = t.logs.filter((l) => /recognizer listening/.test(l[0]));
   assert.equal(all.length, 2);

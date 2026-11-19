@@ -189,7 +189,7 @@ test("picking a language: announced, my own recognizer switches to that language
   assert.equal(t.engine.getState().readLang, "de");
   assert.deepEqual(t.sent("lang-changed").at(-1), { appointmentId: APPT, lang: "de" });
   assert.equal(t.sdk.log.recognizers.length, 1, "not restarted yet: it waits for a pause");
-  say(t, "Guten Tag", { en: "Good day" }, { lang: "de-DE", conf: 0.9 }); // a finished sentence is a pause
+  say(t, "Guten Tag, ich habe seit gestern starke Kopfschmerzen", { en: "Good day" }, { lang: "de-DE", conf: 0.9 }); // a finished sentence is a pause
   await settle();
   assert.equal(t.sdk.log.recognizers.length, 2);
   assert.equal(t.rec().cfg.speechRecognitionLanguage, "de-DE");

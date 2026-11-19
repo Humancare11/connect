@@ -30,7 +30,25 @@ const MIC_SPEECH_PEAK = 0.1; // my microphone is "clearly speaking" above this
 const NO_MATCH_TRIGGER = 3; // this many loud no-match results...
 const NO_MATCH_WINDOW_MS = 30000; // ...within this time switch to automatic language detection
 const SILENT_RESULT_MS = 6000; // my microphone is loud but the recognizer has said nothing at all (not even "no match") for this long
-const LOCK_SINGLE_CONF = 0.8; // one sentence this sure locks the speaker's language
+const LOCK_SINGLE_CONF = 0.8; // one LONG sentence this sure locks the speaker's language
+const LOCK_MIN_WORDS = 4; // a sentence counts towards locking only with at least this many words...
+const LOCK_MIN_MS = 1500; // ...or at least this much speech (a greeting alone never counts, however it is spoken)
+const LOCK_LONG_WORDS = 8; // "long" sentence: 8 words or 3 s of speech
+const LOCK_LONG_MS = 3000;
+const UNLOCK_BAD_RUN = 2; // while locked: this many no-match / unclear / empty results in a row unlock at once
+const LOCKED_SILENT_RESULT_MS = 5000; // while locked: a loud microphone with no result at all for this long unlocks at once
+// Short greetings and fillers never decide the language ("Hello" is heard as Hindi, "haan" as English...). Compared lower-cased, without punctuation.
+const GREETINGS = new Set(["hello", "hallo", "hi", "hey", "hii", "ok", "okay", "k", "yes", "yeah", "yep", "no", "nope", "thanks", "thank", "you", "bye", "good", "morning", "evening", "afternoon", "please", "sorry", "namaste", "namaskar", "haan", "han", "ha", "haa", "ji", "nahi", "nahin", "theek", "thik", "accha", "achha", "hmm", "hm", "um", "uh", "ah", "oh", "हैलो", "हेलो", "हैलो।", "हाय", "हां", "हाँ", "हा", "जी", "नहीं", "नही", "ठीक", "अच्छा", "नमस्ते", "नमस्कार", "ओके", "धन्यवाद", "शुक्रिया"]);
+const wordsOf = (text) => String(text || "").toLowerCase().replace(/[.,!?;:।"'()\-]/g, " ").split(/\s+/).filter(Boolean);
+function lockWeight(text, durationMs) {
+  const words = wordsOf(text);
+  const chars = String(text || "").replace(/\s+/g, "").length;
+  const unspaced = words.length === 1 && chars >= 8; // scripts written without spaces
+  const count = unspaced ? Math.floor(chars / 2) : words.length;
+  if (!unspaced && words.length > 0 && words.every((w) => GREETINGS.has(w))) return { qualifies: false, long: false };
+  const ms = typeof durationMs === "number" ? durationMs : 0;
+  return { qualifies: count >= LOCK_MIN_WORDS || ms >= LOCK_MIN_MS, long: count >= LOCK_LONG_WORDS || ms >= LOCK_LONG_MS };
+}
 const SUSPECT_TRIGGER = 2; // this many of my last 3 sentences heard as the LISTENER's language with low confidence: ask again without that language
 const GARBAGE_TRIGGER = 2; // ...and give that language back after this many unclear sentences in a row of the second opinion
 const NO_MATCH_STRETCH_END_MS = 5000; // a run of no-match results ends after this much without another
@@ -277,6 +295,12 @@ export function createTranscriptionEngine({
     noMatchTimes.push(t);
     while (noMatchTimes.length && t - noMatchTimes[0] > NO_MATCH_WINDOW_MS) noMatchTimes.shift();
     lastResultPerf = t;
+    // Locked on a language but nothing is understood: the lock is probably wrong, so go back to detection at once.
+    if (recognizer && state.lockedLang) {
+      badRun += 1;
+      if (r && r.silent) unlockLanguage("the microphone was loud but the locked language gave no result");
+      else if (badRun >= UNLOCK_BAD_RUN) unlockLanguage("2 results in a row not understood");
+    }
     if (recognizer && noMatchTimes.length >= NO_MATCH_TRIGGER) {
       noMatchTimes.length = 0;
       if (state.lockedLang) unlockLanguage("nothing understood");
@@ -338,7 +362,7 @@ export function createTranscriptionEngine({
         const p = nowPerf();
         if (pipeline.recentPeak(1000) >= MIC_SPEECH_PEAK) { lastMicLoudPerf = p; if (loudSince === null) loudSince = p; }
         else if (p - lastMicLoudPerf > QUIET_GAP_MS) loudSince = null;
-        if (loudSince !== null && p - Math.max(loudSince, lastResultPerf) > SILENT_RESULT_MS) { loudSince = p; onNoMatch({ durationMs: SILENT_RESULT_MS, silent: true }); }
+        if (loudSince !== null && p - Math.max(loudSince, lastResultPerf) > (state.lockedLang ? LOCKED_SILENT_RESULT_MS : SILENT_RESULT_MS)) { loudSince = p; onNoMatch({ durationMs: SILENT_RESULT_MS, silent: true }); }
       } else loudSince = null;
     } catch { /* ignore */ }
     // SPEAKER side: "I am alive" every few seconds while my recognizer runs and the call is connected (the current status, nothing else).
@@ -408,11 +432,15 @@ export function createTranscriptionEngine({
   // the first 3 sentences, or once in a sentence of 0.8 or more, listen for THAT language only (applied at the next pause).
   const lockHistory = []; // the first 3 sentences while detecting: { lang, conf }
   const lockMisses = []; // while locked: was each of my last 3 sentences low or unclear?
+  let badRun = 0; // while locked: no-match / unclear / empty results in a row
   function maybeLockLanguage(f) {
     if (state.lockedLang || (state.speakLang !== NONE && !state.fellBackToDetection) || typeof f.confidence !== "number" || !f.srcLang) return false;
     if (!isTranscribableLocale(f.srcLang)) return false;
+    // Short utterances and greetings never decide the language (staging: "Hello" x3 locked the speaker to Hindi).
+    const w = lockWeight(f.text, f.durationMs);
+    if (!w.qualifies) return false;
     let why = null;
-    if (f.confidence >= LOCK_SINGLE_CONF) why = "one confident sentence";
+    if (f.confidence >= LOCK_SINGLE_CONF && w.long) why = "one confident long sentence";
     else if (lockHistory.length < 3) {
       lockHistory.push({ lang: f.srcLang, conf: f.confidence });
       if (lockHistory.filter((h) => h.lang === f.srcLang && h.conf >= thresholds.lowBelow).length >= 2) why = "2 of the first 3 sentences";
@@ -422,7 +450,7 @@ export function createTranscriptionEngine({
     return true;
   }
   function lockLanguage(locale, why) {
-    lockHistory.length = 0; lockMisses.length = 0; recentSuspect.length = 0; noMatchTimes.length = 0;
+    lockHistory.length = 0; lockMisses.length = 0; recentSuspect.length = 0; noMatchTimes.length = 0; badRun = 0;
     set({ lockedLang: locale });
     diag("language locked", { locale, why });
     if (recognizer) recognizer.requestRestart(recognitionConfig());
@@ -430,7 +458,7 @@ export function createTranscriptionEngine({
   function unlockLanguage(why) {
     if (!state.lockedLang) return;
     const was = state.lockedLang;
-    lockHistory.length = 0; lockMisses.length = 0; noMatchTimes.length = 0;
+    lockHistory.length = 0; lockMisses.length = 0; noMatchTimes.length = 0; badRun = 0;
     set({ lockedLang: "" });
     diag("language unlocked", { was, why });
     if (recognizer) recognizer.requestRestart(recognitionConfig());
@@ -564,7 +592,10 @@ export function createTranscriptionEngine({
       // Locked: unlock when 2 of my last 3 sentences are low or unclear.
       lockMisses.push(typeof f.confidence === "number" && f.confidence < thresholds.lowBelow);
       while (lockMisses.length > 3) lockMisses.shift();
-      if (lockMisses.filter(Boolean).length >= 2) unlockLanguage("low confidence in 2 of 3 sentences");
+      const bad = !String(f.text || "").trim() || tier === "unclear";
+      badRun = bad ? badRun + 1 : 0;
+      if (badRun >= UNLOCK_BAD_RUN) unlockLanguage("2 sentences in a row unclear or empty");
+      else if (lockMisses.filter(Boolean).length >= 2) unlockLanguage("low confidence in 2 of 3 sentences");
     } else if (recognizer.mode() === "fixed") {
       recentConfidences.push(f.confidence);
       if (safetyNetTriggered(recentConfidences)) fallBackToDetection();
