@@ -1,5 +1,5 @@
 const express = require("express");
-const { recordOpen } = require("../services/email/trackingRecorder");
+const { recordOpenAny } = require("../services/marketing/trackingBridge");
 const { trackingEnv } = require("../services/email/emailSettings");
 
 // The public tracking image: GET /api/e/<token>.gif  (no login — mail clients call it).
@@ -46,7 +46,7 @@ function createIpGate({ limitPerMinute, now = () => Date.now() }) {
 }
 
 // Options exist so tests can use a fake recorder and a small limit.
-function createPublicTrackingRouter({ record = recordOpen, limitPerMinute = trackingEnv().ratePerMinute, now } = {}) {
+function createPublicTrackingRouter({ record = recordOpenAny, limitPerMinute = trackingEnv().ratePerMinute, now } = {}) {
   const router = express.Router();
   const allow = createIpGate({ limitPerMinute, now });
   let inFlight = 0;

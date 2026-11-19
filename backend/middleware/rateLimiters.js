@@ -194,6 +194,15 @@ const emailSendLimiter = buildUserLimiter({
   message:  "You are sending mail too quickly. Please wait {min} minutes and try again.",
 });
 
+// Email Marketing "Send test mail": each one is a real SES send, so keep it modest. Per admin.
+const marketingTestStore = new Map();
+const marketingTestLimiter = buildUserLimiter({
+  store:    marketingTestStore,
+  windowMs: 10 * 60 * 1000,
+  max:      Number(process.env.MARKETING_TESTS_PER_10_MIN) > 0 ? Number(process.env.MARKETING_TESTS_PER_10_MIN) : 10,
+  message:  "You are sending test mails too quickly. Please wait {min} minutes and try again.",
+});
+
 // Super Admin "Mail IDs": every connection check calls Google while impersonating
 // a company address, so keep it modest. Per Super Admin.
 const mailboxCheckStore = new Map();
@@ -371,5 +380,6 @@ module.exports = {
   searchSettleLimiter,
   searchAnalyticsAdminLimiter,
   emailSendLimiter,
+  marketingTestLimiter,
   mailboxCheckLimiter,
 };

@@ -62,6 +62,7 @@ const { scheduleSearchAnalyticsRollup } = require("./jobs/searchAnalyticsJobs");
 const { scheduleInvoiceReconciliation } = require("./jobs/invoiceReconciliationJob");
 const { schedulePendingReports } = require("./jobs/pendingReportsJob");
 const { scheduleEmailSync } = require("./jobs/emailSyncJob");
+const { startMarketingWorker } = require("./services/marketing/worker");
 const { mountLiveChat, seedLiveChatDefaults } = require("./services/liveChat");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
 const { seedCategoryPricing } = require("./models/CategoryPricing");
@@ -91,6 +92,11 @@ app.set("trust proxy", parseTrustProxy(process.env.TRUST_PROXY));
 app.use("/api/e", require("./routes/publicTracking"));
 app.use("/api/l", require("./routes/publicLinks"));
 app.use("/api/d", require("./routes/publicDownloads"));
+// Email Marketing, public parts (no login, no CORS, same reasoning as the tracking routes above): the unsubscribe
+// page / one-click endpoint, and the Amazon SNS endpoint for SES bounces and complaints (SNS posts plain text).
+// Both keep working for mail that is already out, whatever MARKETING_ENABLED says.
+app.use("/api/u", require("./routes/publicUnsubscribe"));
+app.post("/api/ses/events", express.text({ type: "*/*", limit: "256kb" }), require("./routes/publicSesEvents").handler);
 
 // Creates a default account if it doesn't already exist. In development
 // this uses a fixed, well-known password for local convenience. Outside
@@ -159,6 +165,7 @@ const startServer = async () => {
   scheduleInvoiceReconciliation();
   schedulePendingReports();
   scheduleEmailSync();
+  startMarketingWorker(); // no-op unless MARKETING_ENABLED=true
   await seedLiveChatDefaults().catch((err) => console.error("[livechat] seed failed:", err.message));
 
   await ensureBucketCors(allowedOrigins);
@@ -345,6 +352,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 // Razorpay signs the RAW body, so its webhook gets the bytes untouched (before express.json parses and discards them).
 app.post("/api/razorpay/webhook", express.raw({ type: "*/*", limit: "1mb" }), require("./routes/razorpay").webhookHandler);
+// Email Marketing carries whole HTML designs and CSV lists, so its API accepts bigger bodies than the 100 KB default.
+// Parsed here first; the general parser below skips a body that is already parsed.
+app.use("/api/admin/email-marketing", express.json({ limit: "3mb" }));
 app.use(express.json());
 app.use(require("cookie-parser")());
 
@@ -596,6 +606,9 @@ app.use("/api/admin/email/signatures", require("./routes/adminEmailSignatures"))
 app.use("/api/admin/email", require("./routes/adminEmail"));
 app.use("/api/superadmin/email/mailboxes", require("./routes/superadminMailboxes"));
 app.use("/api/superadmin/email/settings", require("./routes/superadminEmailSettings"));
+// Email Marketing (a separate page; sends through Amazon SES only). Off unless MARKETING_ENABLED=true.
+app.use("/api/admin/email-marketing", require("./routes/adminEmailMarketing"));
+app.use("/api/superadmin/email-marketing", require("./routes/superadminEmailMarketing"));
 // Registered first: the doctor's Visit Note signature has its own guard and multipart parser.
 app.use("/api/doctor/signature", require("./routes/doctorSignature"));
 app.use("/api/doctor", require("./routes/doctorAuth"));
