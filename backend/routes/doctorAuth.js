@@ -790,7 +790,7 @@ function pickAllowedStepFields(data, allowedKeys) {
 // in place when present: empty → null, anything outside the list is rejected,
 // and the free text is kept (trimmed, max 100) only for "others".
 // Returns an error message, or null when fine. Keys that are absent are left alone.
-const REFERRAL_SOURCES = ["indeed", "facebook", "instagram", "ai", "google", "others"];
+const REFERRAL_SOURCES = ["indeed", "facebook", "instagram", "linkedin", "ai", "google", "others"];
 function normalizeReferral(data) {
     if (Object.prototype.hasOwnProperty.call(data, "referralSource")) {
         const raw = data.referralSource;

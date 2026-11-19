@@ -2944,6 +2944,7 @@ export default function DoctorOnboardingWizard({
             <option value="indeed">Indeed</option>
             <option value="facebook">Facebook</option>
             <option value="instagram">Instagram</option>
+            <option value="linkedin">LinkedIn</option>
             <option value="ai">AI (ChatGPT, Claude, etc.)</option>
             <option value="google">Google</option>
             <option value="others">Others</option>
