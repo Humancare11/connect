@@ -556,6 +556,8 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
         // fields like approvalStatus/verified/pendingRequestType must only ever
         // be set by this route's own logic below, never by the request body.
         const enrollmentData = pickAllowedStepFields(enrollmentDataRaw, ENROLLMENT_FIELD_ALLOWLIST);
+        const referralError = normalizeReferral(enrollmentData);
+        if (referralError) return res.status(400).json({ message: referralError });
         // hasProfilePhoto is derived, not client-trusted — same pattern used in
         // adminController.js — so it can't be spoofed independently of profilePhoto.
         enrollmentData.hasProfilePhoto = !!enrollmentData.profilePhoto;
@@ -743,7 +745,7 @@ const STEP_FIELD_ALLOWLIST = {
     1: [
         "firstName", "surname", "countryCode", "phoneNumber", "gender",
         "dob", "country", "state", "city", "zip", "address", "languagesKnown",
-        "profilePhoto",
+        "profilePhoto", "referralSource", "referralSourceOther",
     ],
     2: [
         "specialization", "subSpecialization", "qualification", "experience",
@@ -782,6 +784,30 @@ function pickAllowedStepFields(data, allowedKeys) {
         }
     }
     return out;
+}
+
+// "How did you hear about us?" (wizard step 1). Normalises the two referral keys
+// in place when present: empty → null, anything outside the list is rejected,
+// and the free text is kept (trimmed, max 100) only for "others".
+// Returns an error message, or null when fine. Keys that are absent are left alone.
+const REFERRAL_SOURCES = ["indeed", "facebook", "instagram", "linkedin", "ai", "google", "others"];
+function normalizeReferral(data) {
+    if (Object.prototype.hasOwnProperty.call(data, "referralSource")) {
+        const raw = data.referralSource;
+        if (raw === "" || raw === null || raw === undefined) {
+            data.referralSource = null;
+        } else if (typeof raw !== "string" || !REFERRAL_SOURCES.includes(raw.trim().toLowerCase())) {
+            return "Invalid value for how you heard about us.";
+        } else {
+            data.referralSource = raw.trim().toLowerCase();
+        }
+        if (data.referralSource !== "others") data.referralSourceOther = "";
+    }
+    if (Object.prototype.hasOwnProperty.call(data, "referralSourceOther")) {
+        const other = data.referralSourceOther;
+        data.referralSourceOther = typeof other === "string" ? other.trim().slice(0, 100) : "";
+    }
+    return null;
 }
 
 // ── PATCH /api/doctor/enrollment/step ─────────────────────────────────────────
@@ -835,6 +861,8 @@ router.patch("/enrollment/step", verifyDoctorToken, async (req, res) => {
         }
 
         const safeData = pickAllowedStepFields(data, STEP_FIELD_ALLOWLIST[stepNum]);
+        const referralError = normalizeReferral(safeData);
+        if (referralError) return res.status(400).json({ message: referralError });
         enrollment.set(safeData);
         for (const key of Object.keys(safeData)) {
             if (STEP_ARRAY_OR_MIXED_FIELDS.has(key)) enrollment.markModified(key);

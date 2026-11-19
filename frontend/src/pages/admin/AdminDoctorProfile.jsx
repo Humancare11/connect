@@ -493,6 +493,16 @@ function Field({ label, value, full }) {
   );
 }
 
+const REFERRAL_LABELS = {
+  indeed: "Indeed",
+  facebook: "Facebook",
+  instagram: "Instagram",
+  linkedin: "LinkedIn",
+  ai: "AI (ChatGPT, Claude, etc.)",
+  google: "Google",
+  others: "Others",
+};
+
 const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"]);
 const DOCUMENT_FIELDS = new Set([
   "profilePhoto",
@@ -2988,6 +2998,12 @@ export default function AdminDoctorProfile() {
   const langs = Array.isArray(e.languagesKnown)
     ? e.languagesKnown.join(", ")
     : e.languagesKnown || "";
+  const referralOtherText = String(e.referralSourceOther || "").trim();
+  const referralLabel = !e.referralSource
+    ? ""
+    : e.referralSource === "others" && referralOtherText
+      ? `Others – ${referralOtherText}`
+      : REFERRAL_LABELS[e.referralSource] || String(e.referralSource);
   const hasPendingProfileUpdate =
     requestType === "profile_update" &&
     (e.profileUpdateRequestStatus || "pending") === "pending";
@@ -3566,6 +3582,7 @@ export default function AdminDoctorProfile() {
                 value={langs}
                 full={langs?.length > 40}
               />
+              <Field label="Heard About Us" value={referralLabel} />
             </div>
           </Section>
 
