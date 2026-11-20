@@ -1,8 +1,8 @@
 const { marketingConfig } = require("./config");
 
 // The ONLY place that talks to Amazon SES. Marketing mail never goes through Gmail, and system mail (OTP,
-// appointments) never goes through here. Credentials come from the AWS default chain, i.e. the EC2 instance
-// role: no access keys are read or stored by this code.
+// appointments) never goes through here. Credentials come from the EC2 instance role only (see
+// instanceRoleCredentials): no access keys are read or stored by this code.
 
 const ASCII = /^[\x20-\x7E]*$/;
 
@@ -36,13 +36,26 @@ function classifySesError(err) {
   return { kind: "uncertain", code: name || "unknown" };
 }
 
+// SES credentials come ONLY from the EC2 instance role (instance metadata). The SDK's default chain would use
+// AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_SESSION_TOKEN / AWS_PROFILE from the environment first, and those
+// may hold the S3 keys. Passing an explicit provider means none of that is ever consulted.
+function instanceRoleCredentials() {
+  const { fromInstanceMetadata } = require("@smithy/credential-provider-imds");
+  return fromInstanceMetadata({ timeout: 2000, maxRetries: 2 });
+}
+
+// The exact settings the SES client is created with (exported so a test can check them without AWS).
+function sesClientConfig(cfg = marketingConfig(), credentials = instanceRoleCredentials()) {
+  return { region: cfg.region, credentials };
+}
+
 // Options exist so tests can inject a fake `client` ({ send(command) }) and never touch AWS.
 function createSesSender({ cfg = marketingConfig(), client = null } = {}) {
   let ses = client;
   const getClient = () => {
     if (!ses) {
       const { SESv2Client } = require("@aws-sdk/client-sesv2");
-      ses = new SESv2Client({ region: cfg.region });
+      ses = new SESv2Client(sesClientConfig(cfg));
     }
     return ses;
   };
@@ -80,4 +93,4 @@ function createSesSender({ cfg = marketingConfig(), client = null } = {}) {
   return { send };
 }
 
-module.exports = { createSesSender, classifySesError, formatFrom };
+module.exports = { createSesSender, classifySesError, formatFrom, sesClientConfig, instanceRoleCredentials };
