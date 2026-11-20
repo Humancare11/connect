@@ -7,6 +7,7 @@ import { useAdmin } from "../../context/AdminContext";
 import DirectCallAlertsBell from "./DirectCallAlertsBell";
 import { LiveChatAdminProvider } from "./livechat/LiveChatAdminProvider";
 import { NAV_ITEMS, buildNav, pathMatches, targetOf } from "./adminNav";
+import { marketingApi } from "../../api/emailMarketingApi";
 
 const svg = (children) => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -91,6 +92,13 @@ const ICONS = {
     <>
       <rect x="3" y="5" width="18" height="14" rx="2" />
       <path d="m3 7 9 6 9-6" />
+    </>
+  ),
+  emailMarketing: svg(
+    <>
+      <path d="m3 11 15-6v14L3 13z" />
+      <path d="M7 13.5V18a2 2 0 0 0 4 0v-2.5" />
+      <path d="M21 9.5v5" />
     </>
   ),
   ticket: svg(
@@ -330,6 +338,22 @@ export default function AdminLayout({ children }) {
     }
   }, [user, loading, navigate]);
 
+  // Email Marketing: the menu item exists only for a Super Admin and for admins a Super Admin switched it on for.
+  // The server decides (and enforces it on every request); a failed answer simply leaves the item hidden.
+  const [marketingAllowed, setMarketingAllowed] = useState(false);
+  const accountKey = `${user?.role || ""}:${user?._id || user?.id || user?.email || ""}`;
+  useEffect(() => {
+    if (!user || !["admin", "superadmin"].includes(user.role)) return undefined;
+    let live = true;
+    marketingApi
+      .access()
+      .then((r) => live && setMarketingAllowed(Boolean(r?.allowed)))
+      .catch(() => live && setMarketingAllowed(false));
+    return () => {
+      live = false;
+    };
+  }, [accountKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // The drawer only exists on phones: drop its open state when the desktop sidebar takes over.
   if (!isPhone && sideOpen) setSideOpen(false);
 
@@ -380,7 +404,7 @@ export default function AdminLayout({ children }) {
   const crumbParent = titleParent || "Workspace";
 
   // Menu entries this role can see (see adminNav.js).
-  const visibleItems = buildNav(user.role, { liveChat: import.meta.env.VITE_LIVECHAT_ENABLED === "true" });
+  const visibleItems = buildNav(user.role, { liveChat: import.meta.env.VITE_LIVECHAT_ENABLED === "true", emailMarketing: marketingAllowed });
 
   // Highlight the best (longest) match among the visible pages, so exactly one
   // page — and its parent — is active.

@@ -135,10 +135,11 @@ function EditModal({ mailbox, onClose, onSaved }) {
   const [displayName, setDisplayName] = useState(mailbox.displayName);
   const [color, setColor] = useState(mailbox.color);
   const [signature, setSignature] = useState(mailbox.signature || "");
+  const [allowedForMarketing, setAllowedForMarketing] = useState(Boolean(mailbox.allowedForMarketing));
   const [error, setError] = useState("");
 
   const save = useMutation({
-    mutationFn: () => mailIdsApi.update(mailbox.id, { displayName: displayName.trim(), color, signature }),
+    mutationFn: () => mailIdsApi.update(mailbox.id, { displayName: displayName.trim(), color, signature, allowedForMarketing }),
     onSuccess: (res) => onSaved(res.mailbox),
     onError: (err) => setError(apiMessage(err)),
   });
@@ -167,6 +168,13 @@ function EditModal({ mailbox, onClose, onSaved }) {
         <label htmlFor="mi-footer">Footer</label>
         <textarea id="mi-footer" rows={3} maxLength={500} value={signature} onChange={(e) => setSignature(e.target.value)} />
 
+        <label htmlFor="mi-marketing" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <input id="mi-marketing" type="checkbox" checked={allowedForMarketing} onChange={(e) => setAllowedForMarketing(e.target.checked)} />
+          Allowed for marketing
+        </label>
+        <p className="em-sub">
+          Email Marketing campaigns can be sent from this Mail ID (through Amazon SES). Off by default. Keep support@ off to protect its reputation.
+        </p>
 
         {error && <div className="mi-error" role="alert">{error}</div>}
         <div className="mi-actions">
@@ -292,6 +300,7 @@ export default function MailIdsSettings() {
                 </span>
                 <span role="cell">
                   <span className={`em-tag ${m.isActive ? "mi-on" : "mi-off"}`}>{m.isActive ? "Active" : "Inactive"}</span>
+                  {m.allowedForMarketing && <span className="em-tag mi-on" style={{ marginLeft: 6 }}>Marketing</span>}
                 </span>
                 <span role="cell"><SyncCell m={m} /></span>
                 <span role="cell" className="mi-num">{m.messageCount}</span>

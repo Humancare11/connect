@@ -873,6 +873,7 @@ const AdminPartnerCaseDetail = lazy(
   () => import("./pages/admin/PartnerCaseDetail"),
 );
 const EmailLayout = lazy(() => import("./pages/admin/email/EmailLayout"));
+const EmailMarketingPage = lazy(() => import("./pages/admin/emailMarketing/EmailMarketingPage"));
 const EmailList = lazy(() => import("./pages/admin/email/EmailList"));
 const EmailThread = lazy(() => import("./pages/admin/email/EmailThread"));
 const MailIdsSettings = lazy(
@@ -1799,6 +1800,17 @@ export function AppLayout() {
                     <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                       <AdminLayout>
                         <MySignature />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                {/* Email Marketing: campaigns sent through Amazon SES. The server decides who may use it (Super Admin, or an admin a Super Admin switched on). */}
+                <Route
+                  path="/admin-dashboard/email-marketing/*"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <EmailMarketingPage />
                       </AdminLayout>
                     </PrivateRoute>
                   }

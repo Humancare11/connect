@@ -64,6 +64,7 @@ export const SEO_ROUTES = {
   "/admin-dashboard/direct-video-consultation": {"robots":"noindex,nofollow"},
   "/admin-dashboard/direct-video-consultation/calls": {"robots":"noindex,nofollow"},
   "/admin-dashboard/email": {"robots":"noindex,nofollow"},
+  "/admin-dashboard/email-marketing": {"robots":"noindex,nofollow"},
   "/admin-dashboard/gop": {"robots":"noindex,nofollow"},
   "/admin-dashboard/manage-doctors": {"robots":"noindex,nofollow"},
   "/admin-dashboard/manage-users": {"robots":"noindex,nofollow"},

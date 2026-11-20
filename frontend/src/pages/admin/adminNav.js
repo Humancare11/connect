@@ -70,6 +70,9 @@ export const NAV_ITEMS = [
   // Shared company mailboxes (support@, tech@). Same visibility rule as the
   // other admin pages: admin + superadmin, never the payment admin.
   { key: "email", label: "Email", path: "/admin-dashboard/email", roles: ["admin", "superadmin"], icon: "email" },
+  // Email Marketing: its own page, right below Email (campaigns sent through Amazon SES). Shown only to a Super Admin
+  // and to the admins a Super Admin switched it on for: AdminLayout passes `emailMarketing` from the server's answer.
+  { key: "email-marketing", label: "Email Marketing", path: "/admin-dashboard/email-marketing", roles: ["admin", "superadmin"], icon: "emailMarketing" },
   // Live Chat (admin + superadmin only; employeeadmin is not a live agent). It has its own menu and opens in its own
   // browser tab (see liveChatTabs.js). The module itself is switched on and off by LIVECHAT_ENABLED on the server.
   {
@@ -103,9 +106,10 @@ export const targetOf = (link, role) => (role === "paymentadmin" && link.payment
 
 // What this role sees, in order. Parents are shown only when at least one child is; Live Chat only in builds with
 // VITE_LIVECHAT_ENABLED=true (otherwise the panel is as before). Children come back as `links`, each with its `target`.
-export function buildNav(role, { liveChat = false } = {}) {
+export function buildNav(role, { liveChat = false, emailMarketing = false } = {}) {
   const withTarget = (link) => ({ ...link, target: targetOf(link, role) });
   return NAV_ITEMS.filter((item) => item.key !== "live-chat" || liveChat)
+    .filter((item) => item.key !== "email-marketing" || emailMarketing)
     .map((item) => (item.children ? { ...item, links: item.children.filter((c) => isVisibleTo(c, role)).map(withTarget) } : item))
     .filter((item) => (item.children ? item.links.length > 0 : isVisibleTo(item, role)));
 }
