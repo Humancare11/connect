@@ -3,12 +3,15 @@ import { createRoot, hydrateRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import { installSecureConsole } from "./utils/secureConsole";
 import { installChunkReload } from "./utils/chunkReload";
+import { reportEmailClick } from "./utils/emailClickReport";
 
 // Must run before anything else can call console.error/warn with a raw
 // Axios error object (see utils/secureConsole.js for why).
 installSecureConsole();
 // A page loaded before a deploy asks for chunk files that no longer exist: reload once to get the new build.
 installChunkReload();
+// Email Marketing: report a ?r=<code> visit once and remove it from the address bar (see utils/emailClickReport.js).
+reportEmailClick();
 import AppProviders from "./AppProviders";
 import { readPrerenderData } from "./seo/prerenderData";
 import PrerenderCleanup from "./seo/PrerenderCleanup";

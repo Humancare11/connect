@@ -6,6 +6,7 @@ const { getTrackingState, trackingEnv } = require("../email/emailSettings");
 const { hashToken, isTokenShape } = require("../email/trackingToken");
 const { classifyOpen, uaFamily } = require("../email/openClassifier");
 const { classifyClick } = require("../email/clickRecorder");
+const { isCodeShape, hashCode, marketingLinksOn } = require("./clickLinks");
 
 // Open and click tracking for marketing mail: the SAME rules, gates and classifiers as the Email page
 // (grace window, scanner lists, Apple Mail Privacy Protection, second-hit rule, de-duplication, burst rule),
@@ -24,6 +25,13 @@ const optedOut = async (email) => Boolean(email) && Boolean(await EmailTrackingO
 async function findMarketingLink(token) {
   if (!isTokenShape(token)) return null;
   const link = await MarketingLink.findOne({ tokenHash: hashToken(token) }).select("_id recipient campaign url").lean();
+  return link ? { url: link.url, linkId: link._id, recipientId: link.recipient, campaignId: link.campaign, marketing: true } : null;
+}
+
+// Looks a short click code up (the ?r= code on our site, or /go/<code>). Same shape of answer as above.
+async function findMarketingCode(code) {
+  if (!isCodeShape(code)) return null;
+  const link = await MarketingLink.findOne({ tokenHash: hashCode(code), kind: { $in: ["own", "go"] } }).select("_id recipient campaign url").lean();
   return link ? { url: link.url, linkId: link._id, recipientId: link.recipient, campaignId: link.campaign, marketing: true } : null;
 }
 
@@ -90,12 +98,13 @@ async function recordMarketingOpen({ token, ip = "", userAgent = "" }, { now = n
   return { recorded: true, counted: Boolean(verdict.counted), reason: verdict.secondHit ? "second_hit" : verdict.reason || "" };
 }
 
-async function recordMarketingClick({ token, ip = "", userAgent = "" }, { now = new Date(), state, env = process.env } = {}) {
-  const link = await findMarketingLink(token);
+// `token`: the 32-character /api/l token (older mails) · `code`: the short ?r= / go code (current mails).
+// Marketing clicks are recorded whenever the env switches are on; the Email page's link switch is not consulted.
+async function recordMarketingClick({ token, code, ip = "", userAgent = "" }, { now = new Date(), env = process.env } = {}) {
+  const link = code ? await findMarketingCode(code) : await findMarketingLink(token);
   if (!link) return { recorded: false, why: "unknown_token" };
-  const current = state || (await getTrackingState({ env, now: now.getTime() }));
-  if (!current.linksActive) return { recorded: false, why: "links_off" };
   const cfg = trackingEnv(env);
+  if (!marketingLinksOn(cfg)) return { recorded: false, why: "links_off" };
 
   const recipient = await MarketingRecipient.findById(link.recipientId).select("_id campaign email sentAt").lean();
   if (!recipient || !recipient.sentAt) return { recorded: false, why: "unknown_token" };
@@ -170,4 +179,4 @@ async function recordMarketingClick({ token, ip = "", userAgent = "" }, { now = 
   return { recorded: true, counted: Boolean(verdict.counted), reason: verdict.reason || "" };
 }
 
-module.exports = { findMarketingLink, recordMarketingOpen, recordMarketingClick };
+module.exports = { findMarketingLink, findMarketingCode, recordMarketingOpen, recordMarketingClick };

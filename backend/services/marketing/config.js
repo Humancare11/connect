@@ -24,6 +24,9 @@ function marketingConfig(env = process.env) {
     footerAddress: String(env.MARKETING_FOOTER_ADDRESS || "").replace(/[\r\n]+/g, " ").trim(),
     // Unsubscribe and tracking links share the host of the existing tracking links.
     baseUrl: normalizeBaseUrl(env.PUBLIC_TRACKING_BASE_URL),
+    // Extra hosts (comma separated) whose pages report the "?r=" click code. humancareconnect.co, www. and the host
+    // of PUBLIC_TRACKING_BASE_URL are always included.
+    siteHosts: String(env.MARKETING_SITE_HOSTS || ""),
     testsPer10Min: Math.floor(positive(env.MARKETING_TESTS_PER_10_MIN, 10)),
   };
 }

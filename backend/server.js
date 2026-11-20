@@ -91,6 +91,9 @@ app.set("trust proxy", parseTrustProxy(process.env.TRUST_PROXY));
 // must answer every request identically. Inert unless open tracking is switched on.
 app.use("/api/e", require("./routes/publicTracking"));
 app.use("/api/l", require("./routes/publicLinks"));
+// Email Marketing click codes: /go/<code> (short redirect to another site) and POST /api/r/<code> (the website reports ?r=<code>).
+app.use("/go", require("./routes/publicClickCodes").go);
+app.use("/api/r", require("./routes/publicClickCodes").report);
 app.use("/api/d", require("./routes/publicDownloads"));
 // Email Marketing, public parts (no login, no CORS, same reasoning as the tracking routes above): the unsubscribe
 // page / one-click endpoint, and the Amazon SNS endpoint for SES bounces and complaints (SNS posts plain text).

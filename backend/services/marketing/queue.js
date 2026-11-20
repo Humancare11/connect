@@ -2,7 +2,8 @@ const MarketingCampaign = require("../../models/MarketingCampaign");
 const MarketingRecipient = require("../../models/MarketingRecipient");
 const MarketingLink = require("../../models/MarketingLink");
 const { getTrackingState } = require("../email/emailSettings");
-const { newToken, trackingUrl, linkUrl } = require("../email/trackingToken");
+const { newToken, trackingUrl } = require("../email/trackingToken");
+const { newClickCode, ownSiteHosts, planLink, goUrl, marketingLinksOn } = require("./clickLinks");
 const { marketingConfig } = require("./config");
 const { renderMail, MAX_TRACKED_LINKS } = require("./render");
 const { createUnsubscribeToken, unsubscribeUrl } = require("./unsubscribe");
@@ -97,16 +98,22 @@ function createMarketingQueue({
         pixelUrl = trackingUrl(state.baseUrl, t.token);
         openHash = t.hash;
       }
-      const trackLink = state.linksActive
+      // Click tracking for marketing is on whenever the env switches are (the Email page's own switch is not consulted).
+      // Own-site links keep their real address plus ?r=<code>; other sites go through <base>/go/<code>.
+      const hosts = ownSiteHosts({ baseUrl: state.baseUrl, extra: cfg.siteHosts });
+      const trackLink = marketingLinksOn(state)
         ? (url) => {
+            if (url.startsWith(`${state.baseUrl}/api/u/`)) return null; // never the unsubscribe link
             let entry = tracked.find((l) => l.url === url);
             if (!entry) {
               if (tracked.length >= MAX_TRACKED_LINKS) return null;
-              const t = newToken();
-              entry = { url, hash: t.hash, token: t.token, index: tracked.length };
+              const c = newClickCode();
+              const plan = planLink(url, { hosts, code: c.code, goUrl: (code) => goUrl(state.baseUrl, code) });
+              if (!plan) return null;
+              entry = { url, hash: c.hash, out: plan.url, kind: plan.kind, index: tracked.length };
               tracked.push(entry);
             }
-            return linkUrl(state.baseUrl, entry.token);
+            return entry.out;
           }
         : null;
 
@@ -117,7 +124,7 @@ function createMarketingQueue({
       // The links and the open token must exist before the mail leaves, or a very fast click would find nothing.
       if (tracked.length) {
         await MarketingLink.insertMany(
-          tracked.map((l) => ({ recipient: rec._id, campaign: campaign._id, index: l.index, url: l.url, tokenHash: l.hash }))
+          tracked.map((l) => ({ recipient: rec._id, campaign: campaign._id, index: l.index, url: l.url, tokenHash: l.hash, kind: l.kind }))
         );
       }
       if (openHash) await MarketingRecipient.updateOne({ _id: rec._id }, { $set: { openTokenHash: openHash } });

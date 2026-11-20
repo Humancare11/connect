@@ -9,6 +9,8 @@ const linkSchema = new mongoose.Schema(
     index: { type: Number, required: true },
     url: { type: String, required: true, maxlength: 2048 },
     tokenHash: { type: String, required: true },
+    // api: /api/l/<token> (older mails) · own: ?r=<code> on our site · go: /go/<code> redirect
+    kind: { type: String, enum: ["api", "own", "go"], default: "api" },
   },
   { timestamps: { createdAt: true, updatedAt: false }, versionKey: false }
 );

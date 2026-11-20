@@ -23,8 +23,20 @@ Branch: `admin`. Demo of the approved UI: `docs/email-marketing-demo.html`.
 - **Suppression.** One global list (unsubscribe, hard bounce, complaint), checked before every send. Marketing only.
 - **Sanitising.** Scripts, event handlers, forms, iframes, `javascript:` URLs and unsafe CSS are removed on the server.
   Tables, images, links, inline styles and `<style>` blocks (cleaned) are kept.
-- **Tracking.** Hidden open image and tracked links per recipient, with the same rules and switches as the Email page
-  (scanner lists, Apple Mail Privacy Protection, grace window, dedupe). Never announced in the mail.
+- **Tracking.** Hidden open image (same rules and switches as the Email page: scanner lists, Apple Mail Privacy
+  Protection, grace window, dedupe) and click tracking per recipient. Never announced in the mail.
+- **Click tracking, no technical URL on hover.** Marketing always tracks clicks while `EMAIL_TRACKING_ENABLED` and
+  `EMAIL_TRACKING_LINKS_ENABLED` are on (the env switches are the emergency stop). The Super Admin "Record which links are
+  clicked" switch belongs to the Email page only and is not consulted. Test mails and the plain-text part are never rewritten;
+  neither are `mailto:`, `tel:`, `#anchors` and the unsubscribe link.
+  - Links to our own site (`humancareconnect.co`, `www.`, and the host of `PUBLIC_TRACKING_BASE_URL`, i.e. `uat.` on UAT)
+    keep the real page address plus `?r=<code>` (existing query string and `#fragment` kept). The website reports the
+    code once (`POST /api/r/<code>`, `navigator.sendBeacon`) and removes it from the address bar before the app renders.
+    Files, `/api` addresses and links that already have an `r` parameter use the redirect below instead.
+  - Links to other sites become `<PUBLIC_TRACKING_BASE_URL>/go/<code>`, a 302 to the stored address (only a stored address,
+    never a URL from the request).
+  - The code is ~10 random base62 characters: no email, name or campaign in it; only its SHA-256 is stored.
+  - Older `/api/l/<token>` links keep working.
 - **Unsubscribe.** Footer link plus `List-Unsubscribe` and `List-Unsubscribe-Post` (one-click). Signed token, public page
   at `/api/u/<token>`. Opening the link does not unsubscribe anyone; the button does.
 - **Bounces and complaints.** SES, SNS, `POST /api/ses/events` (signature and topic verified) mark the recipient and add
@@ -50,6 +62,7 @@ Branch: `admin`. Demo of the approved UI: `docs/email-marketing-demo.html`.
 | `MARKETING_LEASE_SECONDS` | `120` | |
 | `MARKETING_TICK_MS` | `1000` | |
 | `MARKETING_TESTS_PER_10_MIN` | `10` | |
+| `MARKETING_SITE_HOSTS` | empty | Optional extra own-site hosts (comma separated) that get `?r=`. |
 
 Already needed for tracking and the unsubscribe link: `PUBLIC_TRACKING_BASE_URL` (public https), `EMAIL_TRACKING_ENABLED=true`,
 `EMAIL_TRACKING_LINKS_ENABLED=true`, and the Super Admin tracking switches (Email, Mail IDs). Without a public https base
@@ -69,6 +82,28 @@ what is missing.
 6. EC2 instance role: allow `ses:SendEmail` on the domain identity and the configuration set. No access keys.
 7. Turn on the SES account-level suppression list for bounces and complaints (second layer).
 8. Request production access when ready (the sandbox only delivers to verified addresses).
+
+## nginx: `/go/` must reach the backend
+
+`/go/<code>` is served by the Node backend, so the web server in front of the site needs one location for it. The report
+endpoint `POST /api/r/<code>` is under `/api/`, which is already proxied: **no change needed for it**.
+
+```nginx
+# Add next to the existing "location /api/" block of the site (UAT: uat.humancareconnect.co, production: humancareconnect.co
+# and www). Use the same upstream/port as the /api/ block. Must come before the generic "location /" block.
+location ^~ /go/ {
+    proxy_pass http://127.0.0.1:5000;            # same target as location /api/
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_redirect off;                           # pass the backend's 302 Location through untouched
+}
+```
+
+Then `nginx -t && systemctl reload nginx`. It does not matter whether static files come from `/usr/share/nginx/html` (UAT) or
+`/var/www/connect` (production): `^~` makes this prefix win over the static `location /` and over regex locations. Check:
+`curl -sI https://<host>/go/doesnotexist1` must answer `404` with `x-robots-tag: noindex` (not the website's 404 page).
 
 ## UAT deploy steps
 

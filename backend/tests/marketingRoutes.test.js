@@ -22,7 +22,8 @@ const { marketingEnabledGate, requireMarketingAccess } = require("../middleware/
 const { marketingConfig } = require("../services/marketing/config");
 const { createMarketingQueue } = require("../services/marketing/queue");
 const { createUnsubscribeToken } = require("../services/marketing/unsubscribe");
-const { recordMarketingOpen, recordMarketingClick } = require("../services/marketing/tracking");
+const LINK_ENV = { EMAIL_TRACKING_ENABLED: "true", EMAIL_TRACKING_LINKS_ENABLED: "true", PUBLIC_TRACKING_BASE_URL: "https://h.example" };
+const { recordMarketingOpen, recordMarketingClick, findMarketingCode } = require("../services/marketing/tracking");
 const { recordOpenAny, recordClickAny, findLinkAny } = require("../services/marketing/trackingBridge");
 const { newToken } = require("../services/email/trackingToken");
 
@@ -216,6 +217,7 @@ describe("Email Marketing routes (real routers, in-memory MongoDB, fake SES)", (
       assert.equal((await call("POST", `${API}/campaigns/${id}/test`, { user: admin, body: { to: "me@humancareconnect.co" } })).status, 200);
       assert.equal(sender.calls.length, 1);
       assert.match(sender.calls[0].subject, /^\[Test\] Hello Anil/);
+      assert.doesNotMatch(sender.calls[0].html, /\/go\/|[?&]r=|\/api\/[el]\//, "a test mail stays untracked");
 
       assert.equal((await call("POST", `${API}/campaigns/${id}/send`, { user: admin, body: { confirm: false } })).status, 400);
       const sent = await call("POST", `${API}/campaigns/${id}/send`, { user: admin, body: { confirm: true } });
@@ -229,7 +231,7 @@ describe("Email Marketing routes (real routers, in-memory MongoDB, fake SES)", (
 
       // The server-side queue does the sending (here driven by hand, with the fake SES).
       sender.calls.length = 0;
-      const queue = createMarketingQueue({ sender, cfg, sleep: async () => {}, trackingState: async () => ({ active: true, linksActive: true, baseUrl: "https://h.example" }), log: { warn() {}, error() {}, log() {} } });
+      const queue = createMarketingQueue({ sender, cfg, sleep: async () => {}, trackingState: async () => ({ envEnabled: true, linksEnvEnabled: true, active: true, linksActive: false, baseUrl: "https://h.example" }), log: { warn() {}, error() {}, log() {} } });
       await queue.runOnce();
       assert.equal(sender.calls.length, 3);
       const progress = await call("GET", `${API}/campaigns/${id}/progress`, { user: admin });
@@ -254,12 +256,12 @@ describe("Email Marketing routes (real routers, in-memory MongoDB, fake SES)", (
       const tokenOf = (html, re) => html.match(re)[1];
       const mail = sender.calls.find((c) => c.to === "priya@example.com");
       const openTok = tokenOf(mail.html, /api\/e\/([A-Za-z0-9_-]{32})\.gif/);
-      const linkTok = tokenOf(mail.html, /api\/l\/([A-Za-z0-9_-]{32})/);
+      const linkCode = tokenOf(mail.html, /[?&]r=([A-Za-z0-9]{10})/);
       const UA = "Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/120.0 Safari/537.36";
-      const state = { active: true, linksActive: true };
+      const state = { active: true, linksActive: false };
       assert.equal((await recordOpenAny({ token: openTok, ip: "203.0.113.5", userAgent: UA }, { state })).counted, true);
-      assert.equal((await recordClickAny({ token: linkTok, ip: "203.0.113.5", userAgent: UA }, { state })).counted, true);
-      assert.equal((await findLinkAny(linkTok)).url, "https://humancareconnect.co", "stored exactly as the admin wrote it");
+      assert.equal((await recordMarketingClick({ code: linkCode, ip: "203.0.113.5", userAgent: UA }, { env: LINK_ENV })).counted, true);
+      assert.equal((await findMarketingCode(linkCode)).url, "https://humancareconnect.co", "stored exactly as the admin wrote it");
 
       // A reply to Priya's mail arrives in the Mail ID's Gmail and is stored by the existing sync.
       await EmailMessage.collection.insertOne({
@@ -437,7 +439,7 @@ describe("Email Marketing routes (real routers, in-memory MongoDB, fake SES)", (
       return { r, open: open.token, link: link.token };
     }
     const UA = "Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/120.0 Safari/537.36";
-    const state = { active: true, linksActive: true };
+    const state = { active: true, linksActive: false }; // the Email page's link switch is off: marketing does not care
 
     test("a real open counts once inside the dedupe window; scanners, no-user-agent and the first seconds do not", async () => {
       const { r, open } = await trackedRecipient();
@@ -464,17 +466,17 @@ describe("Email Marketing routes (real routers, in-memory MongoDB, fake SES)", (
 
     test("a click counts; a scanner following every link is ignored; clicks stop being recorded for an opted-out address", async () => {
       const { r, link } = await trackedRecipient();
-      assert.equal((await recordMarketingClick({ token: link, ip: "203.0.113.5", userAgent: UA }, { state })).counted, true);
-      assert.equal((await recordMarketingClick({ token: link, ip: "203.0.113.5", userAgent: UA }, { state })).counted, false, "double click");
+      assert.equal((await recordMarketingClick({ token: link, ip: "203.0.113.5", userAgent: UA }, { env: LINK_ENV })).counted, true);
+      assert.equal((await recordMarketingClick({ token: link, ip: "203.0.113.5", userAgent: UA }, { env: LINK_ENV })).counted, false, "double click");
       assert.equal((await MarketingRecipient.findById(r._id)).clickCount, 1);
       await EmailTrackingOptOut.create({ address: "reader@example.com" });
-      assert.equal((await recordMarketingClick({ token: link, ip: "203.0.113.5", userAgent: UA }, { state })).recorded, false);
+      assert.equal((await recordMarketingClick({ token: link, ip: "203.0.113.5", userAgent: UA }, { env: LINK_ENV })).recorded, false);
       assert.equal((await recordMarketingOpen({ token: link, ip: "203.0.113.5", userAgent: UA }, { state })).recorded, false);
     });
 
     test("switched off: nothing is recorded, but the link still redirects", async () => {
       const { r, link } = await trackedRecipient();
-      assert.equal((await recordMarketingClick({ token: link, ip: "203.0.113.5", userAgent: UA }, { state: { active: false, linksActive: false } })).recorded, false);
+      assert.equal((await recordMarketingClick({ token: link, ip: "203.0.113.5", userAgent: UA }, { env: { ...LINK_ENV, EMAIL_TRACKING_LINKS_ENABLED: "false" } })).recorded, false);
       assert.equal((await findLinkAny(link)).url, "https://example.com/offer");
       assert.equal((await MarketingRecipient.findById(r._id)).clickCount, 0);
     });

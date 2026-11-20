@@ -244,7 +244,7 @@ describe("Email Marketing queue (fake SES, in-memory MongoDB)", () => {
 
   test("tracking: a hidden image and tracked links per recipient, stored before the mail leaves; unsubscribe link untracked", async () => {
     const c = await campaignWith([{ email: "ana@example.com", name: "Ana" }]);
-    const h = harness({ tracking: { active: true, linksActive: true, baseUrl: BASE } });
+    const h = harness({ tracking: { envEnabled: true, linksEnvEnabled: true, active: true, linksActive: false, baseUrl: BASE } });
     h.sender.onSend = async () => {
       assert.equal(await MarketingLink.countDocuments({}), 1, "link stored before sending");
       assert.ok((await MarketingRecipient.findOne({ email: "ana@example.com" })).openTokenHash);
@@ -252,7 +252,7 @@ describe("Email Marketing queue (fake SES, in-memory MongoDB)", () => {
     await h.queue.runOnce();
     const sent = h.sender.calls[0];
     assert.match(sent.html, /src="https:\/\/h\.example\/api\/e\/[A-Za-z0-9_-]{32}\.gif"/);
-    assert.match(sent.html, /href="https:\/\/h\.example\/api\/l\/[A-Za-z0-9_-]{32}"/);
+    assert.match(sent.html, /href="https:\/\/h\.example\/go\/[A-Za-z0-9]{10}"/);
     assert.doesNotMatch(sent.html, /href="https:\/\/example\.com\/a"/);
     assert.match(sent.html, /href="https:\/\/h\.example\/api\/u\//);
     const link = await MarketingLink.findOne({});
@@ -263,9 +263,9 @@ describe("Email Marketing queue (fake SES, in-memory MongoDB)", () => {
 
   test("with tracking switched off the mail has no image and no rewritten links", async () => {
     await campaignWith(["a@example.com"]);
-    const h = harness({ tracking: { active: false, linksActive: false, baseUrl: BASE } });
+    const h = harness({ tracking: { envEnabled: true, linksEnvEnabled: false, active: false, linksActive: false, baseUrl: BASE } });
     await h.queue.runOnce();
-    assert.doesNotMatch(h.sender.calls[0].html, /api\/e\/|api\/l\//);
+    assert.doesNotMatch(h.sender.calls[0].html, /api\/e\/|api\/l\/|\/go\//);
     assert.equal(await MarketingLink.countDocuments({}), 0);
   });
 
