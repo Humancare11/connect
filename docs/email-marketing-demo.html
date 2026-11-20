@@ -1,0 +1,602 @@
+<title>HCC Email Marketing</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: the live HCC admin shell (navy sidebar + white top bar) with the existing Email rail; a new "Email Marketing" item opens
+   campaigns: list -> 4-step builder (Recipients, Content, Preview & test, Send) -> live sending -> per-recipient report.
+   Single light theme on purpose: it copies the live admin dashboard colours. */
+:root{
+  --page:#eef1f7; --surface:#ffffff; --soft:#f6f8fc; --line:#e3e8f1; --hover:#f1f5fd;
+  --navy:#1a1c5c; --navy-2:#15174d; --navy-ink:#dfe3ff; --navy-muted:#9aa2d8;
+  --ink:#16213e; --muted:#66718a; --faint:#98a2b6;
+  --blue:#2563eb; --blue-ink:#ffffff; --blue-soft:#e6eefe;
+  --green:#0f8a5f; --green-soft:#e3f5ec; --amber:#9a5d00; --amber-soft:#fdf1da; --red:#c2352b; --red-soft:#fbe5e3;
+  --violet:#6d4bd1; --violet-soft:#eee8fc;
+  --font:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{background:var(--page)}
+body{color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.ico{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.note{background:var(--amber-soft);color:var(--amber);font-size:12.5px;text-align:center;padding-block:7px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+.app{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}
+.side{background:var(--navy);color:var(--navy-ink);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding-left:env(safe-area-inset-left,0px)}
+.brand{display:flex;align-items:center;gap:10px;padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.logo{width:38px;height:38px;border-radius:10px;background:#7c5cf2;color:#fff;display:grid;place-items:center;font-weight:800}
+.brand b{display:block;color:#fff;font-size:15px}.brand small{font-size:10.5px;letter-spacing:.1em;color:var(--navy-muted);font-weight:700}
+.snav{display:flex;flex-direction:column;gap:2px;padding:14px 10px;overflow-y:auto;flex:1}
+.snav a{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:10px;color:var(--navy-ink);text-decoration:none;font-size:14px;font-weight:500}
+.snav a:hover{background:rgba(255,255,255,.07)}
+.snav a.on{background:rgba(255,255,255,.12);color:#fff;font-weight:700}
+.signout{padding:14px 22px;border-top:1px solid rgba(255,255,255,.08);color:#ff8f8f;font-weight:600}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:14px;background:var(--surface);border-bottom:1px solid var(--line);padding-block:12px;padding-left:24px;padding-right:max(24px,env(safe-area-inset-right,0px))}
+.crumb{font-size:12px;color:var(--muted)}
+.top h1{margin:2px 0 0;font-size:19px;font-weight:700}
+.top .sp{flex:1}
+.bell{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);display:grid;place-items:center;color:var(--muted);position:relative;background:var(--surface)}
+.bell i{position:absolute;top:-6px;right:-6px;background:#e5484d;color:#fff;font-style:normal;font-size:10px;font-weight:700;border-radius:999px;padding:1px 5px}
+.who-me{display:flex;align-items:center;gap:10px}
+.who-me .av{width:38px;height:38px;border-radius:50%;background:#7c8cf2;color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+.who-me b{display:block;font-size:13.5px}.who-me small{background:#7c3aed;color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.06em;border-radius:5px;padding:1px 6px}
+
+.wrap{padding-block:20px 40px;padding-left:24px;padding-right:max(24px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
+.snav a .newb{margin-left:auto}
+.rail{display:flex;flex-direction:column;gap:3px;position:sticky;top:16px}
+.compose-btn{display:flex;align-items:center;gap:10px;border:0;background:var(--blue);color:var(--blue-ink);font-weight:700;border-radius:12px;padding:12px 20px;margin-bottom:10px;box-shadow:0 4px 12px rgba(37,99,235,.25);align-self:flex-start}
+.ritem{display:flex;align-items:center;gap:12px;border:0;background:transparent;border-radius:10px;padding:9px 14px;text-align:left;width:100%;font-size:14px;color:var(--ink)}
+.ritem:hover{background:var(--hover)}
+.ritem.on{background:var(--blue-soft);color:var(--blue);font-weight:700}
+.ritem .n{margin-left:auto;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.ritem.sub{font-size:13px;color:var(--muted)}
+.rsep{height:1px;background:var(--line);margin:8px 6px}
+.newb{margin-left:auto;background:var(--green);color:#fff;font-size:10px;font-weight:800;border-radius:999px;padding:1px 7px;letter-spacing:.04em}
+
+.card{background:var(--surface);border-radius:16px;border:1px solid var(--line);min-width:0;overflow:hidden}
+.chead{display:flex;align-items:center;gap:12px;padding:16px 20px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.chead h2{margin:0;font-size:18px;font-weight:700}
+.chead p{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+.chead .sp{flex:1}
+.btn{border:0;border-radius:10px;padding:9px 16px;font-weight:700;font-size:13.5px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.btn-p{background:var(--blue);color:var(--blue-ink)}
+.btn-p:disabled{opacity:.45;cursor:not-allowed}
+.btn-g{background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+.btn-g:hover{background:var(--hover)}
+.btn-s{padding:6px 11px;font-size:12.5px}
+.linkb{border:0;background:transparent;color:var(--blue);font-weight:700;padding:0;font-size:inherit}
+
+/* campaign list */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:700;padding:10px 16px;background:var(--soft);border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:13.5px}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--hover)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.cname b{display:block;font-weight:700}.cname small{color:var(--muted);font-size:12px}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.st.sent{background:var(--green-soft);color:var(--green)}
+.st.sending{background:var(--blue-soft);color:var(--blue)}
+.st.draft{background:var(--soft);color:var(--muted);border:1px solid var(--line)}
+.st.opened{background:var(--green-soft);color:var(--green)}
+.st.clicked{background:var(--violet-soft);color:var(--violet)}
+.st.replied{background:#e0f2fe;color:#0369a1}
+.st.delivered{background:var(--soft);color:var(--muted);border:1px solid var(--line)}
+.st.bounced{background:var(--red-soft);color:var(--red)}
+.st.unsub{background:var(--amber-soft);color:var(--amber)}
+.pct{color:var(--muted);font-size:11.5px;display:block}
+.minibar{height:5px;border-radius:9px;background:var(--line);overflow:hidden;width:90px;margin-top:5px}
+.minibar i{display:block;height:100%;background:var(--blue)}
+.byline{display:flex;align-items:center;gap:8px}
+.av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:10.5px;flex:none}
+
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:16px 20px;background:var(--soft);border-top:1px solid var(--line)}
+.how div{font-size:12.5px;color:var(--muted)}
+.how b{display:block;color:var(--ink);font-size:13px;margin-bottom:2px}
+
+/* stepper */
+.steps{display:flex;gap:6px;padding:14px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:var(--soft)}
+.step{display:flex;align-items:center;gap:8px;border:0;background:transparent;border-radius:999px;padding:6px 12px 6px 6px;font-size:13px;font-weight:600;color:var(--muted)}
+.step i{font-style:normal;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);font-size:12px;font-weight:800}
+.step.on{background:var(--blue-soft);color:var(--blue)}
+.step.on i{background:var(--blue);color:#fff;border-color:var(--blue)}
+.step.done i{background:var(--green);color:#fff;border-color:var(--green)}
+.step:disabled{cursor:not-allowed;opacity:.6}
+.body{padding:20px;display:flex;flex-direction:column;gap:18px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>label,.flabel{font-size:12.5px;font-weight:700;color:var(--ink)}
+.field small,.hint{color:var(--muted);font-size:12px}
+.inp,.sel,.ta{border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--surface);width:100%;outline:0}
+.inp:focus,.sel:focus,.ta:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
+.ta{min-height:150px;resize:vertical;font-size:13px;line-height:1.55}
+.ta.code{font-family:var(--mono);font-size:12px;min-height:260px;background:#fbfcff}
+.tabs{display:inline-flex;background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px;flex-wrap:wrap}
+.tabs button{border:0;background:transparent;border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.tabs button.on{background:var(--surface);color:var(--blue);box-shadow:0 1px 3px rgba(22,33,62,.12)}
+.drop{border:1.5px dashed #b9c6e4;border-radius:12px;padding:22px;text-align:center;color:var(--muted);background:var(--soft);position:relative}
+.drop b{color:var(--ink)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.callout{display:flex;gap:10px;align-items:flex-start;border-radius:12px;padding:11px 14px;font-size:13px}
+.callout.info{background:var(--blue-soft);color:#1e40af}
+.callout.warn{background:var(--amber-soft);color:var(--amber)}
+.callout.ok{background:var(--green-soft);color:var(--green)}
+.callout .ico{margin-top:1px}
+
+.parse{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.pstats{display:flex;flex-wrap:wrap;gap:0;border-bottom:1px solid var(--line)}
+.pstats div{flex:1 1 120px;padding:10px 14px;border-right:1px solid var(--line)}
+.pstats div:last-child{border-right:0}
+.pstats b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.pstats span{font-size:11.5px;color:var(--muted);font-weight:600}
+.pstats .bad b{color:var(--red)}.pstats .warnc b{color:var(--amber)}.pstats .good b{color:var(--green)}
+.plist{max-height:230px;overflow:auto}
+.plist table{min-width:0}
+.plist td{padding:8px 14px;font-size:13px}
+.miss{color:var(--amber);font-size:12px;font-weight:600}
+.badlist{padding:10px 14px;background:var(--red-soft);color:var(--red);font-size:12.5px;border-top:1px solid var(--line)}
+.badlist code{font-family:var(--mono);background:rgba(255,255,255,.6);border-radius:4px;padding:0 4px}
+
+.ph{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.phchip{border:1px dashed var(--blue);background:var(--blue-soft);color:var(--blue);border-radius:8px;padding:4px 9px;font-family:var(--mono);font-size:12px;font-weight:700}
+
+/* preview */
+.pv{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:18px;align-items:start}
+.pvbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.pvbar .sp{flex:1}
+.who-nav{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.who-nav b{color:var(--ink)}
+.inbox{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--soft);margin-inline:auto;width:100%;transition:max-width .2s}
+.inbox.mobile{max-width:390px}
+.inbox-h{background:var(--surface);padding:12px 16px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.inbox-h b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+.inbox iframe{display:block;width:100%;height:560px;border:0;background:#fff}
+.side-box{border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.side-box h3{margin:0;font-size:14px}
+.checks{display:flex;flex-direction:column;gap:7px;font-size:12.5px}
+.checks div{display:flex;gap:8px;align-items:flex-start}
+.ok-i{color:var(--green)}.warn-i{color:var(--amber)}
+
+/* send */
+.sum{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.sum div{padding:12px 16px;border-bottom:1px solid var(--line);min-width:0}
+.sum div:nth-child(odd){border-right:1px solid var(--line)}
+.sum span{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:700}
+.sum b{font-size:14px;overflow-wrap:anywhere}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13.5px}
+.chk input{margin-top:3px;width:16px;height:16px}
+.prog{border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.bar{height:12px;border-radius:999px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),#4f8bff);transition:width .3s}
+.pnums{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.pnums b{color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* report */
+.tiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;border-bottom:1px solid var(--line)}
+.tile{padding:14px 16px;border-right:1px solid var(--line);min-width:0}
+.tile:last-child{border-right:0}
+.tile span{display:block;font-size:11.5px;font-weight:700;color:var(--muted)}
+.tile b{font-size:22px;font-variant-numeric:tabular-nums}
+.tile em{font-style:normal;font-size:12px;color:var(--muted);margin-left:4px}
+.fchips{display:flex;gap:6px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--line)}
+.fchips button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 11px;font-size:12px;font-weight:600;color:var(--muted)}
+.fchips button.on{border-color:var(--blue);background:var(--blue-soft);color:var(--blue)}
+.foot{display:flex;justify-content:space-between;gap:10px;padding:14px 20px;border-top:1px solid var(--line);flex-wrap:wrap;background:var(--soft)}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--navy);color:#fff;padding:10px 16px;border-radius:10px;font-size:13.5px;z-index:40;max-width:calc(100% - 32px)}
+
+@media (max-width:1150px){.pv{grid-template-columns:1fr}.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}.tile:nth-child(3){border-right:0}.tile{border-bottom:1px solid var(--line)}}
+@media (max-width:980px){.app{grid-template-columns:1fr}.side{display:none}.wrap{grid-template-columns:1fr}.rail{position:static;flex-direction:row;flex-wrap:wrap;gap:6px}.rail .compose-btn{margin:0}.ritem{width:auto;border:1px solid var(--line);background:var(--surface)}.rsep{display:none}}
+@media (max-width:700px){
+  .top,.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .who-me div{display:none}
+  .grid2,.sum,.how{grid-template-columns:1fr}
+  .sum div:nth-child(odd){border-right:0}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tile:nth-child(3){border-right:1px solid var(--line)}.tile:nth-child(even){border-right:0}
+  .body,.chead{padding-left:16px;padding-right:16px}
+  .inbox iframe{height:480px}
+}
+</style>
+
+<div class="note">Demo of the new <b>Email Marketing</b> page with sample data. The Email page stays as it is (sent through Gmail). Marketing mail goes through Amazon SES, one separate email per person.</div>
+
+<div class="app">
+  <aside class="side" aria-label="Admin menu">
+    <div class="brand"><div class="logo">H</div><div><b>Humancare</b><small>ADMIN CONSOLE</small></div></div>
+    <nav class="snav">
+      <a href="#list">Dashboard</a><a href="#list">Doctors</a><a href="#list">Users</a><a href="#list">Appointments</a>
+      <a href="#list">Appointment entries</a><a href="#list">Direct Video Consultation</a><a href="#list">Documents</a>
+      <a href="#list">Visit Notes</a><a href="#list">Partner Cases</a><a href="#list" data-demo="Email">Email</a>
+      <a href="#list" class="on" id="sideMk">Email Marketing <span class="newb">NEW</span></a>
+      <a href="#list">Live Chat</a><a href="#list">Search Analytics</a><a href="#list">Support Tickets</a>
+    </nav>
+    <div class="signout">Sign out</div>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <div><div class="crumb">Workspace › Email Marketing</div><h1>Email Marketing</h1></div>
+      <div class="sp"></div>
+      <div class="bell"><svg class="ico" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><i>37</i></div>
+      <div class="who-me"><span class="av">SA</span><div><b>Super Admin</b><small>SUPER ADMIN</small></div></div>
+    </header>
+
+    <div class="wrap">
+      <section class="card" id="pane" aria-live="polite"></section>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const EMAIL_RE=/^[^\s@,;]+@[^\s@,;]+\.[a-z]{2,}$/i;
+const UNSUB=new Set(["old.contact@example.com","k.rao@example.com"]);
+const FROMS=[
+  {id:"sa",label:"Humancare Connect Strategic Alliance",addr:"strategicalliance@humancareconnect.co"},
+  {id:"up",label:"Humancare Updates",addr:"updates@humancareconnect.co"}
+];
+const AV=["#2563eb","#c0397a","#6d4bd1","#c46a12","#0f8a5f"];
+const initials=n=>(n||"?").replace(/^dr\.?\s*/i,"").split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
+
+const SAMPLE_HTML=`<!-- Sample newsletter. Paste your own HTML here. -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f7;font-family:Arial,Helvetica,sans-serif;">
+  <tr><td align="center" style="padding:24px 12px;">
+    <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;">
+      <tr><td style="background:#1a1c5c;padding:28px 32px;color:#ffffff;">
+        <div style="font-size:13px;letter-spacing:2px;opacity:.75;">HUMANCARE CONNECT</div>
+        <div style="font-size:24px;font-weight:bold;margin-top:6px;">See a doctor online, wherever you are</div>
+      </td></tr>
+      <tr><td style="padding:28px 32px;color:#16213e;font-size:15px;line-height:1.6;">
+        <p style="margin:0 0 14px;">Hello {{name}},</p>
+        <p style="margin:0 0 14px;">Humancare Connect is a telehealth platform for travellers, expats, families and companies in 40+ countries. Talk to a licensed doctor by video, get prescriptions and medical certificates, all in one place.</p>
+        <table cellpadding="0" cellspacing="0" style="margin:6px 0 18px;">
+          <tr><td style="padding:6px 0;">&#10003;&nbsp; Video consultations in minutes</td></tr>
+          <tr><td style="padding:6px 0;">&#10003;&nbsp; Plans for individuals and companies</td></tr>
+          <tr><td style="padding:6px 0;">&#10003;&nbsp; Prescriptions and visit notes in one app</td></tr>
+        </table>
+        <a href="https://humancareconnect.co" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:8px;">Learn more</a>
+        <p style="margin:22px 0 0;">Kind regards,<br>Team Humancare Connect</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>`;
+
+const SAMPLE_PAIRS=`Anil Sharma, anil.sharma@example.com
+Priya Mehta, priya.mehta@example.com
+Rahul Verma, rahul.verma@example.com
+Sara Thomas, hr@bluewave-travels.example.com
+Kavya Rao, k.rao@example.com
+Imran Khan, imran.khan@exam ple.com
+Priya Mehta, PRIYA.MEHTA@example.com
+Neha Joshi, neha.joshi@example.com`;
+const SAMPLE_EMAILS=`anil.sharma@example.com, priya.mehta@example.com, rahul.verma@example.com, sara.thomas@example.com, old.contact@example.com`;
+
+const campaigns=[
+  {id:"c1",name:"Corporate wellness – Dubai companies",subject:"Hello {{name}}, telehealth for your whole team",from:"sa",by:"Shifa Kazi",byC:0,date:"17 Nov 2026, 11:20 am",total:142,delivered:139,opened:88,clicked:31,replied:9,bounced:3,unsub:2,status:"sent"},
+  {id:"c2",name:"November telehealth update",subject:"{{name}}, what’s new at Humancare this month",from:"up",by:"Nethaji N",byC:2,date:"12 Nov 2026, 4:05 pm",total:318,delivered:311,opened:164,clicked:47,replied:4,bounced:7,unsub:5,status:"sent"},
+  {id:"c3",name:"Doctor network invite – Europe",subject:"Hello {{name}}, join our doctor network",from:"sa",by:"Super Admin",byC:1,date:"Draft · edited today",total:56,delivered:0,opened:0,clicked:0,replied:0,bounced:0,unsub:0,status:"draft"}
+];
+
+const S={view:"list",step:1,mode:"pairs",from:"sa",cname:"Online consultation offer – travellers",raw:{emails:SAMPLE_EMAILS,pairs:SAMPLE_PAIRS,csv:""},csvName:"",
+  recips:[],bad:[],dups:0,skipped:[],subject:"Hello {{name}}, see a doctor online wherever you are",cmode:"paste",html:SAMPLE_HTML,htmlName:"",fallback:"there",
+  pvIdx:0,device:"desktop",testTo:"",confirm:false,sending:null,report:null,rfilter:"all"};
+
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>el.hidden=true,2600)}
+
+/* ---------- recipients parsing ---------- */
+function parseRecipients(){
+  let rows=[];
+  const raw=S.raw[S.mode]||"";
+  if(S.mode==="emails"){
+    raw.split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean).forEach(e=>rows.push({name:"",email:e}));
+  }else{
+    raw.split(/\n+/).map(l=>l.trim()).filter(Boolean).forEach((l,i)=>{
+      if(S.mode==="csv"&&i===0&&/email/i.test(l))return;
+      const k=l.lastIndexOf(",");
+      if(k<0){rows.push({name:"",email:l});return}
+      rows.push({name:l.slice(0,k).trim().replace(/^"|"$/g,""),email:l.slice(k+1).trim().replace(/^"|"$/g,"")});
+    });
+  }
+  const seen=new Set();S.recips=[];S.bad=[];S.dups=0;S.skipped=[];
+  rows.forEach(r=>{
+    const e=r.email.toLowerCase();
+    if(!EMAIL_RE.test(r.email)){S.bad.push(r.email);return}
+    if(seen.has(e)){S.dups++;return}
+    seen.add(e);
+    if(UNSUB.has(e)){S.skipped.push(r);return}
+    S.recips.push({name:r.name,email:r.email});
+  });
+  if(S.pvIdx>=S.recips.length)S.pvIdx=0;
+}
+const nameFor=r=>(r&&r.name)?r.name:S.fallback;
+const fill=(t,r)=>t.replace(/\{\{\s*name\s*\}\}/gi,nameFor(r));
+
+/* ---------- views ---------- */
+function render(){
+  const p=$("#pane");
+  if(S.view==="list")p.innerHTML=viewList();
+  else if(S.view==="new")p.innerHTML=viewBuilder();
+  else if(S.view==="report")p.innerHTML=viewReport();
+  bind();
+  if(S.view==="new"&&S.step===3)drawPreview();
+}
+
+function rate(a,b){return b?Math.round(a/b*100)+"%":"–"}
+function viewList(){
+  const rows=campaigns.map(c=>{
+    const f=FROMS.find(x=>x.id===c.from);
+    let st=c.status==="sent"?'<span class="st sent">Sent</span>':c.status==="sending"?`<span class="st sending">Sending</span><div class="minibar"><i style="width:${Math.round(c.delivered/c.total*100)}%"></i></div>`:'<span class="st draft">Draft</span>';
+    const live=c.status!=="draft";
+    return `<tr class="click" data-open="${c.id}">
+      <td class="cname"><b>${esc(c.name)}</b><small>${esc(f.addr)}</small></td>
+      <td><span class="byline"><span class="av" style="background:${AV[c.byC]}">${initials(c.by)}</span>${esc(c.by)}</span></td>
+      <td class="num">${c.total}</td>
+      <td class="num">${live?c.delivered:"–"}</td>
+      <td class="num">${live?`${c.opened}<span class="pct">${rate(c.opened,c.delivered)}</span>`:"–"}</td>
+      <td class="num">${live?`${c.clicked}<span class="pct">${rate(c.clicked,c.delivered)}</span>`:"–"}</td>
+      <td>${st}</td>
+      <td style="white-space:nowrap;color:var(--muted);font-size:12.5px">${esc(c.date)}</td></tr>`}).join("");
+  return `<div class="chead"><div><h2>Campaigns</h2><p>Send designed HTML emails to companies, patients, doctors or anyone, with each person’s name filled in. Everyone gets their own email, and opens and clicks are tracked for each one.</p></div><div class="sp"></div>
+    <button class="btn btn-p" id="newBtn"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New campaign</button></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Campaign</th><th>Sent by</th><th class="num">Recipients</th><th class="num">Delivered</th><th class="num">Opened</th><th class="num">Clicked</th><th>Status</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="how">
+      <div><b>One email per person</b>Enter 50 addresses and 50 separate emails go out. Nobody sees anyone else’s address.</div>
+      <div><b>Names filled in</b><span class="phchip">{{name}}</span> is replaced with each person’s own name.</div>
+      <div><b>Replies on the Email page</b>When someone replies, it arrives in that Mail ID’s Received folder on the Email page.</div>
+    </div>`;
+}
+
+const STEPS=["Recipients","Content","Preview & test","Send"];
+function canGo(n){
+  if(n>=2&&!S.recips.length)return false;
+  if(n>=3&&(!S.subject.trim()||!S.html.trim()))return false;
+  return true;
+}
+function viewBuilder(){
+  const st=STEPS.map((t,i)=>{const n=i+1;return `<button class="step ${S.step===n?"on":""} ${S.step>n?"done":""}" data-step="${n}" ${!canGo(n)||S.sending?"disabled":""}><i>${S.step>n?"✓":n}</i>${t}</button>`}).join("");
+  let inner="";
+  if(S.sending)inner=viewSending();
+  else if(S.step===1)inner=stepRecipients();
+  else if(S.step===2)inner=stepContent();
+  else if(S.step===3)inner=stepPreview();
+  else inner=stepSend();
+  const back=S.step>1&&!S.sending?`<button class="btn btn-g" id="backBtn">Back</button>`:`<button class="btn btn-g" id="cancelBtn">${S.sending?"Back to campaigns":"Cancel"}</button>`;
+  const nextOk=canGo(S.step+1);
+  const next=S.sending?"":S.step<4?`<button class="btn btn-p" id="nextBtn" ${nextOk?"":"disabled"}>Next: ${STEPS[S.step]}</button>`:"";
+  return `<div class="chead"><div><h2>New campaign</h2><p>${esc(S.cname)} · from ${esc(FROMS.find(f=>f.id===S.from).addr)}</p></div></div>
+    <div class="steps">${st}</div><div class="body">${inner}</div>
+    <div class="foot">${back}${next}</div>`;
+}
+
+function stepRecipients(){
+  parseRecipients();
+  const fromOpts=FROMS.map(f=>`<option value="${f.id}" ${S.from===f.id?"selected":""}>${esc(f.label)} — ${esc(f.addr)}</option>`).join("");
+  let input="";
+  if(S.mode==="emails")input=`<textarea class="ta" id="rawIn" spellcheck="false" placeholder="a@example.com, b@example.com, c@example.com">${esc(S.raw.emails)}</textarea><small>Separate with commas, semicolons or new lines. There are no names here, so <span class="phchip">{{name}}</span> becomes "${esc(S.fallback)}".</small>`;
+  else if(S.mode==="pairs")input=`<textarea class="ta" id="rawIn" spellcheck="false" placeholder="Anil Sharma, anil@example.com">${esc(S.raw.pairs)}</textarea><small>One person per line: <b>Name, email</b></small>`;
+  else input=`<div class="drop"><input type="file" id="csvIn" accept=".csv,text/csv" aria-label="Upload CSV"><svg class="ico" viewBox="0 0 24 24" style="width:26px;height:26px"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg><div><b>${S.csvName?esc(S.csvName):"Drop a CSV file here or click to choose"}</b></div><small>Columns: <b>name</b>, <b>email</b>. In Excel, use "Save as CSV" and upload the file.</small></div>
+    <button class="linkb" id="csvSample" style="align-self:flex-start;font-size:12.5px">Try a sample CSV</button>`;
+  const list=S.recips.slice(0,50).map((r,i)=>`<tr><td style="color:var(--faint);width:36px">${i+1}</td><td>${r.name?esc(r.name):`<span class="miss">No name → "${esc(S.fallback)}"</span>`}</td><td style="color:var(--muted)">${esc(r.email)}</td></tr>`).join("");
+  return `<div class="grid2">
+      <div class="field"><label for="fromSel">From</label><select class="sel" id="fromSel">${fromOpts}</select><small>Only Mail IDs approved for marketing. support@ is left out to protect its reputation.</small></div>
+      <div class="field"><label for="cnameIn">Campaign name</label><input class="inp" id="cnameIn" value="${esc(S.cname)}"><small>For your team only. Recipients never see it.</small></div>
+    </div>
+    <div class="field"><span class="flabel">Recipients</span>
+      <div class="tabs" role="tablist"><button data-mode="emails" class="${S.mode==="emails"?"on":""}">Email addresses</button><button data-mode="pairs" class="${S.mode==="pairs"?"on":""}">Name + email</button><button data-mode="csv" class="${S.mode==="csv"?"on":""}">CSV upload</button></div>
+      ${input}
+    </div>
+    <div class="parse">
+      <div class="pstats">
+        <div class="good"><b>${S.recips.length}</b><span>Will receive</span></div>
+        <div class="${S.bad.length?"bad":""}"><b>${S.bad.length}</b><span>Invalid</span></div>
+        <div class="${S.dups?"warnc":""}"><b>${S.dups}</b><span>Duplicates removed</span></div>
+        <div class="${S.skipped.length?"warnc":""}"><b>${S.skipped.length}</b><span>Unsubscribed, skipped</span></div>
+      </div>
+      ${S.recips.length?`<div class="plist"><table><tbody>${list}</tbody></table></div>`:`<div style="padding:16px;color:var(--muted)">Add recipients above. They will be listed here.</div>`}
+      ${S.bad.length?`<div class="badlist">These addresses are invalid and will not be sent: ${S.bad.map(b=>`<code>${esc(b)}</code>`).join(" ")}</div>`:""}
+      ${S.skipped.length?`<div class="badlist" style="background:var(--amber-soft);color:var(--amber)">These people unsubscribed earlier and will not be sent: ${S.skipped.map(b=>`<code>${esc(b.email)}</code>`).join(" ")}</div>`:""}
+    </div>
+    <div class="callout info"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h0M11 12h1v5h1"/></svg><div><b>${S.recips.length} separate emails will be sent.</b> Each person sees only their own email, never anyone else’s address.</div></div>`;
+}
+
+function stepContent(){
+  const contentIn=S.cmode==="paste"
+    ?`<textarea class="ta code" id="htmlIn" spellcheck="false">${esc(S.html)}</textarea>`
+    :`<div class="drop"><input type="file" id="htmlFile" accept=".html,.htm,text/html" aria-label="Upload HTML file"><svg class="ico" viewBox="0 0 24 24" style="width:26px;height:26px"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg><div><b>${S.htmlName?esc(S.htmlName):"Drop an .html file here or click to choose"}</b></div><small>An HTML file exported from Mailchimp, Canva or any email editor.</small></div>`;
+  return `<div class="field"><label for="subIn">Subject</label><input class="inp" id="subIn" value="${esc(S.subject)}"><small>You can use <span class="phchip">{{name}}</span> in the subject too.</small></div>
+    <div class="field"><span class="flabel">Email design (HTML)</span>
+      <div class="ph"><div class="tabs"><button data-cmode="paste" class="${S.cmode==="paste"?"on":""}">Paste HTML</button><button data-cmode="file" class="${S.cmode==="file"?"on":""}">Upload .html file</button></div>
+      <span class="sp" style="flex:1"></span><button class="btn btn-g btn-s" id="insName">+ Insert <span class="phchip" style="padding:0 5px">{{name}}</span></button></div>
+      ${contentIn}
+    </div>
+    <div class="grid2">
+      <div class="field"><label for="fbIn">If a name is missing, use</label><input class="inp" id="fbIn" value="${esc(S.fallback)}"><small>For example "Hello there," when the list has no name.</small></div>
+      <div class="field"><span class="flabel">Added automatically</span>
+        <div class="checks"><div><span class="ok-i">✓</span>An unsubscribe link at the bottom of every email</div><div><span class="ok-i">✓</span>Hidden tracking of opens and link clicks</div><div><span class="ok-i">✓</span>Replies go to this Mail ID’s Gmail inbox</div></div></div>
+    </div>`;
+}
+
+function stepPreview(){
+  const r=S.recips[S.pvIdx]||{};
+  const f=FROMS.find(x=>x.id===S.from);
+  const issues=htmlChecks();
+  return `<div class="pv"><div style="min-width:0">
+      <div class="pvbar">
+        <div class="who-nav"><button class="btn btn-g btn-s" id="pvPrev" aria-label="Previous recipient">‹</button>
+          <span>Preview for <b>${esc(nameFor(r))}</b> · ${esc(r.email||"")} <span style="color:var(--faint)">(${S.pvIdx+1}/${S.recips.length})</span></span>
+          <button class="btn btn-g btn-s" id="pvNext" aria-label="Next recipient">›</button></div>
+        <span class="sp"></span>
+        <div class="tabs"><button data-dev="desktop" class="${S.device==="desktop"?"on":""}">Desktop</button><button data-dev="mobile" class="${S.device==="mobile"?"on":""}">Mobile</button></div>
+      </div>
+      <div class="inbox ${S.device}"><div class="inbox-h"><b>${esc(fill(S.subject,r))}</b>${esc(f.label)} &lt;${esc(f.addr)}&gt; · to ${esc(r.email||"")}</div><iframe id="pvFrame" title="Mail preview" sandbox=""></iframe></div>
+    </div>
+    <aside class="side-box">
+      <h3>Send yourself a test</h3>
+      <small class="hint">The test uses the first recipient’s name, so you can check that the placeholder works.</small>
+      <input class="inp" id="testIn" type="email" placeholder="you@humancareconnect.co" value="${esc(S.testTo)}" aria-label="Test email address">
+      <button class="btn btn-g" id="testBtn">Send test mail</button>
+      <h3 style="margin-top:8px">Checks</h3>
+      <div class="checks">${issues.map(x=>`<div><span class="${x.ok?"ok-i":"warn-i"}">${x.ok?"✓":"!"}</span>${x.t}</div>`).join("")}</div>
+    </aside></div>`;
+}
+function htmlChecks(){
+  const h=S.html, out=[];
+  out.push({ok:/\{\{\s*name\s*\}\}/i.test(h+S.subject),t:/\{\{\s*name\s*\}\}/i.test(h+S.subject)?"Name placeholder found":"No {{name}} found, so everyone gets the same text"});
+  out.push({ok:!/<script/i.test(h),t:/<script/i.test(h)?"Script tags will be removed (email apps don’t run them)":"No scripts"});
+  out.push({ok:!/src=["']http:/i.test(h),t:/src=["']http:/i.test(h)?"Some images use http. Use https links":"Image links look fine"});
+  const kb=Math.round(new Blob([h]).size/1024);
+  out.push({ok:kb<100,t:kb<100?`Size ${kb} KB, fine`:`Size ${kb} KB. Gmail clips emails over 100 KB`});
+  out.push({ok:true,t:"Unsubscribe link is added at the bottom"});
+  return out;
+}
+function drawPreview(){
+  const fr=$("#pvFrame");if(!fr)return;
+  const r=S.recips[S.pvIdx]||{};
+  const footer=`<div style="font-family:Arial,sans-serif;font-size:11px;color:#8a93a6;text-align:center;padding:14px 12px 22px;background:#eef1f7">Humancare Connect, Inc. · 4 Peddlers Row #1091, Newark, DE 19702, United States<br>You received this email from Humancare Connect. <u>Unsubscribe</u></div>`;
+  const body=fill(S.html,r).replace(/<script[\s\S]*?<\/script>/gi,"");
+  fr.srcdoc=`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;background:#eef1f7}</style></head><body>${body}${footer}</body></html>`;
+}
+
+function stepSend(){
+  const f=FROMS.find(x=>x.id===S.from);
+  const n=S.recips.length, mins=Math.max(1,Math.ceil(n/10/60));
+  return `<div class="sum">
+      <div><span>From</span><b>${esc(f.addr)}</b></div>
+      <div><span>Subject</span><b>${esc(S.subject)}</b></div>
+      <div><span>Recipients</span><b>${n} people, one email each</b></div>
+      <div><span>Skipped</span><b>${S.bad.length} invalid · ${S.dups} duplicates · ${S.skipped.length} unsubscribed</b></div>
+      <div><span>Estimated time</span><b>About ${mins} min (sent steadily, not all at once)</b></div>
+      <div><span>Sent through</span><b>Amazon SES. Normal Gmail mail is not affected.</b></div>
+    </div>
+    <label class="chk"><input type="checkbox" id="confirmIn" ${S.confirm?"checked":""}><span>I have checked the preview and the test email. Sent emails cannot be recalled.</span></label>
+    <div><button class="btn btn-p" id="sendBtn" ${S.confirm?"":"disabled"}><svg class="ico" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>Send to ${n} recipients</button></div>`;
+}
+
+function viewSending(){
+  const s=S.sending,total=s.total,done=s.sent+s.failed,pct=Math.round(done/total*100);
+  const fin=done>=total;
+  return `<div class="prog">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b style="font-size:16px">${fin?"All emails sent":"Sending emails…"}</b><span style="font-variant-numeric:tabular-nums;font-weight:700">${pct}%</span></div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="pnums"><span>Sent: <b>${s.sent}</b></span><span>Failed: <b>${s.failed}</b></span><span>Remaining: <b>${total-done}</b></span></div>
+      ${fin?`<div class="callout ok"><svg class="ico" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><div>Campaign complete. Opens, clicks and replies keep updating in the report.</div></div><div><button class="btn btn-p" id="viewRep">View report</button></div>`
+      :`<div class="callout info"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h0M11 12h1v5h1"/></svg><div>You can close this page. Sending continues on the server.</div></div>`}
+    </div>`;
+}
+
+function viewReport(){
+  const c=S.report;
+  const f=FROMS.find(x=>x.id===c.from);
+  const counts={all:c.people.length};
+  c.people.forEach(p=>counts[p.st]=(counts[p.st]||0)+1);
+  const FL=[["all","All"],["replied","Replied"],["clicked","Clicked"],["opened","Opened"],["delivered","Not opened"],["bounced","Bounced"],["unsub","Unsubscribed"]];
+  const label={replied:"Replied",clicked:"Clicked",opened:"Opened",delivered:"Not opened",bounced:"Bounced",unsub:"Unsubscribed"};
+  const rows=c.people.filter(p=>S.rfilter==="all"||p.st===S.rfilter).map(p=>`<tr><td>${esc(p.name||"—")}</td><td style="color:var(--muted)">${esc(p.email)}</td><td><span class="st ${p.st}">${label[p.st]}</span></td><td style="color:var(--muted);font-size:12.5px;white-space:nowrap">${esc(p.when||"—")}</td></tr>`).join("");
+  return `<div class="chead"><div><h2>${esc(c.name)}</h2><p>${esc(f.addr)} · sent by ${esc(c.by)} · ${esc(c.date)}</p></div><div class="sp"></div><button class="btn btn-g" id="backList">All campaigns</button></div>
+    <div class="tiles">
+      <div class="tile"><span>Recipients</span><b>${c.total}</b></div>
+      <div class="tile"><span>Delivered</span><b>${c.delivered}</b></div>
+      <div class="tile"><span>Opened</span><b>${c.opened}</b><em>${rate(c.opened,c.delivered)}</em></div>
+      <div class="tile"><span>Clicked</span><b>${c.clicked}</b><em>${rate(c.clicked,c.delivered)}</em></div>
+      <div class="tile"><span>Replied</span><b>${c.replied}</b></div>
+      <div class="tile"><span>Bounced / Unsub</span><b>${c.bounced} / ${c.unsub}</b></div>
+    </div>
+    <div class="fchips">${FL.map(([k,t])=>`<button data-rf="${k}" class="${S.rfilter===k?"on":""}">${t} ${counts[k]||0}</button>`).join("")}</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Last activity</th></tr></thead><tbody>${rows||`<tr><td colspan="4" style="color:var(--muted);padding:24px 16px">No one matches this filter.</td></tr>`}</tbody></table></div>
+    <div class="how"><div><b>Replied</b>The reply arrived in Gmail and also shows in Received on the Email page.</div><div><b>Bounced</b>The address is wrong or closed. It is skipped in future campaigns.</div><div><b>Unsubscribed</b>This person opted out and will never get marketing email again.</div></div>`;
+}
+
+function makePeople(list,c){
+  const names=["Anil Sharma","Priya Mehta","Rahul Verma","Sara Thomas","Neha Joshi","Arjun Nair","Fatima Sheikh","Vikram Singh","Meera Iyer","Karan Kapoor","Elena Rossi","Tomas Novak","Aisha Rahman","Lukas Weber","Hana Sato","Omar Haddad"];
+  const people=list&&list.length?list.map(r=>({name:r.name,email:r.email})):names.map(n=>({name:n,email:n.toLowerCase().replace(" ",".")+"@example.com"}));
+  const pattern=["opened","clicked","delivered","opened","replied","delivered","opened","bounced","delivered","clicked","opened","unsub","delivered","opened","delivered","opened"];
+  const times=["2 min ago","8 min ago","—","15 min ago","22 min ago","—","40 min ago","bounced at send","—","1 hr ago","1 hr ago","2 hr ago","—","3 hr ago","—","5 hr ago"];
+  people.forEach((p,i)=>{p.st=pattern[i%pattern.length];p.when=p.st==="delivered"?"—":times[i%times.length]});
+  if(!c)return people;
+  c.people=people;
+  c.total=people.length;c.bounced=people.filter(p=>p.st==="bounced").length;c.delivered=c.total-c.bounced;
+  c.opened=people.filter(p=>["opened","clicked","replied"].includes(p.st)).length;
+  c.clicked=people.filter(p=>["clicked","replied"].includes(p.st)).length;
+  c.replied=people.filter(p=>p.st==="replied").length;c.unsub=people.filter(p=>p.st==="unsub").length;
+  return people;
+}
+
+/* ---------- events ---------- */
+function bind(){
+  const on=(sel,ev,fn)=>{const el=$(sel);if(el)el.addEventListener(ev,fn)};
+  on("#newBtn","click",()=>{Object.assign(S,{view:"new",step:1,sending:null,confirm:false});render()});
+  document.querySelectorAll("[data-open]").forEach(tr=>tr.addEventListener("click",()=>{
+    const c=campaigns.find(x=>x.id===tr.dataset.open);
+    if(c.status==="draft"){Object.assign(S,{view:"new",step:1,cname:c.name,from:c.from,subject:c.subject,sending:null,confirm:false});render();return}
+    if(!c.people){const keep={...c};makePeople(null,c);Object.assign(c,{total:keep.total,delivered:keep.delivered,opened:keep.opened,clicked:keep.clicked,replied:keep.replied,bounced:keep.bounced,unsub:keep.unsub})}
+    S.report=c;S.rfilter="all";S.view="report";render();
+  }));
+  on("#cancelBtn","click",()=>{S.view="list";S.sending=null;render()});
+  on("#backBtn","click",()=>{S.step--;render()});
+  on("#nextBtn","click",()=>{if(canGo(S.step+1)){S.step++;render()}});
+  document.querySelectorAll("[data-step]").forEach(b=>b.addEventListener("click",()=>{S.step=+b.dataset.step;render()}));
+  // step 1
+  on("#fromSel","change",e=>{S.from=e.target.value;render()});
+  on("#cnameIn","input",e=>{S.cname=e.target.value});
+  document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{S.mode=b.dataset.mode;render()}));
+  on("#rawIn","input",e=>{S.raw[S.mode]=e.target.value;softRefresh()});
+  on("#csvIn","change",e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{S.raw.csv=String(rd.result);S.csvName=f.name;render()};rd.readAsText(f)});
+  on("#csvSample","click",()=>{S.raw.csv="name,email\n"+SAMPLE_PAIRS.split("\n").slice(0,5).join("\n");S.csvName="contacts.csv (sample)";render()});
+  // step 2
+  on("#subIn","input",e=>{S.subject=e.target.value;updateNext()});
+  on("#htmlIn","input",e=>{S.html=e.target.value;updateNext()});
+  on("#fbIn","input",e=>{S.fallback=e.target.value||"there"});
+  document.querySelectorAll("[data-cmode]").forEach(b=>b.addEventListener("click",()=>{S.cmode=b.dataset.cmode;render()}));
+  on("#htmlFile","change",e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{S.html=String(rd.result);S.htmlName=f.name;toast("HTML file loaded: "+f.name);render()};rd.readAsText(f)});
+  on("#insName","click",()=>{
+    const ta=$("#htmlIn");
+    if(!ta){S.cmode="paste";render();return}
+    const a=ta.selectionStart,b=ta.selectionEnd;ta.value=ta.value.slice(0,a)+"{{name}}"+ta.value.slice(b);S.html=ta.value;ta.focus();ta.selectionStart=ta.selectionEnd=a+8;
+  });
+  // step 3
+  on("#pvPrev","click",()=>{S.pvIdx=(S.pvIdx-1+S.recips.length)%S.recips.length;render()});
+  on("#pvNext","click",()=>{S.pvIdx=(S.pvIdx+1)%S.recips.length;render()});
+  document.querySelectorAll("[data-dev]").forEach(b=>b.addEventListener("click",()=>{S.device=b.dataset.dev;render()}));
+  on("#testIn","input",e=>{S.testTo=e.target.value});
+  on("#testBtn","click",()=>{const v=S.testTo.trim();if(!EMAIL_RE.test(v)){toast("Enter a valid email address first");return}toast(`Demo: test email sent to ${v} (name used: ${nameFor(S.recips[0])})`)});
+  // step 4
+  on("#confirmIn","change",e=>{S.confirm=e.target.checked;render()});
+  on("#sendBtn","click",startSend);
+  on("#viewRep","click",()=>{S.view="report";S.rfilter="all";render()});
+  // report
+  on("#backList","click",()=>{S.view="list";render()});
+  document.querySelectorAll("[data-rf]").forEach(b=>b.addEventListener("click",()=>{S.rfilter=b.dataset.rf;render()}));
+}
+function updateNext(){const b=$("#nextBtn");if(b)b.disabled=!canGo(S.step+1)}
+let softT;function softRefresh(){clearTimeout(softT);softT=setTimeout(()=>{
+  const ta=$("#rawIn"),pos=ta?ta.selectionStart:0;render();const t2=$("#rawIn");if(t2){t2.focus();t2.selectionStart=t2.selectionEnd=pos}},350)}
+
+function startSend(){
+  const total=S.recips.length;
+  S.sending={total,sent:0,failed:0};
+  const c={id:"c"+Date.now(),name:S.cname||"Untitled campaign",subject:S.subject,from:S.from,by:"Super Admin",byC:1,date:"Today, just now",total,delivered:0,opened:0,clicked:0,replied:0,bounced:0,unsub:0,status:"sending"};
+  campaigns.unshift(c);render();
+  const failAt=total>4?3:-1;
+  const timer=setInterval(()=>{
+    const s=S.sending;if(!s){clearInterval(timer);return}
+    const i=s.sent+s.failed;
+    if(i>=total){clearInterval(timer);c.status="sent";makePeople(S.recips,c);S.report=c;if(S.view==="new")render();return}
+    if(i===failAt)s.failed++;else s.sent++;
+    c.delivered=s.sent;
+    if(S.view==="new")render();
+  },Math.max(120,1600/Math.max(total,1)));
+}
+
+document.querySelectorAll(".snav a").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();if(a.id==="sideMk"){S.view="list";S.sending=null;render()}else toast(`"${a.textContent.trim()}" page stays as it is. This demo shows only Email Marketing.`)}));
+render();
+</script>
