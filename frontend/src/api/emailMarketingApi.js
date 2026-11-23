@@ -13,6 +13,10 @@ export const marketingApi = {
   // → { enabled, allowed, superAdmin }  (always answers, so the sidebar knows whether to show the item)
   access: () => api.get(`${BASE}/access`, RAW).then((r) => r.data),
   settings: () => api.get(`${BASE}/settings`, RAW).then((r) => r.data),
+  // The signature of the admin looking at the page: { hasImage, autoAdd, previewUrl, displayWidth, displayHeight }
+  signature: () => api.get(`${BASE}/signature`, RAW).then((r) => r.data),
+  // "Write text" -> HTML (saves nothing)
+  textToHtml: (text) => api.post(`${BASE}/text-to-html`, { text }, RAW).then((r) => r.data),
   mailboxes: () => api.get(`${BASE}/mailboxes`, RAW).then((r) => r.data),
   list: () => api.get(`${BASE}/campaigns`, RAW).then((r) => r.data),
   create: (payload) => api.post(`${BASE}/campaigns`, payload, RAW).then((r) => r.data),

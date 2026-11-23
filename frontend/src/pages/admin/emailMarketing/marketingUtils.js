@@ -120,3 +120,23 @@ export const PLACEHOLDERS = ["{{name}}", "{{company}}"];
 
 // Where the page lives (absolute, so the same code works from every nested route).
 export const MK_BASE = "/admin-dashboard/email-marketing";
+
+// Where "My signature" lives (opened in a new tab so a draft in progress is not lost).
+export const MY_SIGNATURE_PATH = "/admin-dashboard/email/settings/my-signature";
+
+// "added" | "none" (ticked, but the sender has no signature yet) | "off"
+export function signatureStatus({ add, hasImage }) {
+  if (!add) return "off";
+  return hasImage ? "added" : "none";
+}
+
+// What changing the Content tab does to what the admin already has:
+//   "none"    nothing is lost
+//   "replace" typed HTML would be replaced by written text: ask first
+//   "choose"  written text would be left behind: convert it to HTML first, start empty, or cancel
+export function tabSwitchPlan({ from, to, html = "", sourceText = "" }) {
+  if (from === to) return "none";
+  if (to === "text") return String(html).trim() ? "replace" : "none";
+  if (from === "text" && String(sourceText).trim()) return "choose";
+  return "none";
+}

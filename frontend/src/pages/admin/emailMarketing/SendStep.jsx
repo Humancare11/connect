@@ -1,7 +1,7 @@
-import { estimateText } from "./marketingUtils";
+import { estimateText, MY_SIGNATURE_PATH } from "./marketingUtils";
 
 // Step 4: the summary, the required confirmation, and the send button. After it the campaign runs on the server.
-export default function SendStep({ from, subject, total, skipped, estimate, confirm, setConfirm, onSend, busy, ready, error }) {
+export default function SendStep({ from, subject, total, skipped, estimate, confirm, setConfirm, onSend, busy, ready, error, signature = "off" }) {
   return (
     <>
       <div className="mk-sum">
@@ -9,6 +9,18 @@ export default function SendStep({ from, subject, total, skipped, estimate, conf
         <div><span>Subject</span><b>{subject}</b></div>
         <div><span>Recipients</span><b>{total} people, one email each</b></div>
         <div><span>Skipped</span><b>{skipped.invalid} invalid · {skipped.duplicates} duplicates · {skipped.suppressed} unsubscribed</b></div>
+        {signature !== "off" && (
+          <div>
+            <span>Signature</span>
+            {signature === "added" ? (
+              <b>Your signature is added before the footer</b>
+            ) : (
+              <b>
+                none (you have no signature yet) · <a href={MY_SIGNATURE_PATH} target="_blank" rel="noopener noreferrer">My signature</a>
+              </b>
+            )}
+          </div>
+        )}
         <div><span>Estimated time</span><b>{estimateText(estimate)}</b></div>
         <div><span>Sent through</span><b>Amazon SES. Normal Gmail mail is not affected.</b></div>
       </div>

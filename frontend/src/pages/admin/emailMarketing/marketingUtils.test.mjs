@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   rate, initials, avatarColor, statusLabel, filterCounts, reportFilters, filterPeople, campaignStatusLabel,
   holdText, estimateText, insertAtCursor, formatDateTime, formatWhen, errorMessage, isEmail, mailboxLabel,
+  signatureStatus, tabSwitchPlan, MY_SIGNATURE_PATH,
 } from "./marketingUtils.js";
 
 test("rates and initials", () => {
@@ -58,4 +59,22 @@ test("dates and messages", () => {
   assert.equal(isEmail("a@b.co"), true);
   assert.equal(isEmail("a b@c.co"), false);
   assert.equal(mailboxLabel({ displayName: "Updates", address: "u@h.co" }), "Updates — u@h.co");
+});
+
+test("signature status: off, added, or none when ticked but the sender has no signature", () => {
+  assert.equal(signatureStatus({ add: false, hasImage: true }), "off");
+  assert.equal(signatureStatus({ add: true, hasImage: true }), "added");
+  assert.equal(signatureStatus({ add: true, hasImage: false }), "none");
+  assert.equal(MY_SIGNATURE_PATH, "/admin-dashboard/email/settings/my-signature");
+});
+
+test("switching content tabs: warns before replacing HTML with text, offers convert-or-empty for typed text", () => {
+  assert.equal(tabSwitchPlan({ from: "paste", to: "text", html: "<p>x</p>" }), "replace");
+  assert.equal(tabSwitchPlan({ from: "file", to: "text", html: "<p>x</p>" }), "replace");
+  assert.equal(tabSwitchPlan({ from: "paste", to: "text", html: "  " }), "none");
+  assert.equal(tabSwitchPlan({ from: "text", to: "paste", sourceText: "Hello" }), "choose");
+  assert.equal(tabSwitchPlan({ from: "text", to: "file", sourceText: "Hello" }), "choose");
+  assert.equal(tabSwitchPlan({ from: "text", to: "paste", sourceText: " " }), "none");
+  assert.equal(tabSwitchPlan({ from: "paste", to: "file", html: "<p>x</p>" }), "none");
+  assert.equal(tabSwitchPlan({ from: "text", to: "text", sourceText: "x", html: "y" }), "none");
 });

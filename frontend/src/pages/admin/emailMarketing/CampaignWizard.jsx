@@ -6,7 +6,7 @@ import RecipientsStep from "./RecipientsStep";
 import ContentStep from "./ContentStep";
 import PreviewStep from "./PreviewStep";
 import SendStep from "./SendStep";
-import { MK_BASE, errorMessage, isEmail } from "./marketingUtils";
+import { MK_BASE, errorMessage, isEmail, signatureStatus } from "./marketingUtils";
 
 const STEPS = ["Recipients", "Content", "Preview & test", "Send"];
 
@@ -38,7 +38,14 @@ export default function CampaignWizard({ initial }) {
   // Step 2
   const [subject, setSubject] = useState(initial?.subject || "");
   const [html, setHtml] = useState(initial?.html || "");
-  const [cmode, setCmode] = useState("paste");
+  // Which tab the draft was made in: paste | file | text ("Write text"), so it reopens where it was left.
+  const [cmode, setCmode] = useState(initial?.contentMode || "paste");
+  const [sourceText, setSourceText] = useState(initial?.sourceText || "");
+  // The sender's own signature (the server always uses the logged-in admin's). Until the admin ticks or unticks the box,
+  // a saved draft keeps its choice and a new one starts from "Add to new mails automatically".
+  const signatureQ = useQuery({ queryKey: ["marketing", "signature"], queryFn: marketingApi.signature });
+  const [sigChoice, setSigChoice] = useState(null);
+  const addSignature = sigChoice ?? initial?.addSignature ?? signatureQ.data?.autoAdd ?? false;
   const [htmlName, setHtmlName] = useState("");
   const [fallbackName, setFallbackName] = useState(initial?.fallbackName || "there");
   const [fallbackCompany, setFallbackCompany] = useState(initial?.fallbackCompany || "");
@@ -84,7 +91,7 @@ export default function CampaignWizard({ initial }) {
 
   const canGo = (n) => {
     if (n >= 2 && !(shownParse?.willReceive > 0 && name.trim() && mailboxId)) return false;
-    if (n >= 3 && !(subject.trim() && html.trim())) return false;
+    if (n >= 3 && !(subject.trim() && (cmode === "text" ? sourceText.trim() : html.trim()))) return false;
     return true;
   };
 
@@ -99,7 +106,11 @@ export default function CampaignWizard({ initial }) {
       setCampaignId(id);
     }
     if (upTo >= 2) view = (await marketingApi.save(id, { name: name.trim(), mailboxId, recipients: { mode, text: raw[mode] } })).campaign;
-    if (upTo >= 3) view = (await marketingApi.save(id, { subject, html, fallbackName, fallbackCompany })).campaign;
+    if (upTo >= 3) {
+      // In "Write text" the server builds the HTML from the text, so only the text is sent.
+      const design = cmode === "text" ? { contentMode: "text", sourceText } : { contentMode: cmode, html };
+      view = (await marketingApi.save(id, { subject, ...design, fallbackName, fallbackCompany, addSignature })).campaign;
+    }
     setSaved(view);
     qc.invalidateQueries({ queryKey: ["marketing", "campaigns"] });
     return { id, view };
@@ -215,7 +226,9 @@ export default function CampaignWizard({ initial }) {
         {step === 2 && (
           <ContentStep
             subject={subject} setSubject={setSubject} html={html} setHtml={setHtml} cmode={cmode} setCmode={setCmode}
-            htmlName={htmlName} setHtmlName={setHtmlName} fallbackName={fallbackName} setFallbackName={setFallbackName}
+            htmlName={htmlName} setHtmlName={setHtmlName} sourceText={sourceText} setSourceText={setSourceText}
+            signature={signatureQ.data} addSignature={addSignature} setAddSignature={setSigChoice}
+            fallbackName={fallbackName} setFallbackName={setFallbackName}
             fallbackCompany={fallbackCompany} setFallbackCompany={setFallbackCompany} onFileError={setError}
           />
         )}
@@ -232,6 +245,7 @@ export default function CampaignWizard({ initial }) {
             skipped={{ invalid: saved?.invalidCount ?? 0, duplicates: saved?.duplicatesCount ?? 0, suppressed: saved?.suppressedCount ?? 0 }}
             estimate={saved?.estimate} confirm={confirm} setConfirm={setConfirm} onSend={send} busy={busy}
             ready={saved?.sendReady !== false} error=""
+            signature={signatureStatus({ add: addSignature, hasImage: saved?.hasSignatureImage ?? signatureQ.data?.hasImage ?? false })}
           />
         )}
       </div>

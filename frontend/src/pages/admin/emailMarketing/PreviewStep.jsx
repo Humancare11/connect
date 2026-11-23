@@ -42,7 +42,8 @@ export default function PreviewStep({ pv, loading, error, pvIdx, setPvIdx, devic
         <h3 style={{ marginTop: 8 }}>Checks</h3>
         <div className="mk-checks">
           {(pv?.checks || []).map((c) => (
-            <div key={c.key}><span className={c.ok ? "mk-ok-i" : "mk-warn-i"}>{c.ok ? "✓" : "!"}</span>{c.text}</div>
+            <div key={c.key}><span className={c.ok ? "mk-ok-i" : "mk-warn-i"}>{c.ok ? "✓" : "!"}</span>{c.text}
+              {c.link && <> · <a href={c.link.href} target="_blank" rel="noopener noreferrer">{c.link.text}</a></>}</div>
           ))}
         </div>
       </aside>
