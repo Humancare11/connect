@@ -10,6 +10,7 @@ const { escapeHtml } = require("./render");
 
 const MAX_SOURCE_CHARS = 50_000;
 const FONT = "Arial,Helvetica,sans-serif";
+// The look is a normal personal email (white page, left aligned, max 600px), not a newsletter.
 // Matches on already-escaped text, so an escaped quote or angle bracket ends the URL.
 const URL_RE = /https?:\/\/(?:(?!&quot;|&#39;|&lt;|&gt;)[^\s<>])+/gi;
 const TRAILING_PUNCT = /[.,;:!?)\]]+$/;
@@ -32,15 +33,14 @@ function textToHtml(source) {
     .filter(Boolean)
     .map((p) => {
       const lines = p.split("\n").map((l) => linkify(escapeHtml(l.trim())));
-      return `<p style="margin:0 0 16px 0;">${lines.join("<br>")}</p>`;
+      return lines.join("<br>");
     });
+  // The last paragraph has no bottom margin, so a signature can sit 6px below it.
+  const last = paragraphs.length - 1;
+  const body = paragraphs.map((html, i) => `<p style="margin:0 0 ${i === last ? 0 : 14}px 0;">${html}</p>`).join("");
   return (
-    '<body style="margin:0;padding:0;background:#f4f6f8;">' +
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f6f8;"><tr>' +
-    '<td align="center" style="padding:24px 12px;">' +
-    '<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;"><tr>' +
-    `<td style="padding:28px 32px;font-family:${FONT};font-size:16px;line-height:1.6;color:#1f2937;text-align:left;">` +
-    `${paragraphs.join("")}</td></tr></table></td></tr></table></body>`
+    '<body style="margin:0;padding:0;background:#ffffff;">' +
+    `<div style="max-width:600px;padding:16px 16px 0;font-family:${FONT};font-size:15px;line-height:1.6;color:#16213e;text-align:left;">${body}</div></body>`
   );
 }
 

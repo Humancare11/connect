@@ -89,10 +89,13 @@ function appendBeforeBodyEnd(html, fragment) {
   return i === -1 ? html + fragment : html.slice(0, i) + fragment + html.slice(i);
 }
 
-function footerHtml({ address, unsubscribeUrl }) {
+// `left`: "Write text" mails keep the footer in the same left-aligned 600px column as the text; designs keep it centered.
+// The address is wrapped in a link-less <a> so Gmail does not turn "4 Peddlers Row #1091" into a blue underlined link.
+function footerHtml({ address, unsubscribeUrl, left = false }) {
+  const box = left ? "text-align:left;max-width:600px;padding:18px 16px 24px;" : "text-align:center;padding:14px 12px 22px;";
   return (
-    '<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a93a6;text-align:center;padding:14px 12px 22px;">' +
-    `${escapeHtml(address)}<br>You received this email from Humancare Connect. ` +
+    `<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a93a6;${box}">` +
+    `<a style="color:inherit;text-decoration:none;pointer-events:none;">${escapeHtml(address)}</a><br>You received this email from Humancare Connect. ` +
     `<a href="${escapeHtml(unsubscribeUrl)}" style="color:#8a93a6;text-decoration:underline;">Unsubscribe</a></div>`
   );
 }
@@ -104,32 +107,35 @@ const pixelHtml = (url) =>
   `<img src="${escapeHtml(url)}" width="1" height="1" alt="" style="display:block;border:0;width:1px;height:1px;overflow:hidden">`;
 
 // The image signature, like on the Email page: shown at most 420px wide (width/height attributes set), 6px below the
-// content. It has no link, and it is added AFTER links are rewritten, so click tracking can never touch it.
-// `signature`: { url, width, height } with width/height already the display size. `centered`: inside a 600px column
-// (used when the design came from the "Write text" tab, whose layout is centered).
-function signatureBlockHtml({ url, width, height }, { centered = false } = {}) {
+// content, no link. It is added AFTER links are rewritten, so click tracking can never touch it.
+// `signature`: { url, width, height } with width/height already the display size.
+//   layout "text": "Write text" mails: right under the text, in the same left-aligned 600px column.
+//   layout "html": pasted / uploaded designs: in a centered 600px wrapper, left aligned inside it, so it lines up with
+//                  the left edge of a typical centered 600px design. The design itself is not changed.
+function signatureBlockHtml({ url, width, height }, { layout = "html" } = {}) {
   const img =
     `<img src="${escapeHtml(url)}" alt="Signature" width="${width}" height="${height}" border="0" ` +
-    `style="width:${width}px;max-width:100%;height:auto;display:block;border:0">`;
-  if (!centered) return `<div style="margin-top:6px">${img}</div>`;
+    `style="display:block;width:${width}px;max-width:100%;height:auto;border:0">`;
+  if (layout === "text") return `<div style="max-width:600px;padding:0 16px;"><div style="margin-top:6px">${img}</div></div>`;
   return (
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:0 12px;">' +
-    `<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;"><tr><td style="padding:0 32px;"><div style="margin-top:6px">${img}</div></td></tr></table>` +
-    "</td></tr></table>"
+    '<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">' +
+    `<tr><td align="left" style="padding-top:6px;">${img}</td></tr></table></td></tr></table>`
   );
 }
 
 // → { subject, html, text, bytes }
 function renderMail({ campaign, recipient, footerAddress, unsubscribeUrl, trackLink = null, pixelUrl = "", signature = null }) {
   const values = valuesFor(recipient, campaign);
+  const textMode = campaign.contentMode === "text";
   const filled = fillHtml(campaign.html, values);
   // "Write text" designs: the plain-text part is what was typed (placeholders filled), not a re-reading of the HTML.
-  const body = campaign.contentMode === "text" && campaign.sourceText ? fillText(campaign.sourceText, values).trim() : htmlToText(filled);
+  const body = textMode && campaign.sourceText ? fillText(campaign.sourceText, values).trim() : htmlToText(filled);
   const text = body + footerText({ address: footerAddress, unsubscribeUrl });
 
   let html = rewriteLinks(filled, trackLink);
-  if (signature) html = appendBeforeBodyEnd(html, signatureBlockHtml(signature, { centered: campaign.contentMode === "text" }));
-  html = appendBeforeBodyEnd(html, footerHtml({ address: footerAddress, unsubscribeUrl }));
+  if (signature) html = appendBeforeBodyEnd(html, signatureBlockHtml(signature, { layout: textMode ? "text" : "html" }));
+  html = appendBeforeBodyEnd(html, footerHtml({ address: footerAddress, unsubscribeUrl, left: textMode }));
   if (pixelUrl) html = appendBeforeBodyEnd(html, pixelHtml(pixelUrl));
 
   return { subject: cleanSubject(campaign.subject, values), html, text, bytes: Buffer.byteLength(html, "utf8") };

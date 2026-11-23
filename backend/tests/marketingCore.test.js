@@ -137,7 +137,7 @@ describe("rendering one recipient's mail", () => {
 
   test("footer with the company line and unsubscribe link, plain-text twin, tracking only when asked", () => {
     const plain = render.renderMail({ campaign, recipient: { name: "Ana" }, footerAddress: "Humancare Connect, Inc. · 4 Peddlers Row", unsubscribeUrl: "https://h.example/api/u/T" });
-    assert.match(plain.html, /Humancare Connect, Inc\. · 4 Peddlers Row<br>You received this email from Humancare Connect\. <a href="https:\/\/h\.example\/api\/u\/T"[^>]*>Unsubscribe<\/a>/);
+    assert.match(plain.html, /<a style="color:inherit;text-decoration:none;pointer-events:none;">Humancare Connect, Inc\. · 4 Peddlers Row<\/a><br>You received this email from Humancare Connect\. <a href="https:\/\/h\.example\/api\/u\/T"[^>]*>Unsubscribe<\/a>/);
     assert.doesNotMatch(plain.html, /api\/e\/|api\/l\//);
     assert.match(plain.text, /Hi Ana from !/);
     assert.match(plain.text, /Unsubscribe: https:\/\/h\.example\/api\/u\/T$/);

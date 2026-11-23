@@ -129,7 +129,12 @@ describe("Email Marketing: signature and Write text (real routers, in-memory Mon
       assert.match(html, /<a href="https:\/\/example\.org\/a\?x=1&amp;y=2"[^>]*>https:\/\/example\.org\/a\?x=1&amp;y=2<\/a>\./, "trailing full stop stays outside the link");
       assert.match(html, /<a href="https:\/\/example\.org\/b"[^>]*>[^<]*<\/a>\)\./, "closing bracket stays outside the link");
       assert.match(html, /max-width:600px/);
-      assert.match(html, /align="center"/);
+      assert.match(html, /background:#ffffff/);
+      assert.doesNotMatch(html, /#f4f6f8|#eef1f7|align="center"|<table/, "a personal email: no grey page, no centered card");
+      assert.match(html, /font-size:15px;line-height:1\.6/);
+      assert.match(html, /padding:16px 16px 0/);
+      assert.match(html, /text-align:left/);
+      assert.match(html, /<p style="margin:0 0 0px 0;">/, "the last paragraph has no bottom margin, so the signature sits 6px below it");
       assert.equal(textToHtml("   \n\n "), "");
     });
 
@@ -196,9 +201,11 @@ describe("Email Marketing: signature and Write text (real routers, in-memory Mon
       const f = mail.html.indexOf("Unsubscribe");
       const p = mail.html.indexOf("/api/e/");
       assert.ok(c > -1 && s > c && f > s && p > f, "content < signature < footer < pixel");
-      assert.match(mail.html, /<div style="margin-top:6px"><img src="https:\/\/h\.example\/api\/m\/sig\/[A-Za-z0-9_-]{32}" alt="Signature" width="420" height="100"/);
-      assert.match(mail.html, /style="width:420px;max-width:100%;height:auto;display:block;border:0"/);
-      const block = mail.html.slice(mail.html.lastIndexOf("<div", s), mail.html.indexOf("</div>", s));
+      assert.match(mail.html, /<td align="left" style="padding-top:6px;"><img src="https:\/\/h\.example\/api\/m\/sig\/[A-Za-z0-9_-]{32}" alt="Signature" width="420" height="100"/);
+      assert.match(mail.html, /<table role="presentation" width="600"[^>]*max-width:600px;width:100%;"><tr><td align="left"/, "centered 600px wrapper, left aligned inside it");
+      assert.match(mail.html, /style="display:block;width:420px;max-width:100%;height:auto;border:0"/);
+      assert.match(mail.html, /text-align:center;padding:14px 12px 22px/, "pasted designs keep the centered footer");
+      const block = mail.html.slice(mail.html.lastIndexOf("<table", s), mail.html.indexOf("</table>", s));
       assert.doesNotMatch(block, /<a /);
       assert.doesNotMatch(mail.html, /cid:/);
       assert.doesNotMatch(mail.text, /api\/m\/sig/);
@@ -356,10 +363,36 @@ describe("Email Marketing: signature and Write text (real routers, in-memory Mon
       assert.equal([...store.objects.keys()].filter((k) => k.startsWith("marketing-signatures/")).length, 0);
     });
 
-    test("signatureBlockHtml escapes the URL; a text-mode design gets the centered variant", () => {
+    test("signatureBlockHtml escapes the URL", () => {
       assert.match(signatureBlockHtml({ url: 'https://h/x"y', width: 10, height: 5 }), /src="https:\/\/h\/x&quot;y"/);
-      const mail = renderMail({ campaign: { html: "<html><body><p>Hi</p></body></html>", subject: "s", contentMode: "text", sourceText: "Hi" }, recipient: {}, footerAddress: "F", unsubscribeUrl: "https://u", signature: { url: "https://h/s", width: 420, height: 100 } });
-      assert.match(mail.html, /max-width:600px;"><tr><td style="padding:0 32px;"><div style="margin-top:6px"><img /);
+      assert.match(signatureBlockHtml({ url: 'https://h/x"y', width: 10, height: 5 }, { layout: "text" }), /src="https:\/\/h\/x&quot;y"/);
+    });
+
+    test("Write text mail: white left-aligned column; signature right under the text in the same column; footer left in 600px", async () => {
+      await giveSignature(users.a, IMG_A);
+      const id = await draft(users.a, { contentMode: "text", sourceText: "Hi {{name}},\n\nThe end.", addSignature: true });
+      await call("POST", `${API}/campaigns/${id}/send`, { user: users.a, body: { confirm: true } });
+      const [mail] = await runQueue();
+      const h = mail.html;
+      const text = h.indexOf("The end.");
+      const sig = h.indexOf("/api/m/sig/");
+      const foot = h.indexOf("Unsubscribe");
+      assert.ok(text > -1 && sig > text && foot > sig, "text < signature < footer");
+      assert.match(h, /<body style="margin:0;padding:0;background:#ffffff;?">/);
+      assert.doesNotMatch(h, /#f4f6f8|#eef1f7/);
+      assert.match(h, /<div style="max-width:600px;padding:0 16px;"><div style="margin-top:6px"><img src="https:\/\/h\.example\/api\/m\/sig\//, "same 16px left edge as the text, 6px gap");
+      assert.match(h, /width="420" height="100"/);
+      assert.match(h, /text-align:left;max-width:600px;padding:18px 16px 24px;/, "footer left in the same 600px column");
+      assert.doesNotMatch(h, /text-align:center/);
+    });
+
+    test("footer address is wrapped so Gmail leaves it as plain grey text; wording and unsubscribe link are unchanged", async () => {
+      const id = await draft(users.a);
+      await call("POST", `${API}/campaigns/${id}/send`, { user: users.a, body: { confirm: true } });
+      const [mail] = await runQueue();
+      assert.match(mail.html, /<a style="color:inherit;text-decoration:none;pointer-events:none;">Humancare Connect, Inc\.<\/a><br>You received this email from Humancare Connect\. <a href="https:\/\/h\.example\/api\/u\/[^"]+" style="color:#8a93a6;text-decoration:underline;">Unsubscribe<\/a>/);
+      assert.match(mail.text, /Humancare Connect, Inc\.\nYou received this email from Humancare Connect\. Unsubscribe: https:\/\/h\.example\/api\/u\//);
+      assert.equal(await MarketingLink.countDocuments({ campaign: id, url: /\/api\/u\// }), 0);
     });
   });
 });
