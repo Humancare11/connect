@@ -8,6 +8,8 @@ const { sanitizeEmailHtml } = require("./sanitizer");
 const { renderMail, unknownPlaceholders, usesPlaceholder } = require("./render");
 const { suppressedSet } = require("./suppression");
 const { countsFor, countsOrEmpty } = require("./report");
+const { textToHtml, MAX_SOURCE_CHARS } = require("./textToHtml");
+const sig = require("./signature");
 
 // The rules of Email Marketing in one place; routes/adminEmailMarketing.js only calls these.
 // Nothing here logs an address, a name or any content.
@@ -131,11 +133,28 @@ async function updateDraft({ campaign, actor, body, cfg = marketingConfig() }) {
   }
   if (body.fallbackName !== undefined) campaign.fallbackName = cleanLine(body.fallbackName, 60) || "there";
   if (body.fallbackCompany !== undefined) campaign.fallbackCompany = cleanLine(body.fallbackCompany, 60);
-  if (body.html !== undefined) {
-    if (typeof body.html !== "string") throw new MarketingHttpError(400, "The email design must be text.");
-    if (Buffer.byteLength(body.html, "utf8") > MAX_HTML_BYTES) throw new MarketingHttpError(413, "The email design is too large (limit 1 MB).");
-    if (body.html.trim()) {
-      const clean = sanitizeEmailHtml(body.html);
+  if (body.addSignature !== undefined) {
+    if (typeof body.addSignature !== "boolean") throw new MarketingHttpError(400, "Add my signature must be true or false.");
+    campaign.addSignature = body.addSignature;
+  }
+  if (body.contentMode !== undefined) {
+    if (!["paste", "file", "text"].includes(body.contentMode)) throw new MarketingHttpError(400, "Unknown design type.");
+    campaign.contentMode = body.contentMode;
+  }
+  if (body.sourceText !== undefined) {
+    if (typeof body.sourceText !== "string") throw new MarketingHttpError(400, "The text must be text.");
+    if (body.sourceText.length > MAX_SOURCE_CHARS) throw new MarketingHttpError(413, "The text is too long.");
+    campaign.sourceText = body.sourceText;
+  }
+  // "Write text": the HTML is always made from the typed text here on the server, whatever html the browser sent.
+  const fromText = campaign.contentMode === "text" && (body.sourceText !== undefined || body.contentMode !== undefined);
+  if (campaign.contentMode !== "text" && campaign.sourceText) campaign.sourceText = "";
+  const incomingHtml = fromText ? textToHtml(campaign.sourceText) : body.html;
+  if (incomingHtml !== undefined) {
+    if (typeof incomingHtml !== "string") throw new MarketingHttpError(400, "The email design must be text.");
+    if (Buffer.byteLength(incomingHtml, "utf8") > MAX_HTML_BYTES) throw new MarketingHttpError(413, "The email design is too large (limit 1 MB).");
+    if (incomingHtml.trim()) {
+      const clean = sanitizeEmailHtml(incomingHtml);
       campaign.html = clean.html;
       campaign.htmlRemoved = clean.removed;
     } else {
@@ -172,8 +191,9 @@ async function updateDraft({ campaign, actor, body, cfg = marketingConfig() }) {
   return { campaign, summary };
 }
 
-async function deleteDraft(campaign) {
+async function deleteDraft(campaign, store = null) {
   requireDraft(campaign);
+  if (campaign.signature && store) await sig.removeCampaignSignature(campaign, store);
   await MarketingRecipient.deleteMany({ campaign: campaign._id });
   await MarketingCampaign.deleteOne({ _id: campaign._id });
 }
@@ -213,12 +233,17 @@ async function listCampaigns() {
 }
 
 // The editor's view of a draft: settings, content, and the recipients as lines it can show again.
-async function draftView(campaign, cfg = marketingConfig()) {
+async function draftView(campaign, cfg = marketingConfig(), actorId = null) {
   const rows = await MarketingRecipient.find({ campaign: campaign._id }).sort({ _id: 1 }).select("email name company").lean();
   const lines = rows.map((r) => [r.name, r.company, r.email].filter((x, i) => x || i === 2).join(", ")).join("\n");
   return {
     ...serializeCampaign(campaign),
     html: campaign.html,
+    contentMode: campaign.contentMode || "paste",
+    sourceText: campaign.sourceText || "",
+    addSignature: campaign.addSignature,
+    // Does the person looking at the draft (who will be the sender) have a signature image?
+    hasSignatureImage: actorId ? Boolean((await sig.loadOwnSignature(actorId)).image) : null,
     htmlRemoved: campaign.htmlRemoved,
     fallbackName: campaign.fallbackName,
     fallbackCompany: campaign.fallbackCompany,
@@ -232,7 +257,10 @@ async function draftView(campaign, cfg = marketingConfig()) {
   };
 }
 
-function buildChecks(campaign, bytes) {
+const MY_SIGNATURE_PATH = "/admin-dashboard/email/settings/my-signature";
+
+// signature: "added" | "none" (box ticked, no image) | "off"
+function buildChecks(campaign, bytes, signature = "off") {
   const out = [];
   const used = usesPlaceholder(campaign.subject, campaign.html);
   out.push({
@@ -253,21 +281,33 @@ function buildChecks(campaign, bytes) {
   out.push({ key: "http", ok: !httpImages, text: httpImages ? "Some images use http. Use https links" : "Image links look fine" });
   const kb = Math.ceil((bytes || 0) / 1024);
   out.push({ key: "size", ok: kb < 100, text: kb < 100 ? `Size ${kb} KB, fine` : `Size ${kb} KB. Gmail clips emails over 100 KB` });
+  if (signature === "added") out.push({ key: "signature", ok: true, text: "Your signature is added before the footer" });
+  if (signature === "none") {
+    out.push({ key: "signature", ok: false, text: "Signature: none (you have no signature yet)", link: { text: "My signature", href: MY_SIGNATURE_PATH } });
+  }
   out.push({ key: "unsubscribe", ok: true, text: "Unsubscribe link is added at the bottom" });
   return out;
 }
 
 // One recipient's mail as it will look (no tracking, no real unsubscribe link). `index` walks the recipient list.
-async function previewMail(campaign, index = 0, cfg = marketingConfig()) {
+async function previewMail(campaign, index = 0, cfg = marketingConfig(), { actor = null, store = null } = {}) {
   const total = await MarketingRecipient.countDocuments({ campaign: campaign._id });
   if (!total) throw new MarketingHttpError(400, "Add recipients first.");
   const i = Number.isInteger(index) ? ((index % total) + total) % total : 0;
   const rec = await MarketingRecipient.findOne({ campaign: campaign._id }).sort({ _id: 1 }).skip(i).select("email name company").lean();
+  let signature = null;
+  let signatureState = "off";
+  if (campaign.addSignature) {
+    // A sent campaign shows its own snapshot; a draft shows the current admin's image inline (no public copy exists yet).
+    signature = campaign.signature ? sig.campaignBlock(campaign, cfg.baseUrl) : actor && store ? await sig.previewBlock({ ownerId: actor.id, store }) : null;
+    signatureState = signature ? "added" : "none";
+  }
   const mail = renderMail({
     campaign,
     recipient: rec,
     footerAddress: cfg.footerAddress || "Humancare Connect",
     unsubscribeUrl: "#",
+    signature,
   });
   return {
     index: i,
@@ -275,13 +315,13 @@ async function previewMail(campaign, index = 0, cfg = marketingConfig()) {
     recipient: { name: rec.name || "", email: rec.email },
     subject: mail.subject,
     html: mail.html,
-    checks: buildChecks(campaign, mail.bytes),
+    checks: buildChecks(campaign, mail.bytes, signatureState),
   };
 }
 
 // ── Test, send, stop, retry ──
 
-async function sendTest({ campaign, actor, to, sender, cfg = marketingConfig() }) {
+async function sendTest({ campaign, actor, to, sender, cfg = marketingConfig(), store = null }) {
   const address = String(to || "").trim();
   if (!isValidEmail(address)) throw new MarketingHttpError(400, "Enter a valid email address for the test.");
   if (!campaign.subject.trim() || !campaign.html.trim()) throw new MarketingHttpError(400, "Add a subject and the email design first.");
@@ -290,11 +330,22 @@ async function sendTest({ campaign, actor, to, sender, cfg = marketingConfig() }
   await requireMarketingMailbox(actor, campaign.mailbox);
 
   const first = await MarketingRecipient.findOne({ campaign: campaign._id }).sort({ _id: 1 }).select("name company").lean();
+  // The tester is the sender: their signature, as a temporary hosted copy (removed automatically after 7 days).
+  let signature = null;
+  if (campaign.addSignature && store) {
+    try {
+      signature = await sig.createTestCopy({ ownerId: actor.id, store, baseUrl: cfg.baseUrl });
+    } catch (err) {
+      console.error("[marketing] test signature copy failed:", err?.name || "error");
+      throw new MarketingHttpError(502, "Your signature could not be prepared for the test email. Please try again.");
+    }
+  }
   const mail = renderMail({
     campaign,
     recipient: first || {},
     footerAddress: cfg.footerAddress,
     unsubscribeUrl: `${cfg.baseUrl}/api/u/test`, // a test mail has no real unsubscribe link
+    signature,
   });
   try {
     await sender.send({
@@ -312,7 +363,7 @@ async function sendTest({ campaign, actor, to, sender, cfg = marketingConfig() }
   }
 }
 
-async function startCampaign({ campaign, actor, confirm, cfg = marketingConfig() }) {
+async function startCampaign({ campaign, actor, confirm, cfg = marketingConfig(), store = null }) {
   if (confirm !== true) throw new MarketingHttpError(400, "Tick the box to confirm before sending.");
   const missing = sendReadiness(cfg);
   if (missing.length) throw new MarketingHttpError(503, "Email Marketing is not fully set up yet.", { missing });
@@ -331,13 +382,28 @@ async function startCampaign({ campaign, actor, confirm, cfg = marketingConfig()
     );
   }
 
+  // Signature snapshot: the SENDER's (the session user's) image, copied to a key this campaign owns. Ticked but no
+  // signature: send without one. If the copy fails nothing has started, so the admin can simply try again.
+  let snapshot = null;
+  if (campaign.addSignature && store) {
+    try {
+      snapshot = await sig.snapshotForCampaign({ campaignId: campaign._id, ownerId: actor.id, store });
+    } catch (err) {
+      console.error("[marketing] signature snapshot failed:", err?.name || "error");
+      throw new MarketingHttpError(502, "Your signature could not be prepared. Please try again.");
+    }
+  }
+
   // Atomic: a double click or two admins can start it only once.
   const started = await MarketingCampaign.findOneAndUpdate(
     { _id: campaign._id, status: "draft" },
-    { $set: { status: "sending", sentBy: actor.id, sentByName: actor.name || "", confirmedAt: new Date(), startedAt: new Date(), holdReason: "", holdUntil: null } },
+    { $set: { status: "sending", sentBy: actor.id, sentByName: actor.name || "", confirmedAt: new Date(), startedAt: new Date(), holdReason: "", holdUntil: null, signature: snapshot } },
     { returnDocument: "after" }
   );
-  if (!started) throw new MarketingHttpError(409, "This campaign has already been started.");
+  if (!started) {
+    if (snapshot) await sig.removeCampaignSignature({ signature: snapshot }, store);
+    throw new MarketingHttpError(409, "This campaign has already been started.");
+  }
   return started;
 }
 

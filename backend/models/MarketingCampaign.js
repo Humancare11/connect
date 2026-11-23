@@ -19,6 +19,26 @@ const campaignSchema = new mongoose.Schema(
       eventHandlers: { type: Number, default: 0 },
       otherUnsafe: { type: Number, default: 0 },
     },
+    // Which tab the design came from. "text": `html` is generated from `sourceText` (the typed text) on every save.
+    contentMode: { type: String, enum: ["paste", "file", "text"], default: "paste" },
+    sourceText: { type: String, default: "", maxlength: 50000 },
+    // "Add my signature". null = never decided (the page then starts from the admin's own automatic setting).
+    addSignature: { type: Boolean, default: null },
+    // Snapshot taken when the campaign starts: the SENDER's signature image copied to a key this campaign owns, served
+    // by /api/m/sig/<token>. A later change or deletion of the admin's own signature cannot affect it.
+    signature: {
+      type: new mongoose.Schema(
+        {
+          token: { type: String, required: true },
+          key: { type: String, required: true },
+          mime: { type: String, required: true },
+          width: { type: Number, required: true },
+          height: { type: Number, required: true },
+        },
+        { _id: false }
+      ),
+      default: null,
+    },
     fallbackName: { type: String, default: "there", trim: true, maxlength: 60 },
     fallbackCompany: { type: String, default: "", trim: true, maxlength: 60 },
 
@@ -45,6 +65,7 @@ const campaignSchema = new mongoose.Schema(
 );
 
 campaignSchema.index({ createdAt: -1 });
+campaignSchema.index({ "signature.token": 1 }, { sparse: true });
 campaignSchema.index({ status: 1, startedAt: 1 });
 
 module.exports = mongoose.model("MarketingCampaign", campaignSchema);

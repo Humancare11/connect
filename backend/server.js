@@ -91,6 +91,8 @@ app.set("trust proxy", parseTrustProxy(process.env.TRUST_PROXY));
 // must answer every request identically. Inert unless open tracking is switched on.
 app.use("/api/e", require("./routes/publicTracking"));
 app.use("/api/l", require("./routes/publicLinks"));
+// Email Marketing signature image (hosted copy). Not tracking: it never records an open or a click.
+app.use("/api/m/sig", require("./routes/publicMarketingSignature"));
 // Email Marketing click codes: /go/<code> (short redirect to another site) and POST /api/r/<code> (the website reports ?r=<code>).
 app.use("/go", require("./routes/publicClickCodes").go);
 app.use("/api/r", require("./routes/publicClickCodes").report);

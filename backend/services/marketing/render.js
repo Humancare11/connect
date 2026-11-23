@@ -103,13 +103,32 @@ const footerText = ({ address, unsubscribeUrl }) =>
 const pixelHtml = (url) =>
   `<img src="${escapeHtml(url)}" width="1" height="1" alt="" style="display:block;border:0;width:1px;height:1px;overflow:hidden">`;
 
+// The image signature, like on the Email page: shown at most 420px wide (width/height attributes set), 6px below the
+// content. It has no link, and it is added AFTER links are rewritten, so click tracking can never touch it.
+// `signature`: { url, width, height } with width/height already the display size. `centered`: inside a 600px column
+// (used when the design came from the "Write text" tab, whose layout is centered).
+function signatureBlockHtml({ url, width, height }, { centered = false } = {}) {
+  const img =
+    `<img src="${escapeHtml(url)}" alt="Signature" width="${width}" height="${height}" border="0" ` +
+    `style="width:${width}px;max-width:100%;height:auto;display:block;border:0">`;
+  if (!centered) return `<div style="margin-top:6px">${img}</div>`;
+  return (
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:0 12px;">' +
+    `<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;"><tr><td style="padding:0 32px;"><div style="margin-top:6px">${img}</div></td></tr></table>` +
+    "</td></tr></table>"
+  );
+}
+
 // → { subject, html, text, bytes }
-function renderMail({ campaign, recipient, footerAddress, unsubscribeUrl, trackLink = null, pixelUrl = "" }) {
+function renderMail({ campaign, recipient, footerAddress, unsubscribeUrl, trackLink = null, pixelUrl = "", signature = null }) {
   const values = valuesFor(recipient, campaign);
   const filled = fillHtml(campaign.html, values);
-  const text = htmlToText(filled) + footerText({ address: footerAddress, unsubscribeUrl });
+  // "Write text" designs: the plain-text part is what was typed (placeholders filled), not a re-reading of the HTML.
+  const body = campaign.contentMode === "text" && campaign.sourceText ? fillText(campaign.sourceText, values).trim() : htmlToText(filled);
+  const text = body + footerText({ address: footerAddress, unsubscribeUrl });
 
   let html = rewriteLinks(filled, trackLink);
+  if (signature) html = appendBeforeBodyEnd(html, signatureBlockHtml(signature, { centered: campaign.contentMode === "text" }));
   html = appendBeforeBodyEnd(html, footerHtml({ address: footerAddress, unsubscribeUrl }));
   if (pixelUrl) html = appendBeforeBodyEnd(html, pixelHtml(pixelUrl));
 
@@ -130,5 +149,6 @@ module.exports = {
   htmlToText,
   rewriteLinks,
   appendBeforeBodyEnd,
+  signatureBlockHtml,
   renderMail,
 };

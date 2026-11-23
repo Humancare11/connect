@@ -9,6 +9,7 @@ const { renderMail, MAX_TRACKED_LINKS } = require("./render");
 const { createUnsubscribeToken, unsubscribeUrl } = require("./unsubscribe");
 const { isSuppressed } = require("./suppression");
 const { classifySesError } = require("./sesSender");
+const { campaignBlock } = require("./signature");
 
 // The sending queue, stored in MongoDB.
 //   - one recipient row = one email. A row is claimed atomically (queued -> sending with a lease), so two
@@ -119,7 +120,7 @@ function createMarketingQueue({
 
       message = {
         unsubUrl,
-        mail: renderMail({ campaign, recipient: rec, footerAddress: cfg.footerAddress, unsubscribeUrl: unsubUrl, trackLink, pixelUrl }),
+        mail: renderMail({ campaign, recipient: rec, footerAddress: cfg.footerAddress, unsubscribeUrl: unsubUrl, trackLink, pixelUrl, signature: campaign.addSignature ? campaignBlock(campaign, state.baseUrl || cfg.baseUrl) : null }),
       };
       // The links and the open token must exist before the mail leaves, or a very fast click would find nothing.
       if (tracked.length) {
