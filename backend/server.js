@@ -879,6 +879,10 @@ const io = new Server(server, {
 const emailEvents = require("./services/email/emailEvents");
 emailEvents.setEmailEmitter((payload) => io.to(emailEvents.EMAIL_ROOM).emit(emailEvents.EVENT, payload));
 
+// Admin dashboards: voice alert when a new patient registers (event carries only { id, name }).
+const adminAlertEvents = require("./services/admin/adminAlertEvents");
+adminAlertEvents.setAdminAlertEmitter((payload) => io.to(adminAlertEvents.ADMIN_ALERTS_ROOM).emit(adminAlertEvents.EVENT, payload));
+
 app.set("io", io);
 app.set("callReportRecorder", callReportRecorder);
 app.set("evictDoctorFromAppointmentRoom", evictDoctorFromAppointmentRoom);
@@ -2036,6 +2040,24 @@ io.on("connection", (socket) => {
       socket.emit("email-watching");
     } catch (err) {
       socket.emit("email-watch-denied");
+    }
+  });
+
+  // The admin dashboard asks to hear "new patient registered". Only a verified admin or Super Admin joins the room;
+  // anyone else gets "admin-alerts-denied" and nothing else happens.
+  socket.on("admin-alerts-watch", async ({ token } = {}) => {
+    try {
+      const identity =
+        (await resolveSocketIdentity(socket, { role: "admin", token })) ||
+        (await resolveSocketIdentity(socket, { role: "superadmin", token }));
+      if (!adminAlertEvents.canWatchAdminAlerts(identity)) {
+        socket.emit("admin-alerts-denied");
+        return;
+      }
+      socket.join(adminAlertEvents.ADMIN_ALERTS_ROOM);
+      socket.emit("admin-alerts-watching");
+    } catch (err) {
+      socket.emit("admin-alerts-denied");
     }
   });
 

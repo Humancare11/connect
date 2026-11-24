@@ -6,6 +6,7 @@ import "./AdminShell.css";
 import { useAdmin } from "../../context/AdminContext";
 import DirectCallAlertsBell from "./DirectCallAlertsBell";
 import { LiveChatAdminProvider } from "./livechat/LiveChatAdminProvider";
+import { useAdminRegistrationVoice } from "./useAdminRegistrationVoice";
 import { NAV_ITEMS, buildNav, pathMatches, targetOf } from "./adminNav";
 import { marketingApi } from "../../api/emailMarketingApi";
 
@@ -318,6 +319,7 @@ function ProfileMenu({ user, onSignOut }) {
 
 export default function AdminLayout({ children }) {
   const { admin: user, loading, logout: contextLogout } = useAdmin();
+  useAdminRegistrationVoice(user); // spoken "New patient registered" (admin + superadmin only)
   const [sideOpen, setSideOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
   // Which submenu is open (a NavItem key), or undefined = "not chosen yet" (the
