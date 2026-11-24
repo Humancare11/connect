@@ -1000,6 +1000,9 @@
 .mu-users-table .mu-col-actions {
   white-space: nowrap;
 }
+.mu-users-table .mu-col-registered {
+  white-space: nowrap;
+}
 .mu-users-table .adp-btn {
   padding: 8px 16px;
   border-radius: 10px;
@@ -1071,6 +1074,9 @@
     grid-column: 4;
     grid-row: 1;
   }
+  .mu-users-table .mu-col-registered {
+    grid-column: 1 / -1;
+  }
   .mu-users-table td[data-label]::before {
     content: attr(data-label);
     display: block;
@@ -1099,6 +1105,12 @@
   }
   .mu-users-table .mu-col-id::before {
     content: "ID ";
+    display: inline;
+    font-size: inherit;
+    color: inherit;
+  }
+  .mu-users-table .mu-col-registered::before {
+    content: "Registered ";
     display: inline;
     font-size: inherit;
     color: inherit;
