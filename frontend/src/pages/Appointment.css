@@ -1396,3 +1396,33 @@
     width: 100%;
   }
 }
+
+/* ── Checkout "Complete your details" step: gender choice ── */
+.ap-gender-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ap-gender-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius-md);
+  background: var(--ap-bg-input);
+  font-size: 14px;
+  color: var(--ap-ink);
+  cursor: pointer;
+}
+
+.ap-gender-option--on {
+  border-color: var(--ap-primary);
+  background: var(--ap-primary-soft);
+  font-weight: 600;
+}
+
+.ap-gender-option input {
+  accent-color: var(--ap-primary);
+}

@@ -25,6 +25,8 @@ import {
 import "./Appointment.css";
 import useModalA11y from "../hooks/useModalA11y";
 import ReportFileList from "../components/ReportFileList";
+import PatientDetailsStep from "../components/booking/PatientDetailsStep";
+import { profileIsComplete } from "../utils/patientProfile";
 
 // The title of the "Next Availability" option on the intake's timing step (CategoryConsultant).
 const NEXT_AVAILABILITY_LABEL = "Next Availability";
@@ -50,7 +52,7 @@ export default function CategoryAppointmentConfirm() {
   const isNextAvailability = !time && pending?.formData?.urgency !== "flexible";
   const displayTime = time || (isNextAvailability ? NEXT_AVAILABILITY_LABEL : "");
   const [date, setDate] = useState(pending?.formData?.date || "");
-  const [stage, setStage] = useState("form"); // form | payment | confirming | success
+  const [stage, setStage] = useState("form"); // form | details | payment | confirming | success
   const [reports, setReports] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -79,7 +81,7 @@ export default function CategoryAppointmentConfirm() {
     const p = readPendingBooking();
     if (p?.selection) setSelection(p.selection);
     if (p?.formData?.date) setDate(p.formData.date);
-    setStage("payment");
+    setStage(profileIsComplete(user) ? "payment" : "details");
   }, [authLoading, user]);
 
   // The price shown, in the currency the server decided for this visitor (display only: the server prices the payment itself).
@@ -193,7 +195,7 @@ export default function CategoryAppointmentConfirm() {
       });
       return;
     }
-    setStage("payment");
+    setStage(profileIsComplete(user) ? "payment" : "details");
   };
 
   const createAppointment = async (paymentRef, gateway) => {
@@ -251,7 +253,7 @@ export default function CategoryAppointmentConfirm() {
     }
   };
 
-  const stageIndex = stage === "form" ? 0 : stage === "payment" ? 1 : 2;
+  const stageIndex = stage === "form" || stage === "details" ? 0 : stage === "payment" ? 1 : 2;
 
   return (
     <div className="ap-page">
@@ -402,6 +404,16 @@ export default function CategoryAppointmentConfirm() {
           </div>
         )}
 
+        {stage === "details" && (
+          <PatientDetailsStep
+            onSaved={() => setStage("payment")}
+            onBack={() => {
+              setStage("form");
+              setConfirmErr("");
+            }}
+          />
+        )}
+
         {stage === "payment" && (
           <PaymentStep
             priceInfo={priceInfo}
@@ -412,6 +424,7 @@ export default function CategoryAppointmentConfirm() {
               setStage("form");
               setConfirmErr("");
             }}
+            onProfileIncomplete={() => setStage("details")}
             onComplete={(paymentRef, gateway) =>
               createAppointment(paymentRef, gateway)
             }

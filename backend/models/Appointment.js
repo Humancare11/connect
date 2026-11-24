@@ -19,6 +19,10 @@ const appointmentSchema = new mongoose.Schema(
     specialty:  { type: String, default: "" },
     condition:  { type: String, default: "" },
     consultationPrice: { type: Number, default: 0 },
+    // Age (whole years, India calendar) and sex of the patient on the day of booking, copied from the profile once so the record
+    // stays correct when the profile changes later. Empty for bookings made before this existed or without those details.
+    patientAgeAtBooking: { type: Number, default: null },
+    patientSexAtBooking: { type: String, default: "" },
     patientDetails: {
       firstName: { type: String, default: "" },
       lastName:  { type: String, default: "" },

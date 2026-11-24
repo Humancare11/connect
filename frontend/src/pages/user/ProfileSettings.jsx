@@ -559,14 +559,16 @@ export default function ProfileSettings() {
                     />
                   </div>
                 </Field>
-                <Field label="Gender (optional)" icon="⚧">
+                <Field label={user.gender ? "Gender" : "Gender (optional)"} icon="⚧">
                   <select autoComplete="sex"
                     style={selectStyle}
                     id="gender" name="gender"
                     value={formData.gender} onChange={handleChange}
+                    required={Boolean(user.gender)}
                     onFocus={onFocus} onBlur={onBlur}
                   >
-                    <option value="">Select gender</option>
+                    {/* Once saved, gender can be changed but not removed (bookings rely on it). */}
+                    {!user.gender && <option value="">Select gender</option>}
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
@@ -576,10 +578,11 @@ export default function ProfileSettings() {
 
               {/* Row 3: DOB (optional) */}
               <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
-                <Field label="Date of Birth (optional)" icon="🎂">
+                <Field label={user.dob ? "Date of Birth" : "Date of Birth (optional)"} icon="🎂">
                   <input autoComplete="bday"
                     style={inputStyle} type="date" id="dob" name="dob"
                     value={formData.dob} onChange={handleChange}
+                    required={Boolean(user.dob)}
                     min="1900-01-01" max={todayISO()}
                     onFocus={onFocus} onBlur={onBlur}
                   />

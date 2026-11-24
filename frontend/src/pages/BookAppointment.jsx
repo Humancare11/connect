@@ -15,6 +15,8 @@ import { notifyUserActivityUpdated } from "../utils/activityEvents";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
 import { useAuth } from "../context/AuthContext";
 import { useCurrency } from "../hooks/useCurrency";
+import PatientDetailsStep from "../components/booking/PatientDetailsStep";
+import { profileIsComplete, isProfileIncompleteError } from "../utils/patientProfile";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
@@ -249,6 +251,7 @@ export function PaymentStage({
   onBack,
   onComplete,
   formatFee,
+  onProfileIncomplete,
 }) {
   const [method, setMethod] = useState(null); // null | "stripe" | "paypal"
   const [clientSecret, setClientSecret] = useState("");
@@ -270,6 +273,11 @@ export function PaymentStage({
       setClientSecret(res.data.clientSecret);
       setMethod("stripe");
     } catch (err) {
+      // The server refuses to start a payment until the profile has a date of birth and gender: show the details step.
+      if (isProfileIncompleteError(err)) {
+        onProfileIncomplete?.();
+        return;
+      }
       setStripeError(
         err.response?.data?.msg ||
         "Failed to initialize payment. Please try again.",
@@ -286,6 +294,10 @@ export function PaymentStage({
       const res = await api.post("/api/paypal/create-order", { doctorId });
       return res.data.orderId;
     } catch (err) {
+      if (isProfileIncompleteError(err)) {
+        onProfileIncomplete?.();
+        throw new Error("Please complete your details to continue.");
+      }
       // Rethrow with the server's friendly message so PayPalButtons' onError shows it.
       throw new Error(
         err.response?.data?.msg || "Failed to start PayPal payment. Please try again.",
@@ -509,7 +521,7 @@ export default function BookAppointment() {
   const [reports, setReports] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  const [stage, setStage] = useState("form"); // "form" | "payment" | "confirming" | "success"
+  const [stage, setStage] = useState("form"); // "form" | "details" | "payment" | "confirming" | "success"
   const [appointment, setAppointment] = useState(null);
   const [error, setError] = useState("");
   const [bookedSlots, setBookedSlots] = useState([]);
@@ -650,7 +662,8 @@ export default function BookAppointment() {
         );
       }
       setPaymentAmount(res.data.feeCents);
-      setStage("payment");
+      // Payment starts only once the profile has a date of birth and gender; otherwise ask for them first (once, ever).
+      setStage(profileIsComplete(user) ? "payment" : "details");
     } catch (err) {
       setError(
         err.response?.data?.msg || "Failed to load fee. Please try again.",
@@ -755,7 +768,7 @@ export default function BookAppointment() {
       <h2 style={{ padding: 40, textAlign: "center" }}>No Doctor Selected</h2>
     );
 
-  const stageIndex = stage === "form" ? 0 : stage === "payment" ? 1 : 2;
+  const stageIndex = stage === "form" || stage === "details" ? 0 : stage === "payment" ? 1 : 2;
 
   return (
     <div className="ap-page">
@@ -1001,6 +1014,14 @@ export default function BookAppointment() {
           </div>
         )}
 
+        {/* ── Stage: details (only when the profile has no date of birth / gender) ── */}
+        {stage === "details" && (
+          <PatientDetailsStep
+            onSaved={() => setStage("payment")}
+            onBack={() => setStage("form")}
+          />
+        )}
+
         {/* ── Stage: Payment ── */}
         {stage === "payment" && (
           <PaymentStage
@@ -1011,6 +1032,7 @@ export default function BookAppointment() {
             onBack={() => setStage("form")}
             onComplete={handlePaymentComplete}
             formatFee={formatFee}
+            onProfileIncomplete={() => setStage("details")}
           />
         )}
 

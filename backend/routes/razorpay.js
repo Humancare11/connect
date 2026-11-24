@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const crypto = require("crypto");
 const { verifyUserToken } = require("../middleware/verifyToken");
+const { requireCompleteProfile } = require("../utils/patientProfile");
 const Payment = require("../models/Payment");
 const ConsumedPayment = require("../models/ConsumedPayment");
 const RazorpayEvent = require("../models/RazorpayEvent");
@@ -15,7 +16,7 @@ const { createRazorpayOrder, getRazorpayKeyId, verifyWebhookSignature } = requir
    client-sent amount or currency is never read. If the server decides this customer pays in anything other than INR (any other
    country, a category or service with no INR price, INR switched off), Razorpay is refused: the gateway follows the currency.
    Returns { orderId, amountCents (paise), currency: "INR", keyId } - keyId is the PUBLIC key Checkout needs. */
-router.post("/create-order", verifyUserToken, async (req, res) => {
+router.post("/create-order", verifyUserToken, requireCompleteProfile, async (req, res) => {
   try {
     if (!isRazorpayConfigured()) {
       return res.status(503).json({ msg: "Razorpay payments are not available right now." });

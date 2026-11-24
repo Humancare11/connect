@@ -4,7 +4,7 @@ const router  = express.Router();
 
 const {
   register, login, doctorRegister, doctorLogin, adminLogin, paymentAdminLogin,
-  updateProfile, googleAuthUser, googleAuthDoctor,
+  updateProfile, savePatientDetails, googleAuthUser, googleAuthDoctor,
   sendRegisterOTP, sendForgotOTP, verifyForgotOTP, resetPasswordHandler,
   changePassword, me, adminMe, refresh, logout, adminLogout,
   employeeAdminLogin, employeeAdminMe, employeeAdminLogout,
@@ -61,6 +61,7 @@ router.post("/doctor-login",    loginLimiter, doctorLogin);
 
 // ── Protected user routes ─────────────────────────────────────────────────────
 router.put("/update-profile",  authMiddleware, updateProfile);
+router.put("/patient-details",  verifyUserToken, savePatientDetails);
 router.put("/change-password", authMiddleware, changePassword);
 router.post("/account-delete-request", authMiddleware, requestAccountDeletion);
 router.post("/account-delete-request/cancel", authMiddleware, cancelAccountDeletion);

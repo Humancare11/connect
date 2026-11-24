@@ -6,6 +6,7 @@ const Enrollment = require("../models/Enrollment");
 const Doctor     = require("../models/Doctor");
 const { paypalFetch } = require("../utils/paypal");
 const { convertAmount } = require("../utils/currency");
+const { requireCompleteProfile } = require("../utils/patientProfile");
 const { resolveChargeForSelection, assertGatewayCurrency, PaymentVerificationError } = require("../utils/paymentVerification");
 
 async function resolveDoctorId(value) {
@@ -28,7 +29,7 @@ async function resolveDoctorId(value) {
 
 /* POST /api/paypal/create-order
    Creates a PayPal order for the doctor's consultation fee. Returns orderId. */
-router.post("/create-order", verifyUserToken, async (req, res) => {
+router.post("/create-order", verifyUserToken, requireCompleteProfile, async (req, res) => {
   try {
     const { doctorId } = req.body;
     if (!doctorId) return res.status(400).json({ msg: "doctorId is required." });
@@ -69,7 +70,7 @@ router.post("/create-order", verifyUserToken, async (req, res) => {
    Creates a PayPal order for a category or service consultation fee. The
    amount is always resolved server-side (via priceType + priceRef), never
    trusted from the client — see the matching Stripe endpoint for why. */
-router.post("/create-order-by-amount", verifyUserToken, async (req, res) => {
+router.post("/create-order-by-amount", verifyUserToken, requireCompleteProfile, async (req, res) => {
   try {
     const { priceType, priceRef } = req.body;
     // The amount AND the currency are decided here on the server (the body is

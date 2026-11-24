@@ -72,6 +72,11 @@ const consultationSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Age (whole years, India calendar) and sex of the patient on the day of booking, copied from the profile once so the record
+    // stays correct when the profile changes later. Empty for bookings made before this existed or without those details.
+    patientAgeAtBooking: { type: Number, default: null },
+    patientSexAtBooking: { type: String, default: "" },
+
     status: {
       type: String,
       enum: ["Pending", "Assigned", "Confirmed", "Completed", "Cancelled"],
