@@ -6,25 +6,17 @@ import {
   notificationPermission,
   notificationsSupported,
   requestNotificationPermission,
-  setSoundEnabled,
-  setVisitorSoundEnabled,
-  setVoiceEnabled,
-  soundEnabled,
   audioUnlocked,
   subscribeAudioState,
-  visitorSoundEnabled,
-  voiceEnabled,
 } from "./liveChatNotify";
 import "./LiveChatToasts.css";
 
 // "Never miss a patient chat" (docs/live-chat-admin-ui.html .banner): asks the admin to allow browser notifications, and
-// offers a sound on/off switch. Browser notifications are only ever turned on by the admin's own click.
+// says when a click is needed to enable sound. The sound and voice alerts are always on: there is no mute. Browser
+// notifications are only ever turned on by the admin's own click.
 export default function NotificationsBanner() {
   const [permission, setPermission] = useState(notificationPermission);
   const [dismissed, setDismissed] = useState(bannerDismissed);
-  const [sound, setSound] = useState(soundEnabled);
-  const [visitorSound, setVisitorSound] = useState(visitorSoundEnabled);
-  const [voice, setVoice] = useState(voiceEnabled);
 
   const unlocked = useSyncExternalStore(subscribeAudioState, audioUnlocked);
   useEffect(() => {
@@ -54,59 +46,11 @@ export default function NotificationsBanner() {
           </button>
         </div>
       )}
-      {sound && !unlocked && (
+      {!unlocked && (
         <span className="lcn-hint" role="status">
           🔈 Click anywhere on this page to enable sound
         </span>
       )}
-      <button
-        type="button"
-        className="lcn-sound"
-        aria-pressed={sound}
-        title={sound ? "Sound is on for new chats and messages" : "Sound is off"}
-        onClick={() => {
-          setSoundEnabled(!sound);
-          setSound(!sound);
-        }}
-      >
-        {sound ? "🔔 Sound on" : "🔕 Sound off"}
-      </button>
-      <button
-        type="button"
-        className="lcn-sound"
-        aria-pressed={visitorSound}
-        title={
-          visitorSound
-            ? sound
-              ? "A soft sound plays when a new visitor arrives (Live Chat tab only)"
-              : "On, but silent while Sound is off"
-            : "No sound for new website visitors"
-        }
-        onClick={() => {
-          setVisitorSoundEnabled(!visitorSound);
-          setVisitorSound(!visitorSound);
-        }}
-      >
-        {visitorSound ? "👤 Visitor sound on" : "👤 Visitor sound off"}
-      </button>
-      <button
-        type="button"
-        className="lcn-sound"
-        aria-pressed={voice}
-        title={
-          voice
-            ? sound
-              ? "Spoken alerts: Patient wants a live agent, and New visitor (Live Chat tab only)"
-              : "On, but silent while Sound is off"
-            : "No spoken alerts"
-        }
-        onClick={() => {
-          setVoiceEnabled(!voice);
-          setVoice(!voice);
-        }}
-      >
-        {voice ? "🗣 Voice alerts on" : "🗣 Voice alerts off"}
-      </button>
     </div>
   );
 }

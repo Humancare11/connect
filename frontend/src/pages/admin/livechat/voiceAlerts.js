@@ -1,53 +1,109 @@
 // Spoken alerts for live chat admins, in addition to the chime. Pure gating (no browser APIs) so it is unit-tested on
 // its own; `speakPhrase` is the only part that touches speechSynthesis.
 //
-//   "New visitor"                     a new website visitor arrived (also needs the Visitor sound toggle)
+//   "New visitor"                     a new website visitor arrived
+//   "New chat form submitted"         a visitor submitted the live chat contact form
+//   "AI chat started"                 a visitor's chat with the AI started
 //   "Patient wants a live agent"      a chat entered the Queue ("Talk to live agent", an AI handoff, or a return)
 //
-// Rules: only in the Live Chat tab, only when the main Sound is on and Voice alerts are on (default ON), only after
-// the admin has clicked the page (autoplay rule, same unlock as the chime). One utterance at a time: while one is
-// speaking a new request is dropped, except that a Queue alert replaces a "New visitor" one. At most one
-// "New visitor" every 10 seconds.
+// The voice is ALWAYS on: there is no Sound / Voice switch. It plays on every admin page (the hub decides which one
+// browser tab speaks). It only waits for the admin's first click on the page (autoplay rule, same unlock as the chime).
+//
+// One utterance at a time, with a small gap. The form, AI chat and live agent alerts are queued (at most MAX_QUEUE
+// waiting) so none is lost; "New visitor" is dropped while anything is speaking or waiting, and at most one every
+// 10 seconds. A live agent alert replaces a "New visitor" that is still speaking. The same alert for the same chat or
+// visitor is not repeated within a minute.
 export const VOICE_VISITOR_MIN_GAP_MS = 10_000;
 export const VOICE_MAX_SPEAK_MS = 6_000; // a safety net when the browser never reports the end of an utterance
-export const VOICE_PHRASES = { visitor: "New visitor", queue: "Patient wants a live agent" };
+export const VOICE_GAP_MS = 1_200;
+export const VOICE_REPEAT_MS = 60_000;
+export const VOICE_MAX_QUEUE = 5;
+export const VOICE_PHRASES = {
+  visitor: "New visitor",
+  form: "New chat form submitted",
+  ai: "AI chat started",
+  queue: "Patient wants a live agent",
+};
 
-export function createVoiceGate({ now = () => Date.now() } = {}) {
-  let speakingKind = "";
-  let speakingSince = -Infinity;
+export function createVoiceGate({
+  now = () => Date.now(),
+  speak = (text, options) => speakPhrase(text, options),
+  setTimer = (fn, ms) => setTimeout(fn, ms),
+  clearTimer = (id) => clearTimeout(id),
+} = {}) {
+  let current = null; // { id, kind } while an utterance is speaking
+  let seq = 0;
+  let lastEnd = -Infinity;
   let lastVisitorAt = -Infinity;
+  let pumpTimer = null;
+  let safetyTimer = null;
+  const queue = [];
+  const recent = new Map(); // "kind:key" -> when it was accepted
 
-  const busy = (t) => speakingKind !== "" && t - speakingSince < VOICE_MAX_SPEAK_MS;
+  function finish(id) {
+    if (!current || current.id !== id) return; // an utterance that was replaced reports its end late: ignore it
+    clearTimer(safetyTimer);
+    current = null;
+    lastEnd = now();
+    pump();
+  }
+
+  function start(kind, interrupt) {
+    clearTimer(safetyTimer);
+    const id = ++seq;
+    current = { id, kind };
+    safetyTimer = setTimer(() => finish(id), VOICE_MAX_SPEAK_MS);
+    let started = false;
+    try {
+      started = speak(VOICE_PHRASES[kind], { interrupt, onEnd: () => finish(id) }) !== false;
+    } catch {
+      started = false;
+    }
+    if (!started) finish(id);
+  }
+
+  function pump() {
+    clearTimer(pumpTimer);
+    pumpTimer = null;
+    if (current || !queue.length) return;
+    const wait = lastEnd + VOICE_GAP_MS - now();
+    if (wait > 0) {
+      pumpTimer = setTimer(pump, wait);
+      return;
+    }
+    start(queue.shift(), false);
+  }
 
   return {
-    // -> { speak, interrupt, text }
-    decide({ kind, inLiveChatTab, voiceOn, mainSoundOn, visitorSoundOn, unlocked }) {
-      const no = { speak: false, interrupt: false, text: "" };
-      const text = VOICE_PHRASES[kind];
-      if (!text) return no;
-      if (!inLiveChatTab || !voiceOn || !mainSoundOn || !unlocked) return no;
-      if (kind === "visitor" && !visitorSoundOn) return no;
+    // -> "spoken" | "queued" | "dropped"
+    request({ kind, key = "", unlocked }) {
+      if (!VOICE_PHRASES[kind] || !unlocked) return "dropped";
       const t = now();
-      const isBusy = busy(t);
+      for (const [k, at] of recent) if (t - at > VOICE_REPEAT_MS) recent.delete(k);
+      const repeatKey = `${kind}:${key}`;
+      if (key && recent.has(repeatKey)) return "dropped";
+
       if (kind === "visitor") {
-        if (isBusy) return no;
-        if (t - lastVisitorAt < VOICE_VISITOR_MIN_GAP_MS) return no;
+        if (current || queue.length) return "dropped"; // a visitor never waits and never interrupts
+        if (t - lastVisitorAt < VOICE_VISITOR_MIN_GAP_MS) return "dropped";
         lastVisitorAt = t;
-        speakingKind = "visitor";
-        speakingSince = t;
-        return { speak: true, interrupt: false, text };
+        if (key) recent.set(repeatKey, t);
+        queue.push(kind);
+        pump();
+        return current ? "spoken" : "queued";
       }
-      // queue
-      if (isBusy && speakingKind === "queue") return no; // the same alert is already being spoken
-      const interrupt = isBusy; // replaces a "New visitor" that is still speaking
-      speakingKind = "queue";
-      speakingSince = t;
-      return { speak: true, interrupt, text };
+      if (kind === "queue" && current?.kind === "visitor") {
+        if (key) recent.set(repeatKey, t);
+        start(kind, true); // replaces the "New visitor" that is still speaking
+        return "spoken";
+      }
+      if (queue.length >= VOICE_MAX_QUEUE) return "dropped";
+      if (key) recent.set(repeatKey, t);
+      queue.push(kind);
+      pump();
+      return current ? "spoken" : "queued";
     },
-    // The utterance ended (or failed).
-    finished() {
-      speakingKind = "";
-    },
+    _state: () => ({ speaking: current?.kind || "", queued: queue.length }),
   };
 }
 
