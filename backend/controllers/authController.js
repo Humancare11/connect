@@ -42,6 +42,7 @@ const { getClientIp } = require("../utils/clientIp");
 const CONSENT_POLICY_VERSION = "privacy-hipaa-v1";
 const passwordError = (res, result) => res.status(400).json({ msg: result.errors.join(" ") });
 const { validateDob, isValidGender } = require("../utils/patientProfile");
+const { notifyAdminsByEmailUserRegistered } = require("../utils/userRegistrationNotifications");
 
 // ── helpers ───────────────────────────────────────────
 
@@ -234,6 +235,8 @@ const register = async (req, res) => {
       details: { country: user.country, state: user.state, ...(location.skipped && { locationSkipped: true }) },
     });
 
+    // After the account exists; never awaited and never throws, so signup is unaffected.
+    void notifyAdminsByEmailUserRegistered({ user });
     return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
   } catch (err) {
     // Two concurrent signups with the same email: the unique index wins.
@@ -956,6 +959,8 @@ const googleAuthUser = async (req, res) => {
     }
     const session = await issueAuthCookies(res, user);
     const tokens = buildTokenPayload(user, session);
+    // After the account exists; never awaited and never throws, so signup is unaffected.
+    void notifyAdminsByEmailUserRegistered({ user });
     return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
   } catch (err) {
     console.error("googleAuthUser error:", err);
