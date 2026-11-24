@@ -204,7 +204,7 @@ describe("INR through Razorpay (India only)", () => {
     else { delete process.env.RAZORPAY_KEY_ID; delete process.env.RAZORPAY_KEY_SECRET; }
   };
 
-  const mkUser = (country) => User.create({ name: country, email: `${country.replace(/\W/g, "").toLowerCase()}@x.co`, role: "user", country });
+  const mkUser = (country) => User.create({ name: country, email: `${country.replace(/\W/g, "").toLowerCase()}@x.co`, role: "user", country, dob: "1990-01-01", gender: "Male" });
   const post = async (path, user, body, ip) => {
     const res = await fetch(`${base}${path}`, {
       method: "POST",
