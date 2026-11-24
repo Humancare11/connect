@@ -183,6 +183,12 @@ function createChatService({
     }
     const record = presence.get(id);
     if (record) presence.update(id, { name: values.name, email: values.email });
+    // Tells the admins' dashboards (voice alert "New chat form submitted"). Only the visitor id; a failure changes nothing.
+    try {
+      emitToAgents("contact:submitted", { visitorId: id });
+    } catch {
+      /* the form was saved: the alert is a courtesy */
+    }
     return { ok: true, visitorId: id, firstName: firstNameOf(values.name) };
   }
 
