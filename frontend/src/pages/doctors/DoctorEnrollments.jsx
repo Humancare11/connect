@@ -2243,8 +2243,9 @@ export default function DoctorOnboardingWizard({
     else if (gradYearNum < 1950 || gradYearNum > new Date().getFullYear())
       e.gradYear = `Year must be between 1950 and ${new Date().getFullYear()}`;
     if (!String(s2.experience).trim()) e.experience = "Required";
-    if (!s2.consultantFees || Number(s2.consultantFees) <= 0)
-      e.consultantFees = "Required";
+    // Doctor fee hidden on request (2026-11-24)
+    // if (!s2.consultantFees || Number(s2.consultantFees) <= 0)
+    // e.consultantFees = "Required";
     if (!files.degree) e.degree = "Required";
     else if (!files.degree.url)
       e.degree =
@@ -2305,8 +2306,9 @@ export default function DoctorOnboardingWizard({
               : s2.licenseNum.trim(),
             medicalLicense: s2.licenseNum.trim(),
             consultationMode: s2.consultationMode,
-            consultantFees: s2.consultantFees ? Number(s2.consultantFees) : 0,
-            feeCurrency: s2.feeCurrency || "USD",
+            // Doctor fee hidden on request (2026-11-24)
+            // consultantFees: s2.consultantFees ? Number(s2.consultantFees) : 0,
+            // feeCurrency: s2.feeCurrency || "USD",
             clinicName: s2.clinicName.trim(),
             clinicAddress: s2.clinicAddress.trim(),
             aboutDoctor: s2.aboutDoctor.trim() || s2.certifications.trim(),
@@ -2505,8 +2507,9 @@ export default function DoctorOnboardingWizard({
       medicalRegistrationNumber: isUS ? s2.npi.trim() : s2.licenseNum.trim(),
       medicalLicense: s2.licenseNum.trim(),
       consultationMode: s2.consultationMode,
-      consultantFees: s2.consultantFees ? Number(s2.consultantFees) : 0,
-      feeCurrency: s2.feeCurrency || "USD",
+      // Doctor fee hidden on request (2026-11-24)
+      // consultantFees: s2.consultantFees ? Number(s2.consultantFees) : 0,
+      // feeCurrency: s2.feeCurrency || "USD",
       clinicName: s2.clinicName.trim(),
       clinicAddress: s2.clinicAddress.trim(),
       aboutDoctor: s2.aboutDoctor.trim() || s2.certifications.trim(),
@@ -3323,6 +3326,7 @@ export default function DoctorOnboardingWizard({
           Consultation &amp; Practice
         </h4>
         <div className="form-grid">
+          {/* Doctor fee hidden on request (2026-11-24)
           <div className="field-group">
             <label className="field-label">
               Consultation Fee <span className="req">*</span>
@@ -3410,6 +3414,7 @@ export default function DoctorOnboardingWizard({
               <div className="field-error">{s2Errors.consultantFees}</div>
             )}
           </div>
+          */}
           <div className="field-group">
             <label className="field-label">Clinic / Practice Name</label>
             <input
