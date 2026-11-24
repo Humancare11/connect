@@ -53,7 +53,7 @@ export async function startApiServer() {
   const locationsApp = express();
   locationsApp.use("/api/locations", requireBackend(path.join(backendRoot, "routes", "locations.js")));
   const state = freshState();
-  const user = { _id: "patient-1", name: "Test Patient", email: "patient@e2e.test", role: "user" };
+  const user = { _id: "patient-1", name: "Test Patient", email: "patient@e2e.test", role: "user", dob: "1990-01-01", gender: "Female" };
 
   const readBody = (req) =>
     new Promise((resolve) => {
