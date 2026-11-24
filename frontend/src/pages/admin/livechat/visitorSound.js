@@ -6,8 +6,7 @@
 //   - the visitor is not in the visitor list right now (page changes and heartbeats are updates, not arrivals),
 //   - the visitor was not seen in the last 30 minutes (someone who briefly leaves and comes back does not chime
 //     twice; kept in memory for this tab only).
-// The sound then plays only in the Live Chat tab, only when the admin turned it on and the main Sound is on, and at
-// most once every 10 seconds (a burst of visitors gives one note; the rest are dropped, not queued).
+// The sound and voice are always on (no switch) and then play at most once every 10 seconds (a burst of visitors gives one note; the rest are dropped, not queued).
 export const VISITOR_SOUND_MIN_GAP_MS = 10_000;
 export const VISITOR_SEEN_MS = 30 * 60_000;
 
@@ -33,13 +32,12 @@ export function createVisitorSoundGate({ now = () => Date.now() } = {}) {
       primed = false;
     },
     // A visitor delta (an "upsert"). `known` = already in the visitor list. Returns true when the sound should play.
-    shouldPlay({ visitorId, known, inLiveChatTab, enabled, mainSoundOn }) {
+    shouldPlay({ visitorId, known }) {
       const t = now();
       prune(t);
       const wasSeen = seen.has(visitorId);
       seen.set(visitorId, t); // every sighting refreshes the 30 minutes
       if (!primed || known || wasSeen) return false;
-      if (!inLiveChatTab || !enabled || !mainSoundOn) return false;
       if (t - lastPlayedAt < VISITOR_SOUND_MIN_GAP_MS) return false;
       lastPlayedAt = t;
       return true;

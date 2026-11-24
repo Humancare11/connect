@@ -59,5 +59,5 @@ test("quiet chime is softer and a failed unlock is retried; the hint follows the
   assert.match(notify, /audio\?\.state === "running"\) done\(\)/);
   assert.match(notify, /export function subscribeAudioState/);
   assert.match(banner, /Click anywhere on this page to enable sound/);
-  assert.match(banner, /sound && !unlocked/);
+  assert.match(banner, /\{!unlocked && \(/);
 });

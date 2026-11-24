@@ -1,9 +1,11 @@
 import { io } from "socket.io-client";
 import api, { getUserAuthToken } from "../../../api";
-import { audioUnlocked, installAudioUnlock, pageInFront, playChime, playVisitorSound, showBrowserNotification, soundEnabled, visitorSoundEnabled, voiceEnabled } from "./liveChatNotify";
+import { audioUnlocked, installAudioUnlock, pageInFront, playChime, playVisitorSound, showBrowserNotification } from "./liveChatNotify";
 import { inLiveChatTab, shouldAlert } from "./liveChatTabs";
 import { createVisitorSoundGate } from "./visitorSound";
-import { createVoiceGate, speakPhrase } from "./voiceAlerts";
+import { createVoiceGate } from "./voiceAlerts";
+import { createSpeakerElection } from "./voiceElection";
+import { onTabMessage, postToTabs } from "../../../utils/crossTab";
 
 // One shared connection to /livechat-admin for the whole admin session.
 //
@@ -23,18 +25,27 @@ let socket = null;
 const visitorGate = createVisitorSoundGate(); // "new website visitor" sound: once per new visitor (see visitorSound.js)
 const voiceGate = createVoiceGate(); // spoken alerts (see voiceAlerts.js)
 
-// Speaks "New visitor" / "Patient wants a live agent" when every rule of voiceAlerts.js allows it.
-function announceVoice(kind) {
-  const decision = voiceGate.decide({
-    kind,
-    inLiveChatTab: inLiveChatTab(),
-    voiceOn: voiceEnabled(),
-    mainSoundOn: soundEnabled(),
-    visitorSoundOn: visitorSoundEnabled(),
-    unlocked: audioUnlocked(),
-  });
-  if (!decision.speak) return;
-  if (!speakPhrase(decision.text, { interrupt: decision.interrupt, onEnd: () => voiceGate.finished() })) voiceGate.finished();
+// Spoken alerts are always on and play on every admin page. The voice gate (voiceAlerts.js) keeps them one at a time;
+// the election makes only ONE browser tab speak (a Live Chat tab first). Any problem here only means no voice.
+const voiceElection = createSpeakerElection({
+  post: postToTabs,
+  rank: () => ({
+    lc: inLiveChatTab() ? 1 : 0,
+    activated: typeof navigator !== "undefined" && navigator.userActivation ? (navigator.userActivation.hasBeenActive ? 1 : 0) : 1,
+    visible: typeof document === "undefined" || document.visibilityState === "visible" ? 1 : 0,
+  }),
+});
+onTabMessage((message) => voiceElection.handleTabMessage(message));
+
+// kind: "visitor" | "form" | "ai" | "queue" (see voiceAlerts.js). `key` is the visitor or chat the alert is about.
+function announceVoice(kind, key) {
+  try {
+    // The same single-tab rule as the chime: while a Live Chat tab is open only it alerts.
+    if (!shouldAlert()) return;
+    voiceElection.run(`${kind}:${key || ""}`, () => voiceGate.request({ kind, key, unlocked: audioUnlocked() }));
+  } catch {
+    /* a voice problem must never affect the chat alerts */
+  }
 }
 let refs = 0;
 let releaseTimer = null;
@@ -121,6 +132,7 @@ function onChatEvent(event, payload) {
 
   switch (event) {
     case "chat:new":
+      if (payload.mode === "ai") announceVoice("ai", payload.conversationId); // a chat an admin started has no voice
       scheduleUnread();
       if (!isActive(payload.conversationId)) {
         alertToast({
@@ -133,7 +145,7 @@ function onChatEvent(event, payload) {
       break;
     case "queue:new":
       scheduleUnread();
-      announceVoice("queue");
+      announceVoice("queue", payload.conversationId);
       alertToast({
         title: "Waiting for an agent",
         body: `${payload.name || "A patient"} asked for a live agent`,
@@ -166,6 +178,9 @@ function onChatEvent(event, payload) {
       });
       break;
     }
+    case "contact:submitted":
+      announceVoice("form", payload.visitorId);
+      break;
     case "chat:updated":
       scheduleUnread();
       break;
@@ -248,19 +263,16 @@ function connect() {
       const arrival = visitorGate.shouldPlay({
         visitorId: id,
         known: snapshot.visitors.has(id),
-        inLiveChatTab: inLiveChatTab(),
-        enabled: visitorSoundEnabled(),
-        mainSoundOn: soundEnabled(),
       });
       if (arrival) {
-        playVisitorSound();
-        announceVoice("visitor");
+        if (inLiveChatTab()) playVisitorSound(); // the soft note stays in the Live Chat tab; the voice plays everywhere
+        announceVoice("visitor", id);
       }
       next.set(id, delta.visitor);
     }
     set({ visitors: next });
   });
-  ["chat:new", "queue:new", "chat:message", "chat:updated", "chat:typing", "chat:taken", "chat:reopened", "ai:unavailable", "abuse:alert"].forEach((event) =>
+  ["chat:new", "queue:new", "contact:submitted", "chat:message", "chat:updated", "chat:typing", "chat:taken", "chat:reopened", "ai:unavailable", "abuse:alert"].forEach((event) =>
     socket.on(event, (payload) => onChatEvent(event, payload || {}))
   );
 }
