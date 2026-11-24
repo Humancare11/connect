@@ -43,6 +43,7 @@ const CONSENT_POLICY_VERSION = "privacy-hipaa-v1";
 const passwordError = (res, result) => res.status(400).json({ msg: result.errors.join(" ") });
 const { validateDob, isValidGender } = require("../utils/patientProfile");
 const { notifyAdminsByEmailUserRegistered } = require("../utils/userRegistrationNotifications");
+const { emitUserRegistered: emitAdminVoiceAlert } = require("../services/admin/adminAlertEvents");
 
 // ── helpers ───────────────────────────────────────────
 
@@ -237,6 +238,7 @@ const register = async (req, res) => {
 
     // After the account exists; never awaited and never throws, so signup is unaffected.
     void notifyAdminsByEmailUserRegistered({ user });
+    emitAdminVoiceAlert({ user });
     return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
   } catch (err) {
     // Two concurrent signups with the same email: the unique index wins.
@@ -961,6 +963,7 @@ const googleAuthUser = async (req, res) => {
     const tokens = buildTokenPayload(user, session);
     // After the account exists; never awaited and never throws, so signup is unaffected.
     void notifyAdminsByEmailUserRegistered({ user });
+    emitAdminVoiceAlert({ user });
     return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
   } catch (err) {
     console.error("googleAuthUser error:", err);
