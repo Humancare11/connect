@@ -9,6 +9,7 @@ const PaymentLink = require("../models/PaymentLink");
 const Payment = require("../models/Payment");
 const { verifyUserToken, verifyAdminToken, adminOnly, paymentAdminOnly } = require("../middleware/verifyToken");
 const { toCents } = require("../utils/currency");
+const { requireCompleteProfile } = require("../utils/patientProfile");
 const { resolveChargeForSelection, assertGatewayCurrency, PaymentVerificationError } = require("../utils/paymentVerification");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 const ManualInvoice = require("../models/ManualInvoice");
@@ -123,7 +124,7 @@ async function resolveDoctorId(value) {
 /* POST /api/payments/create-intent
    Creates a Stripe PaymentIntent for card payments only.
    Returns clientSecret and amount in paise. */
-router.post("/create-intent", verifyUserToken, async (req, res) => {
+router.post("/create-intent", verifyUserToken, requireCompleteProfile, async (req, res) => {
   try {
     const { doctorId } = req.body;
     if (!doctorId) return res.status(400).json({ msg: "doctorId is required." });
@@ -387,7 +388,7 @@ router.get("/admin/payment-link-creators", verifyAdminToken, paymentAdminOnly, a
    ServicePrice (via priceType + priceRef) — a client-supplied amount is
    never trusted here, since that used to let a patient mint an
    arbitrarily-cheap PaymentIntent and reuse it to book any appointment. */
-router.post("/create-intent-by-amount", verifyUserToken, async (req, res) => {
+router.post("/create-intent-by-amount", verifyUserToken, requireCompleteProfile, async (req, res) => {
   try {
     const { priceType, priceRef } = req.body;
     // The amount AND the currency are decided here on the server (the body is

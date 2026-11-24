@@ -41,30 +41,7 @@ const { getClientIp } = require("../utils/clientIp");
 
 const CONSENT_POLICY_VERSION = "privacy-hipaa-v1";
 const passwordError = (res, result) => res.status(400).json({ msg: result.errors.join(" ") });
-const DOB_MIN_YEAR = 1900;
-
-const validateDob = (dob) => {
-  if (!dob) return { valid: false, msg: "Date of Birth is required." };
-
-  const value = String(dob).trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return { valid: false, msg: "Date of Birth must be a valid date." };
-  }
-
-  const date = new Date(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
-    return { valid: false, msg: "Date of Birth must be a valid date." };
-  }
-
-  const today = new Date();
-  const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
-  if (date > todayUtc) return { valid: false, msg: "Date of Birth cannot be in the future." };
-  if (date.getUTCFullYear() < DOB_MIN_YEAR) {
-    return { valid: false, msg: `Date of Birth must be in or after ${DOB_MIN_YEAR}.` };
-  }
-
-  return { valid: true };
-};
+const { validateDob, isValidGender } = require("../utils/patientProfile");
 
 // ── helpers ───────────────────────────────────────────
 
@@ -685,6 +662,25 @@ const resolveSignupLocation = (req, body) => {
   return validateSignupLocation(body);
 };
 
+// PUT /api/auth/patient-details  { dob, gender }  - the "Complete your details" step of checkout. Both are required here (unlike the
+// optional Profile page fields), validated with the shared rules, and written to the patient's own profile only.
+const savePatientDetails = async (req, res) => {
+  try {
+    const dob = typeof req.body?.dob === "string" ? req.body.dob.trim() : "";
+    const gender = typeof req.body?.gender === "string" ? req.body.gender.trim() : "";
+    const dobCheck = validateDob(dob);
+    if (!dobCheck.valid) return res.status(400).json({ msg: dobCheck.msg });
+    if (!isValidGender(gender)) return res.status(400).json({ msg: "Please select a gender." });
+
+    const user = await User.findByIdAndUpdate(req.user.id, { $set: { dob, gender } }, { returnDocument: "after" });
+    if (!user) return res.status(404).json({ msg: "User not found." });
+    return res.json({ user: safeUser(user) });
+  } catch (err) {
+    console.error("savePatientDetails error:", err.message);
+    return res.status(500).json({ msg: "Server error. Please try again." });
+  }
+};
+
 const updateProfile = async (req, res) => {
   try {
     const { name, email, mobile, dob, gender } = req.body;
@@ -693,7 +689,7 @@ const updateProfile = async (req, res) => {
     if (!name || !email || typeof name !== "string" || typeof email !== "string")
       return res.status(400).json({ msg: "Name and email are required." });
 
-    const current = await User.findById(userId).select("mobile dob country state city").lean();
+    const current = await User.findById(userId).select("mobile dob gender country state city").lean();
     if (!current)
       return res.status(404).json({ msg: "User not found." });
 
@@ -712,6 +708,10 @@ const updateProfile = async (req, res) => {
       if (typeof dob !== "string") return res.status(400).json({ msg: "Date of Birth must be a valid date." });
       const nextDob = dob.trim();
       if (nextDob !== cleanStr(current.dob)) {
+        // Once set, the date of birth can be corrected but not removed (the bookings rely on it).
+        if (!nextDob && cleanStr(current.dob)) {
+          return res.status(400).json({ msg: "Date of Birth can be changed but not removed." });
+        }
         if (nextDob) {
           const dobCheck = validateDob(nextDob);
           if (!dobCheck.valid) return res.status(400).json({ msg: dobCheck.msg });
@@ -723,6 +723,10 @@ const updateProfile = async (req, res) => {
     // Gender is optional too, but must be one of the known values.
     if (gender !== undefined) {
       if (!VALID_GENDERS.includes(gender)) return res.status(400).json({ msg: "Invalid gender." });
+      // Same rule as the date of birth: editable, never blanked once set.
+      if (!gender && cleanStr(current.gender)) {
+        return res.status(400).json({ msg: "Gender can be changed but not removed." });
+      }
       set.gender = gender;
     }
 
@@ -1617,6 +1621,7 @@ const partnerLogout = async (req, res) => {
 };
 
 module.exports = {
+  savePatientDetails,
   register, login, doctorRegister, doctorLogin, adminLogin, paymentAdminLogin,
   updateProfile, googleAuthUser, googleAuthDoctor,
   sendRegisterOTP, sendForgotOTP, verifyForgotOTP, resetPasswordHandler,

@@ -31,6 +31,7 @@ const { notifyAdminAppointmentBooked, notifyAdminAppointmentDoctorAction, notify
 const { attachSummaries } = require("../utils/appointmentReschedule");
 const { timeToMinutes, buildUtcDateTime } = require("../utils/bookingTime");
 const { bookingSourceFor } = require("../utils/bookingSource");
+const { snapshotForBooking } = require("../utils/patientProfile");
 const { safeStoredReports, checkBookingReports, logReportOutcome, reportsWarning } = require("../utils/bookingReports");
 
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
@@ -289,9 +290,11 @@ const createAppointment = async (req, res) => {
       ...(patientDetails || {}),
       email: patientDetails?.email || patient?.email || "",
       phone: patientDetails?.phone || patient?.mobile || "",
-      dob: patientDetails?.dob || patient?.dob || "",
-      gender: patientDetails?.gender || patient?.gender || "",
+      // The profile is the source of truth for these two; what the browser sent is only a fallback for a profile that lacks them.
+      dob: patient?.dob || patientDetails?.dob || "",
+      gender: patient?.gender || patientDetails?.gender || "",
     };
+    const profileSnapshot = snapshotForBooking(patient, { kind: "appointment", patientId, at: bookedAt });
 
     // ── Payment (Stripe/PayPal) is already verified above, outside the
     // transaction — external API calls must never live inside a DB
@@ -352,6 +355,7 @@ const createAppointment = async (req, res) => {
                 ? paymentAmountFinal / 100
                 : Number(consultationPrice) || 0,
             patientDetails: safePatientDetails,
+            ...profileSnapshot,
             medicalReports: checkedReports.kept,
             reportsUnverified: checkedReports.unverified,
             reportsUnverifiedAt: checkedReports.unverified.length ? new Date() : null,
