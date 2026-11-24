@@ -1,0 +1,344 @@
+diff --git a/backend/models/Enrollment.js b/backend/models/Enrollment.js
+index 4e4619ec..37dbccda 100644
+--- a/backend/models/Enrollment.js
++++ b/backend/models/Enrollment.js
+@@ -37,6 +37,12 @@ const enrollmentSchema = new mongoose.Schema({
+   aboutDoctor: String,
+   consultationMode: String,
+   languagesKnown: [String],
++  referralSource: {
++    type: String,
++    enum: ["indeed", "facebook", "instagram", "ai", "google", "others"],
++    default: null,
++  },
++  referralSourceOther: { type: String, trim: true, maxlength: 100, default: "" },
+   licensedStates: [String],
+   internationalLicenses: [String],
+   clinicName: String,
+diff --git a/backend/routes/doctorAuth.js b/backend/routes/doctorAuth.js
+index f1d3d4ea..694f1829 100644
+--- a/backend/routes/doctorAuth.js
++++ b/backend/routes/doctorAuth.js
+@@ -556,6 +556,8 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
+         // fields like approvalStatus/verified/pendingRequestType must only ever
+         // be set by this route's own logic below, never by the request body.
+         const enrollmentData = pickAllowedStepFields(enrollmentDataRaw, ENROLLMENT_FIELD_ALLOWLIST);
++        const referralError = normalizeReferral(enrollmentData);
++        if (referralError) return res.status(400).json({ message: referralError });
+         // hasProfilePhoto is derived, not client-trusted — same pattern used in
+         // adminController.js — so it can't be spoofed independently of profilePhoto.
+         enrollmentData.hasProfilePhoto = !!enrollmentData.profilePhoto;
+@@ -743,7 +745,7 @@ const STEP_FIELD_ALLOWLIST = {
+     1: [
+         "firstName", "surname", "countryCode", "phoneNumber", "gender",
+         "dob", "country", "state", "city", "zip", "address", "languagesKnown",
+-        "profilePhoto",
++        "profilePhoto", "referralSource", "referralSourceOther",
+     ],
+     2: [
+         "specialization", "subSpecialization", "qualification", "experience",
+@@ -784,6 +786,30 @@ function pickAllowedStepFields(data, allowedKeys) {
+     return out;
+ }
+ 
++// "How did you hear about us?" (wizard step 1). Normalises the two referral keys
++// in place when present: empty → null, anything outside the list is rejected,
++// and the free text is kept (trimmed, max 100) only for "others".
++// Returns an error message, or null when fine. Keys that are absent are left alone.
++const REFERRAL_SOURCES = ["indeed", "facebook", "instagram", "ai", "google", "others"];
++function normalizeReferral(data) {
++    if (Object.prototype.hasOwnProperty.call(data, "referralSource")) {
++        const raw = data.referralSource;
++        if (raw === "" || raw === null || raw === undefined) {
++            data.referralSource = null;
++        } else if (typeof raw !== "string" || !REFERRAL_SOURCES.includes(raw.trim().toLowerCase())) {
++            return "Invalid value for how you heard about us.";
++        } else {
++            data.referralSource = raw.trim().toLowerCase();
++        }
++        if (data.referralSource !== "others") data.referralSourceOther = "";
++    }
++    if (Object.prototype.hasOwnProperty.call(data, "referralSourceOther")) {
++        const other = data.referralSourceOther;
++        data.referralSourceOther = typeof other === "string" ? other.trim().slice(0, 100) : "";
++    }
++    return null;
++}
++
+ // ── PATCH /api/doctor/enrollment/step ─────────────────────────────────────────
+ // Autosave: persists ONE wizard step's field data immediately (on "Save" or
+ // on Continue), separate from /enrollment/progress above which only tracks
+@@ -835,6 +861,8 @@ router.patch("/enrollment/step", verifyDoctorToken, async (req, res) => {
+         }
+ 
+         const safeData = pickAllowedStepFields(data, STEP_FIELD_ALLOWLIST[stepNum]);
++        const referralError = normalizeReferral(safeData);
++        if (referralError) return res.status(400).json({ message: referralError });
+         enrollment.set(safeData);
+         for (const key of Object.keys(safeData)) {
+             if (STEP_ARRAY_OR_MIXED_FIELDS.has(key)) enrollment.markModified(key);
+diff --git a/backend/tests/enrollmentReferralSource.test.js b/backend/tests/enrollmentReferralSource.test.js
+new file mode 100644
+index 00000000..5f05d505
+--- /dev/null
++++ b/backend/tests/enrollmentReferralSource.test.js
+@@ -0,0 +1,147 @@
++const { test, describe, before, after, beforeEach } = require("node:test");
++const assert = require("node:assert/strict");
++const http = require("node:http");
++const express = require("express");
++const cookieParser = require("cookie-parser");
++const mongoose = require("mongoose");
++const { MongoMemoryServer } = require("mongodb-memory-server");
++
++process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret";
++process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "sk_test_dummy_not_used";
++
++// Mocked mail provider, installed BEFORE the routes load: no real email is sent, and
++// it is the test-only channel for reading the registration OTP.
++const mailer = require("../utils/sendEmail");
++const mails = [];
++mailer.sendOTPEmail = async (to, code, type) => { mails.push({ kind: type, to, code }); };
++
++const Doctor = require("../models/Doctor");
++const Enrollment = require("../models/Enrollment");
++const Session = require("../models/Session");
++const OTP = require("../models/OTP");
++const AdminNotification = require("../models/AdminNotification");
++
++const PASSWORD = "Passw0rd!x";
++let seq = 0;
++let mongod, server, base;
++
++async function call(method, path, { body, token } = {}) {
++  const res = await fetch(`${base}${path}`, {
++    method,
++    headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
++    body: body ? JSON.stringify(body) : undefined,
++  });
++  let json = null;
++  try { json = await res.json(); } catch { /* empty body */ }
++  return { status: res.status, body: json };
++}
++
++describe("enrollment step 1: how did you hear about us (real routes, in-memory MongoDB)", () => {
++  before(async () => {
++    mongod = await MongoMemoryServer.create();
++    await mongoose.connect(mongod.getUri());
++    await Doctor.init();
++    const app = express();
++    app.use(express.json());
++    app.use(cookieParser());
++    app.use("/api/doctor", require("../routes/doctorAuth"));
++    server = http.createServer(app);
++    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
++    base = `http://127.0.0.1:${server.address().port}`;
++  });
++  after(async () => {
++    await new Promise((resolve) => server.close(resolve));
++    await mongoose.disconnect();
++    await mongod.stop();
++  });
++  beforeEach(async () => {
++    await Promise.all([Doctor.deleteMany({}), Enrollment.deleteMany({}), Session.deleteMany({}), OTP.deleteMany({}), AdminNotification.deleteMany({})]);
++    mails.length = 0;
++  });
++
++  // A newly registered doctor whose enrollment is still in progress.
++  async function newDoctor() {
++    const email = `referral.doctor${++seq}@example.com`;
++    const name = "Jane Roe";
++    await call("POST", "/api/doctor/send-register-otp", { body: { email, name } });
++    const otp = [...mails].reverse().find((m) => m.to === email)?.code;
++    const res = await call("POST", "/api/doctor/register", {
++      body: { name, email, password: PASSWORD, confirmPassword: PASSWORD, otp },
++    });
++    return { token: res.body.accessToken, doctorId: res.body.doctor.id };
++  }
++  const saveStep1 = (token, doctorId, data) =>
++    call("PATCH", "/api/doctor/enrollment/step", { token, body: { doctorId: String(doctorId), step: 1, data } });
++  const stored = (doctorId) => Enrollment.findOne({ doctorId }).lean();
++
++  for (const value of ["indeed", "facebook", "instagram", "ai", "google", "others"]) {
++    test(`step save accepts and stores "${value}"`, async () => {
++      const { token, doctorId } = await newDoctor();
++      const res = await saveStep1(token, doctorId, { referralSource: value });
++      assert.equal(res.status, 200);
++      assert.equal((await stored(doctorId)).referralSource, value);
++    });
++  }
++
++  test("values outside the list are rejected and nothing is stored", async () => {
++    const { token, doctorId } = await newDoctor();
++    for (const bad of ["twitter", "INDEED!", { $ne: null }, ["google"], 5]) {
++      const res = await saveStep1(token, doctorId, { referralSource: bad });
++      assert.equal(res.status, 400, `rejected: ${JSON.stringify(bad)}`);
++    }
++    assert.ok(!(await stored(doctorId)).referralSource);
++  });
++
++  test("an empty value is allowed on Save (stored as null)", async () => {
++    const { token, doctorId } = await newDoctor();
++    const res = await saveStep1(token, doctorId, { referralSource: "", referralSourceOther: "" });
++    assert.equal(res.status, 200);
++    assert.equal((await stored(doctorId)).referralSource ?? null, null);
++  });
++
++  test("the free text is kept (trimmed, max 100) only for \"others\"", async () => {
++    const { token, doctorId } = await newDoctor();
++    await saveStep1(token, doctorId, { referralSource: "others", referralSourceOther: `  ${"x".repeat(150)}  ` });
++    let doc = await stored(doctorId);
++    assert.equal(doc.referralSource, "others");
++    assert.equal(doc.referralSourceOther, "x".repeat(100));
++
++    await saveStep1(token, doctorId, { referralSource: "google", referralSourceOther: "left over text" });
++    doc = await stored(doctorId);
++    assert.equal(doc.referralSource, "google");
++    assert.equal(doc.referralSourceOther, "", "discarded when the source is not others");
++  });
++
++  test("a step save without the referral keys leaves the stored answer alone", async () => {
++    const { token, doctorId } = await newDoctor();
++    await saveStep1(token, doctorId, { referralSource: "ai" });
++    const res = await saveStep1(token, doctorId, { city: "Austin" });
++    assert.equal(res.status, 200);
++    const doc = await stored(doctorId);
++    assert.equal(doc.referralSource, "ai");
++    assert.equal(doc.city, "Austin");
++  });
++
++  test("the final submit saves the answer and rejects a bad one", async () => {
++    const { token, doctorId } = await newDoctor();
++    const bad = await call("POST", "/api/doctor/enrollment", {
++      token, body: { doctorId: String(doctorId), zip: "10001", referralSource: "twitter" },
++    });
++    assert.equal(bad.status, 400);
++    const ok = await call("POST", "/api/doctor/enrollment", {
++      token, body: { doctorId: String(doctorId), zip: "10001", referralSource: "others", referralSourceOther: "A friend" },
++    });
++    assert.equal(ok.status, 201);
++    const doc = await stored(doctorId);
++    assert.equal(doc.referralSource, "others");
++    assert.equal(doc.referralSourceOther, "A friend");
++  });
++
++  test("existing enrollments without the fields still load and save", async () => {
++    const { token, doctorId } = await newDoctor();
++    await Enrollment.collection.updateOne({ doctorId: new mongoose.Types.ObjectId(String(doctorId)) }, { $unset: { referralSource: "", referralSourceOther: "" } });
++    const res = await saveStep1(token, doctorId, { city: "Austin" });
++    assert.equal(res.status, 200);
++    assert.equal((await stored(doctorId)).city, "Austin");
++  });
++});
+diff --git a/frontend/src/pages/doctors/DoctorEnrollments.jsx b/frontend/src/pages/doctors/DoctorEnrollments.jsx
+index a940b18b..184373c0 100644
+--- a/frontend/src/pages/doctors/DoctorEnrollments.jsx
++++ b/frontend/src/pages/doctors/DoctorEnrollments.jsx
+@@ -1757,6 +1757,8 @@ export default function DoctorOnboardingWizard({
+     city: "",
+     zip: "",
+     address: "",
++    referralSource: "",
++    referralSourceOther: "",
+   });
+   const [countryApi, setCountryApi] = useState(null);
+   const [stateApi, setStateApi] = useState(null);
+@@ -1907,6 +1909,8 @@ export default function DoctorOnboardingWizard({
+       city: data.city || "",
+       zip: data.zip || "",
+       address: data.address || "",
++      referralSource: data.referralSource || "",
++      referralSourceOther: data.referralSourceOther || "",
+     });
+     if (data.countryCode) {
+       setPhoneCountryCode(getCountryCodeFromDialCode(data.countryCode));
+@@ -2216,6 +2220,8 @@ export default function DoctorOnboardingWizard({
+     if (s1.country === "US" && !s1.state.trim()) e.state = "Required for US";
+     if (!s1.zip.trim()) e.zip = "Required";
+     if (languagesKnown.length === 0) e.languages = "Required";
++    if (!s1.referralSource && regStatus !== "approved")
++      e.referralSource = "Please select how you heard about us.";
+     setS1Errors(e);
+     return Object.keys(e).length === 0;
+   };
+@@ -2276,6 +2282,9 @@ export default function DoctorOnboardingWizard({
+             zip: s1.zip.trim(),
+             address: s1.address.trim(),
+             languagesKnown,
++            referralSource: s1.referralSource,
++            referralSourceOther:
++              s1.referralSource === "others" ? s1.referralSourceOther.trim() : "",
+             profilePhoto:
+               files.profilePhoto?.url || files.profilePhoto?.name || "",
+           };
+@@ -2480,6 +2489,9 @@ export default function DoctorOnboardingWizard({
+       zip: s1.zip.trim(),
+       address: s1.address.trim(),
+       languagesKnown,
++      referralSource: s1.referralSource,
++      referralSourceOther:
++        s1.referralSource === "others" ? s1.referralSourceOther.trim() : "",
+       specialization:
+         s2.specialty === "Other"
+           ? s2.customSpecialty.trim() || "Other"
+@@ -2893,6 +2905,7 @@ export default function DoctorOnboardingWizard({
+         >
+           Languages
+         </h4>
++        <div className="form-grid">
+         <div className="field-group">
+           <label className="field-label">
+             Languages Known <span className="req">*</span>
+@@ -2909,6 +2922,52 @@ export default function DoctorOnboardingWizard({
+             <div className="field-error">{s1Errors.languages}</div>
+           )}
+         </div>
++        <div className="field-group">
++          <label className="field-label">
++            How did you hear about us? <span className="req">*</span>
++          </label>
++          <select
++            className={`field-select ${s1Errors.referralSource ? "error" : ""}`}
++            value={s1.referralSource}
++            onChange={(e) =>
++              setS1((prev) => ({
++                ...prev,
++                referralSource: e.target.value,
++                referralSourceOther:
++                  e.target.value === "others" ? prev.referralSourceOther : "",
++              }))
++            }
++          >
++            <option value="" disabled>
++              Select an option
++            </option>
++            <option value="indeed">Indeed</option>
++            <option value="facebook">Facebook</option>
++            <option value="instagram">Instagram</option>
++            <option value="ai">AI (ChatGPT, Claude, etc.)</option>
++            <option value="google">Google</option>
++            <option value="others">Others</option>
++          </select>
++          {s1Errors.referralSource && (
++            <div className="field-error">{s1Errors.referralSource}</div>
++          )}
++          {s1.referralSource === "others" && (
++            <input
++              className="field-input"
++              style={{ marginTop: 8 }}
++              placeholder="Please specify (optional)"
++              maxLength={100}
++              value={s1.referralSourceOther}
++              onChange={(e) =>
++                setS1((prev) => ({
++                  ...prev,
++                  referralSourceOther: e.target.value,
++                }))
++              }
++            />
++          )}
++        </div>
++        </div>
+ 
+         <div className="btn-row">
+           <div />
