@@ -214,6 +214,45 @@ function onChatEvent(event, payload) {
   }
 }
 
+// The server drops this socket when the token it connected with expires (about every 15 minutes) and Socket.IO never
+// reconnects by itself after that. So we get a fresh token and connect again. A refused refresh means the session is
+// really over: then we stop. A connection that keeps dropping is retried more slowly.
+const RECOVERY_DELAYS_MS = [0, 5_000, 15_000, 60_000];
+const STABLE_MS = 60_000;
+let recoveryTimer = null;
+let recoveryAttempts = 0;
+let connectedAt = 0; // when the current or last connection was made; 0 = never connected
+let forbiddenRetried = false;
+
+function resetRecovery() {
+  clearTimeout(recoveryTimer);
+  recoveryTimer = null;
+  recoveryAttempts = 0;
+  connectedAt = 0;
+  forbiddenRetried = false;
+}
+
+function recover(target) {
+  if (recoveryTimer) return;
+  const delay = RECOVERY_DELAYS_MS[Math.min(recoveryAttempts, RECOVERY_DELAYS_MS.length - 1)];
+  recoveryAttempts += 1;
+  set({ status: "reconnecting" });
+  recoveryTimer = setTimeout(async () => {
+    recoveryTimer = null;
+    if (socket !== target) return; // closed or replaced meanwhile
+    try {
+      await api.post("/api/auth/refresh", null, { authRole: "admin", skipAuthRefresh: true });
+    } catch (error) {
+      if (socket !== target) return;
+      const code = error?.response?.status;
+      if (code === 401 || code === 403) set({ status: "denied" });
+      else recover(target); // server unreachable: try again later
+      return;
+    }
+    if (socket === target && !target.connected) target.connect();
+  }, delay);
+}
+
 function connect() {
   if (socket || !ENABLED) return;
   installAudioUnlock();
@@ -221,18 +260,26 @@ function connect() {
     path: "/socket.io/",
     transports: ["websocket", "polling"],
     withCredentials: true,
-    auth: { token: getUserAuthToken("admin") },
+    // A function, so every (re)connect sends the current token.
+    auth: (cb) => cb({ token: getUserAuthToken("admin") }),
     reconnectionDelay: 1000,
     reconnectionDelayMax: 15_000,
   });
 
   socket.on("connect", () => {
+    connectedAt = Date.now();
+    forbiddenRetried = false;
     set({ status: "live" });
     refreshUnread();
   });
   socket.on("disconnect", (reason) => {
     visitorGate.unprime(); // arrivals while the connection was down are not announced afterwards
-    set({ status: reason === "io server disconnect" ? "denied" : "reconnecting" });
+    if (reason !== "io server disconnect") {
+      set({ status: "reconnecting" });
+      return;
+    }
+    if (Date.now() - connectedAt >= STABLE_MS) recoveryAttempts = 0;
+    recover(socket);
   });
   socket.on("connect_error", (err) => {
     const message = String(err?.message || "");
@@ -241,11 +288,19 @@ function connect() {
       socket.close();
       socket = null;
     } else if (message === "forbidden") {
+      // After a long sleep the stored token is too old: refresh once before giving up.
+      if (connectedAt && !forbiddenRetried) {
+        forbiddenRetried = true;
+        recover(socket);
+        return;
+      }
       set({ status: "denied" });
       socket.close();
       socket = null;
     } else {
       set({ status: "reconnecting" });
+      // A refusal by the server (not a network error) is not retried by Socket.IO itself.
+      if (connectedAt && !socket.active) recover(socket);
     }
   });
   socket.on("visitors:snapshot", ({ visitors = [], serverTime }) => {
@@ -279,6 +334,7 @@ function connect() {
 
 function disconnect() {
   clearTimeout(unreadTimer);
+  resetRecovery();
   socket?.close();
   socket = null;
   set({ status: ENABLED ? "connecting" : "off", visitors: new Map(), toasts: [] });
