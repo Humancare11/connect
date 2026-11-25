@@ -33,6 +33,10 @@ const userSchema = new mongoose.Schema(
     // always can. Only ever set through the Live Chat Team page; never accepted from a request body elsewhere.
     liveChatReviewer: { type: Boolean, default: false },
 
+    // Email Marketing: an admin the Super Admin has allowed to use the Email Marketing page. Super Admin always can.
+    // Only ever set through the Super Admin access API; never accepted from a request body elsewhere.
+    emailMarketingAccess: { type: Boolean, default: false },
+
     // Set only when role === "partner": the Partner Company this login belongs
     // to. Never accepted from a request body — assigned server-side by the
     // Super Admin partner-creation flow.

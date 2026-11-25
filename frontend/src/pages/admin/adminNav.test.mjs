@@ -34,6 +34,26 @@ test("admin and super admin: the same thirteen entries in the same order, Live C
   }
 });
 
+test("Email Marketing: one new top-level item right below Email, only when the server allows it; Email itself is untouched", () => {
+  const withMarketing = (role) => buildNav(role, { liveChat: false, emailMarketing: true }).map((item) => item.label);
+  for (const role of ["admin", "superadmin"]) {
+    const plain = buildNav(role, { liveChat: false }).map((item) => item.label);
+    assert.ok(!plain.includes("Email Marketing"), `${role}: hidden unless allowed`);
+    const labels = withMarketing(role);
+    assert.equal(labels[labels.indexOf("Email") + 1], "Email Marketing", role);
+    assert.deepEqual(labels.filter((l) => l !== "Email Marketing"), plain, `${role}: nothing else changes`);
+    const item = buildNav(role, { liveChat: false, emailMarketing: true }).find((i) => i.label === "Email Marketing");
+    assert.equal(item.path, "/admin-dashboard/email-marketing");
+    assert.equal(item.links, undefined, "a plain link, not a group");
+  }
+  // Email keeps its own address and does not become a group.
+  const email = buildNav("admin", { liveChat: false, emailMarketing: true }).find((i) => i.label === "Email");
+  assert.equal(email.path, "/admin-dashboard/email");
+  assert.equal(email.links, undefined);
+  // Nobody else ever gets it, even if the flag were passed.
+  assert.ok(!buildNav("paymentadmin", { emailMarketing: true }).some((i) => i.label === "Email Marketing"));
+});
+
 test("payment admin: Documents (Manual Invoices only, on its own URL), Payment Links, Payment History", () => {
   for (const liveChat of [true, false]) {
     assert.deepEqual(shape("paymentadmin", liveChat), [

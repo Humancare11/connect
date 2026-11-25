@@ -64,25 +64,21 @@ test("a visitor who leaves and returns within 30 minutes does not chime again; a
   assert.equal(gate.shouldPlay({ visitorId: "v", known: false, ...ON }), true);
 });
 
-test("silent when not in the Live Chat tab, when the toggle is off, or when the main Sound is off", () => {
-  for (const off of [{ inLiveChatTab: false }, { enabled: false }, { mainSoundOn: false }]) {
-    const c = clock();
-    const gate = createVisitorSoundGate({ now: c.now });
-    gate.prime([]);
-    assert.equal(gate.shouldPlay({ visitorId: "v", known: false, ...ON, ...off }), false, JSON.stringify(off));
-    c.advance(VISITOR_SOUND_MIN_GAP_MS + 1);
-    // the visitor was still noted as seen, so turning the sound on later does not announce them retroactively
-    assert.equal(gate.shouldPlay({ visitorId: "v", known: false, ...ON }), false);
-  }
+test("the new visitor sound and voice are always on: no tab or switch condition", () => {
+  const c = clock();
+  const gate = createVisitorSoundGate({ now: c.now });
+  gate.prime([]);
+  // no inLiveChatTab / enabled / mainSoundOn arguments at all: a new visitor is still announced
+  assert.equal(gate.shouldPlay({ visitorId: "v", known: false }), true);
 });
 
-test("the toggle is stored with try/catch, defaults to off, and sits next to the main Sound toggle", () => {
+test("there is no toggle any more; the hub no longer passes a tab or switch to the gate", () => {
   const notify = fs.readFileSync(path.join(LC, "liveChatNotify.js"), "utf8");
-  assert.match(notify, /export const visitorSoundEnabled = \(\) => read\(VISITOR_SOUND_KEY\) === "on"/, "off unless explicitly on");
+  assert.match(notify, /export const visitorSoundEnabled = \(\) => true;/);
   assert.match(notify, /const read = \(key\) => \{\s*try/, "reads are wrapped in try/catch");
   const banner = fs.readFileSync(path.join(LC, "NotificationsBanner.jsx"), "utf8");
-  assert.ok(banner.indexOf("Sound on") < banner.indexOf("Visitor sound on"));
+  assert.doesNotMatch(banner, /Visitor sound/);
   const hub = fs.readFileSync(path.join(LC, "liveChatHub.js"), "utf8");
-  assert.match(hub, /inLiveChatTab: inLiveChatTab\(\)/, "only in the Live Chat tab");
-  assert.match(hub, /mainSoundOn: soundEnabled\(\)/);
+  assert.doesNotMatch(hub, /enabled: visitorSoundEnabled\(\)|mainSoundOn: soundEnabled\(\)/);
+  assert.match(hub, /if \(inLiveChatTab\(\)\) playVisitorSound\(\);/, "the soft note stays in the Live Chat tab");
 });

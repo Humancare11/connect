@@ -38,6 +38,17 @@ const formatDate = (value) => {
   return date.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
 };
 
+// Registration time of a patient: createdAt, else the time inside the MongoDB _id (older accounts). "" when neither is usable.
+function formatRegistered(user) {
+  let date = user?.createdAt ? new Date(user.createdAt) : null;
+  if (!date || Number.isNaN(date.getTime())) {
+    const id = String(user?._id || "");
+    date = /^[0-9a-f]{24}$/i.test(id) ? new Date(parseInt(id.slice(0, 8), 16) * 1000) : null;
+  }
+  if (!date || Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
 // "Web · Chrome on Windows" / "App · Android" / "Unknown" (accounts created
 // before this was recorded). An app guessed from its HTTP client rather than
 // declared by the app itself is flagged "(inferred)".
@@ -271,6 +282,7 @@ function UserProfile({ id }) {
           <Section title="A/C Information" className="mu-area-account">
             <Row label="Sign up with" value={SIGNUP_METHOD_LABELS[user.signupMethod] || "Unknown"} />
             <Row label="Registered via" value={formatRegisteredVia(user)} />
+            <Row label="Registered on" value={formatRegistered(user) || "—"} />
           </Section>
         </div>
       </div>

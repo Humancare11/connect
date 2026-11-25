@@ -12,6 +12,7 @@ const { recordPaymentAndInvoice } = require("../utils/billing");
 const { notifyCategoryConsultationBooked } = require("../utils/bookingNotifications");
 const { notifyAdminCategoryConsultationBooked, notifyAdminPaymentNeedsReconciliation } = require("../utils/adminNotifications");
 const { bookingSourceFor } = require("../utils/bookingSource");
+const { snapshotForBooking } = require("../utils/patientProfile");
 const { checkBookingReports, logReportOutcome, reportsWarning } = require("../utils/bookingReports");
 
 // Create a new consultation
@@ -127,9 +128,14 @@ const createCategoryConsultation = async (req, res) => {
       throw err;
     }
 
+    // Age and sex on the booking day, copied from the profile. A missing DOB / gender never refuses a booking that is already paid.
+    const profileUser = await User.findById(req.user.id).select("dob gender").lean().catch(() => null);
+    const profileSnapshot = snapshotForBooking(profileUser, { kind: "category consultation", patientId: req.user.id });
+
     let consultation;
     try {
       consultation = await CategoryConsultation.create({
+        ...profileSnapshot,
         concern: req.body.concern,
         duration: req.body.duration,
         severity: req.body.severity,

@@ -27,6 +27,8 @@ import { useServiceRecord } from "../hooks/useServicePrice";
 import { paymentFields } from "../utils/booking";
 import { loadRazorpayScript, buildRazorpayOptions } from "../utils/razorpayCheckout";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
+import PatientDetailsStep from "../components/booking/PatientDetailsStep";
+import { profileIsComplete, isProfileIncompleteError, WEB_CLIENT_CONFIG } from "../utils/patientProfile";
 import { normalizeAppointmentTree, selectionFromUrl, selectionMatchesRoute } from "../utils/appointmentTree";
 import ReportFileList from "../components/ReportFileList";
 import "./Appointment.css";
@@ -356,6 +358,7 @@ export function PaymentStage({
   uploadedReports,
   onBack,
   onComplete,
+  onProfileIncomplete,
 }) {
   const [method, setMethod] = useState(null);
   const [clientSecret, setClientSecret] = useState("");
@@ -432,7 +435,7 @@ export function PaymentStage({
       const res = await api.post("/api/payments/create-intent-by-amount", {
         priceType,
         priceRef,
-      });
+      }, WEB_CLIENT_CONFIG);
       if (!(await chargeMatchesScreen(res.data))) {
         setStripeError(CHANGED_MSG);
         return;
@@ -441,6 +444,11 @@ export function PaymentStage({
       updateCharge(chargeOf(res.data));
       setMethod("stripe");
     } catch (err) {
+      // The server refuses to start a payment until the profile has a date of birth and gender: show the details step.
+      if (isProfileIncompleteError(err)) {
+        onProfileIncomplete?.();
+        return;
+      }
       setStripeError(
         err.response?.data?.msg ||
           "Failed to initialize payment. Please try again.",
@@ -448,6 +456,15 @@ export function PaymentStage({
     } finally {
       setStripeCreating(false);
     }
+  };
+
+  // PayPal's button only shows the message of what is thrown: the "complete your details" refusal switches to that step first.
+  const profileGate = (err) => {
+    if (isProfileIncompleteError(err)) {
+      onProfileIncomplete?.();
+      throw new Error("Please complete your details to continue.");
+    }
+    throw err;
   };
 
   const createPaypalOrder = async () => {
@@ -460,7 +477,7 @@ export function PaymentStage({
     const res = await api.post("/api/paypal/create-order-by-amount", {
       priceType,
       priceRef,
-    });
+    }, WEB_CLIENT_CONFIG).catch(profileGate);
     if (!(await chargeMatchesScreen(res.data))) throw new Error(CHANGED_MSG);
     updateCharge(chargeOf(res.data));
     return res.data.orderId;
@@ -498,7 +515,7 @@ export function PaymentStage({
         setRazorpayBusy(false);
         return;
       }
-      const res = await api.post("/api/razorpay/create-order", { priceType, priceRef });
+      const res = await api.post("/api/razorpay/create-order", { priceType, priceRef }, WEB_CLIENT_CONFIG);
       if (!(await chargeMatchesScreen(res.data))) throw new Error(CHANGED_MSG);
       updateCharge(chargeOf(res.data));
       const checkout = new window.Razorpay(
@@ -523,6 +540,10 @@ export function PaymentStage({
       checkout.open();
     } catch (err) {
       setRazorpayBusy(false);
+      if (isProfileIncompleteError(err)) {
+        onProfileIncomplete?.();
+        return;
+      }
       setRazorpayError(err.response?.data?.msg || err.message || "Failed to start the payment. Please try again.");
     }
   };
@@ -870,7 +891,8 @@ export default function AppointmentBookingForm() {
         time: formData.time || "",
         files: formData.files || [],
       }));
-      setStage("payment");
+      // Payment starts only once the profile has a date of birth and gender; otherwise ask for them first (once, ever).
+      setStage(profileIsComplete(user) ? "payment" : "details");
     } catch (err) {
       setProceedErr(
         err?.response?.data?.msg ||
@@ -1099,7 +1121,7 @@ export default function AppointmentBookingForm() {
     return <Navigate to="/login" state={{ from: pathname }} replace />;
   }
 
-  const stageIndex = stage === "form" ? 0 : stage === "payment" ? 1 : 2;
+  const stageIndex = stage === "form" || stage === "details" ? 0 : stage === "payment" ? 1 : 2;
 
   const siteOrigin = "https://humancareconnect.co";
   const canonicalUrl = `${siteOrigin}/appointment-booking/${categorySlug}/${specialtySlug}/${conditionSlug}`;
@@ -1439,6 +1461,19 @@ export default function AppointmentBookingForm() {
         )}
 
         {/* ══════════════════════════════════════
+            Stage: details (only when the profile has no date of birth / gender)
+        ══════════════════════════════════════ */}
+        {stage === "details" && (
+          <PatientDetailsStep
+            onSaved={() => setStage("payment")}
+            onBack={() => {
+              setStage("form");
+              setConfirmErr("");
+            }}
+          />
+        )}
+
+        {/* ══════════════════════════════════════
             Stage: payment
         ══════════════════════════════════════ */}
         {stage === "payment" && (
@@ -1452,6 +1487,7 @@ export default function AppointmentBookingForm() {
               setConfirmErr("");
             }}
             onComplete={handlePaymentComplete}
+            onProfileIncomplete={() => setStage("details")}
           />
         )}
 

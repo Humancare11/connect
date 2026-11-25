@@ -56,14 +56,14 @@ export async function startApiServer() {
   const Appointment = load("models/Appointment.js");
   const User = load("models/User.js");
   await Appointment.init();
-  const patient = await User.create({ name: "Test Patient", email: "patient@e2e.test", password: "Placeholder1!", role: "user", country: "IN" });
+  const patient = await User.create({ name: "Test Patient", email: "patient@e2e.test", password: "Placeholder1!", role: "user", country: "IN", dob: "1990-01-01", gender: "Female" });
   const { createAppointment } = load("controllers/appointmentController.js");
 
   const app = express();
   app.use(express.json());
   const asPatient = (req, res, next) => { req.user = { id: String(patient._id), role: "user" }; next(); };
 
-  app.get("/api/auth/me", asPatient, (req, res) => res.json({ user: { _id: String(patient._id), name: patient.name, email: patient.email } }));
+  app.get("/api/auth/me", asPatient, (req, res) => res.json({ user: { _id: String(patient._id), name: patient.name, email: patient.email, dob: patient.dob, gender: patient.gender } }));
   app.get("/api/appointment-tree", (req, res) => res.json(TREE));
   app.post("/api/payments/create-intent-by-amount", asPatient, (req, res) => res.json({ clientSecret: "pi_e2e_secret_stub", id: "pi_e2e", amount: 5000 }));
   app.post("/api/appointments", asPatient, createAppointment);

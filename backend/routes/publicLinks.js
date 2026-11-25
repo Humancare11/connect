@@ -1,5 +1,5 @@
 const express = require("express");
-const { recordClick, findLink } = require("../services/email/clickRecorder");
+const { recordClickAny, findLinkAny } = require("../services/marketing/trackingBridge");
 const { trackingEnv } = require("../services/email/emailSettings");
 const { createIpGate } = require("./publicTracking");
 
@@ -38,7 +38,7 @@ function safeTarget(raw) {
 }
 
 // Options exist so tests can use fakes and a small limit.
-function createPublicLinksRouter({ record = recordClick, find = findLink, limitPerMinute = trackingEnv().ratePerMinute, now } = {}) {
+function createPublicLinksRouter({ record = recordClickAny, find = findLinkAny, limitPerMinute = trackingEnv().ratePerMinute, now } = {}) {
   const router = express.Router();
   const allow = createIpGate({ limitPerMinute, now });
   let inFlight = 0;

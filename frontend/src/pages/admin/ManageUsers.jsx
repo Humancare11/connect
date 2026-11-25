@@ -16,6 +16,17 @@ import { useConfirm } from "../../components/ui/ConfirmDialog";
 // Remembers where the list was scrolled when a profile is opened, so coming
 // back (the page's Back button or the browser's) puts the admin in the same place.
 const SCROLL_KEY = "manage-users:list-scroll";
+
+// Registration time of a patient: createdAt, else the time inside the MongoDB _id (older accounts). "" when neither is usable.
+function formatRegistered(user) {
+  let date = user?.createdAt ? new Date(user.createdAt) : null;
+  if (!date || Number.isNaN(date.getTime())) {
+    const id = String(user?._id || "");
+    date = /^[0-9a-f]{24}$/i.test(id) ? new Date(parseInt(id.slice(0, 8), 16) * 1000) : null;
+  }
+  if (!date || Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
 const PAGE_SIZE = 10;
 
 function getCountryName(isoCode) {
@@ -257,6 +268,7 @@ export default function ManageUsers() {
                   <th>Mobile</th>
                   <th className="mu-col-gender">Gender</th>
                   <th>Country</th>
+                  <th className="mu-col-registered">Registered</th>
                   <th className="mu-col-status">Status</th>
                   <th>Actions</th>
                 </tr>
@@ -312,6 +324,7 @@ export default function ManageUsers() {
                       {u.gender || "—"}
                     </td>
                     <td className="mu-col-country" data-label="Country">{getCountryName(u.country) || "—"}</td>
+                    <td className="mu-col-registered" data-label="Registered">{formatRegistered(u) || "—"}</td>
                     <td className="mu-col-status" data-label="Status">
                       {u.deletionRequestStatus === "pending" ? (
                         <span

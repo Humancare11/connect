@@ -148,7 +148,7 @@ describe("category payments in USD / EUR / GBP", () => {
   const originalFlag = process.env.MULTI_CURRENCY_ENABLED;
   const flag = (on) => { if (on) process.env.MULTI_CURRENCY_ENABLED = "true"; else delete process.env.MULTI_CURRENCY_ENABLED; };
 
-  const mkUser = (country) => User.create({ name: country, email: `${country.replace(/\W/g, "").toLowerCase()}@x.co`, role: "user", country });
+  const mkUser = (country) => User.create({ name: country, email: `${country.replace(/\W/g, "").toLowerCase()}@x.co`, role: "user", country, dob: "1990-01-01", gender: "Male" });
   const post = async (path, user, body, ip) => {
     const res = await fetch(`${base}${path}`, {
       method: "POST",

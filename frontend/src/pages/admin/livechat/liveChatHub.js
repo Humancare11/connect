@@ -1,9 +1,11 @@
 import { io } from "socket.io-client";
 import api, { getUserAuthToken } from "../../../api";
-import { audioUnlocked, installAudioUnlock, pageInFront, playChime, playVisitorSound, showBrowserNotification, soundEnabled, visitorSoundEnabled, voiceEnabled } from "./liveChatNotify";
+import { audioUnlocked, installAudioUnlock, pageInFront, playChime, playVisitorSound, showBrowserNotification } from "./liveChatNotify";
 import { inLiveChatTab, shouldAlert } from "./liveChatTabs";
 import { createVisitorSoundGate } from "./visitorSound";
-import { createVoiceGate, speakPhrase } from "./voiceAlerts";
+import { createVoiceGate } from "./voiceAlerts";
+import { createSpeakerElection } from "./voiceElection";
+import { onTabMessage, postToTabs } from "../../../utils/crossTab";
 
 // One shared connection to /livechat-admin for the whole admin session.
 //
@@ -23,18 +25,27 @@ let socket = null;
 const visitorGate = createVisitorSoundGate(); // "new website visitor" sound: once per new visitor (see visitorSound.js)
 const voiceGate = createVoiceGate(); // spoken alerts (see voiceAlerts.js)
 
-// Speaks "New visitor" / "Patient wants a live agent" when every rule of voiceAlerts.js allows it.
-function announceVoice(kind) {
-  const decision = voiceGate.decide({
-    kind,
-    inLiveChatTab: inLiveChatTab(),
-    voiceOn: voiceEnabled(),
-    mainSoundOn: soundEnabled(),
-    visitorSoundOn: visitorSoundEnabled(),
-    unlocked: audioUnlocked(),
-  });
-  if (!decision.speak) return;
-  if (!speakPhrase(decision.text, { interrupt: decision.interrupt, onEnd: () => voiceGate.finished() })) voiceGate.finished();
+// Spoken alerts are always on and play on every admin page. The voice gate (voiceAlerts.js) keeps them one at a time;
+// the election makes only ONE browser tab speak (a Live Chat tab first). Any problem here only means no voice.
+const voiceElection = createSpeakerElection({
+  post: postToTabs,
+  rank: () => ({
+    lc: inLiveChatTab() ? 1 : 0,
+    activated: typeof navigator !== "undefined" && navigator.userActivation ? (navigator.userActivation.hasBeenActive ? 1 : 0) : 1,
+    visible: typeof document === "undefined" || document.visibilityState === "visible" ? 1 : 0,
+  }),
+});
+onTabMessage((message) => voiceElection.handleTabMessage(message));
+
+// kind: "visitor" | "form" | "ai" | "queue" (see voiceAlerts.js). `key` is the visitor or chat the alert is about.
+function announceVoice(kind, key) {
+  try {
+    // The same single-tab rule as the chime: while a Live Chat tab is open only it alerts.
+    if (!shouldAlert()) return;
+    voiceElection.run(`${kind}:${key || ""}`, () => voiceGate.request({ kind, key, unlocked: audioUnlocked() }));
+  } catch {
+    /* a voice problem must never affect the chat alerts */
+  }
 }
 let refs = 0;
 let releaseTimer = null;
@@ -121,6 +132,7 @@ function onChatEvent(event, payload) {
 
   switch (event) {
     case "chat:new":
+      if (payload.mode === "ai") announceVoice("ai", payload.conversationId); // a chat an admin started has no voice
       scheduleUnread();
       if (!isActive(payload.conversationId)) {
         alertToast({
@@ -133,7 +145,7 @@ function onChatEvent(event, payload) {
       break;
     case "queue:new":
       scheduleUnread();
-      announceVoice("queue");
+      announceVoice("queue", payload.conversationId);
       alertToast({
         title: "Waiting for an agent",
         body: `${payload.name || "A patient"} asked for a live agent`,
@@ -166,6 +178,9 @@ function onChatEvent(event, payload) {
       });
       break;
     }
+    case "contact:submitted":
+      announceVoice("form", payload.visitorId);
+      break;
     case "chat:updated":
       scheduleUnread();
       break;
@@ -199,6 +214,45 @@ function onChatEvent(event, payload) {
   }
 }
 
+// The server drops this socket when the token it connected with expires (about every 15 minutes) and Socket.IO never
+// reconnects by itself after that. So we get a fresh token and connect again. A refused refresh means the session is
+// really over: then we stop. A connection that keeps dropping is retried more slowly.
+const RECOVERY_DELAYS_MS = [0, 5_000, 15_000, 60_000];
+const STABLE_MS = 60_000;
+let recoveryTimer = null;
+let recoveryAttempts = 0;
+let connectedAt = 0; // when the current or last connection was made; 0 = never connected
+let forbiddenRetried = false;
+
+function resetRecovery() {
+  clearTimeout(recoveryTimer);
+  recoveryTimer = null;
+  recoveryAttempts = 0;
+  connectedAt = 0;
+  forbiddenRetried = false;
+}
+
+function recover(target) {
+  if (recoveryTimer) return;
+  const delay = RECOVERY_DELAYS_MS[Math.min(recoveryAttempts, RECOVERY_DELAYS_MS.length - 1)];
+  recoveryAttempts += 1;
+  set({ status: "reconnecting" });
+  recoveryTimer = setTimeout(async () => {
+    recoveryTimer = null;
+    if (socket !== target) return; // closed or replaced meanwhile
+    try {
+      await api.post("/api/auth/refresh", null, { authRole: "admin", skipAuthRefresh: true });
+    } catch (error) {
+      if (socket !== target) return;
+      const code = error?.response?.status;
+      if (code === 401 || code === 403) set({ status: "denied" });
+      else recover(target); // server unreachable: try again later
+      return;
+    }
+    if (socket === target && !target.connected) target.connect();
+  }, delay);
+}
+
 function connect() {
   if (socket || !ENABLED) return;
   installAudioUnlock();
@@ -206,18 +260,26 @@ function connect() {
     path: "/socket.io/",
     transports: ["websocket", "polling"],
     withCredentials: true,
-    auth: { token: getUserAuthToken("admin") },
+    // A function, so every (re)connect sends the current token.
+    auth: (cb) => cb({ token: getUserAuthToken("admin") }),
     reconnectionDelay: 1000,
     reconnectionDelayMax: 15_000,
   });
 
   socket.on("connect", () => {
+    connectedAt = Date.now();
+    forbiddenRetried = false;
     set({ status: "live" });
     refreshUnread();
   });
   socket.on("disconnect", (reason) => {
     visitorGate.unprime(); // arrivals while the connection was down are not announced afterwards
-    set({ status: reason === "io server disconnect" ? "denied" : "reconnecting" });
+    if (reason !== "io server disconnect") {
+      set({ status: "reconnecting" });
+      return;
+    }
+    if (Date.now() - connectedAt >= STABLE_MS) recoveryAttempts = 0;
+    recover(socket);
   });
   socket.on("connect_error", (err) => {
     const message = String(err?.message || "");
@@ -226,11 +288,19 @@ function connect() {
       socket.close();
       socket = null;
     } else if (message === "forbidden") {
+      // After a long sleep the stored token is too old: refresh once before giving up.
+      if (connectedAt && !forbiddenRetried) {
+        forbiddenRetried = true;
+        recover(socket);
+        return;
+      }
       set({ status: "denied" });
       socket.close();
       socket = null;
     } else {
       set({ status: "reconnecting" });
+      // A refusal by the server (not a network error) is not retried by Socket.IO itself.
+      if (connectedAt && !socket.active) recover(socket);
     }
   });
   socket.on("visitors:snapshot", ({ visitors = [], serverTime }) => {
@@ -248,25 +318,23 @@ function connect() {
       const arrival = visitorGate.shouldPlay({
         visitorId: id,
         known: snapshot.visitors.has(id),
-        inLiveChatTab: inLiveChatTab(),
-        enabled: visitorSoundEnabled(),
-        mainSoundOn: soundEnabled(),
       });
       if (arrival) {
-        playVisitorSound();
-        announceVoice("visitor");
+        if (inLiveChatTab()) playVisitorSound(); // the soft note stays in the Live Chat tab; the voice plays everywhere
+        announceVoice("visitor", id);
       }
       next.set(id, delta.visitor);
     }
     set({ visitors: next });
   });
-  ["chat:new", "queue:new", "chat:message", "chat:updated", "chat:typing", "chat:taken", "chat:reopened", "ai:unavailable", "abuse:alert"].forEach((event) =>
+  ["chat:new", "queue:new", "contact:submitted", "chat:message", "chat:updated", "chat:typing", "chat:taken", "chat:reopened", "ai:unavailable", "abuse:alert"].forEach((event) =>
     socket.on(event, (payload) => onChatEvent(event, payload || {}))
   );
 }
 
 function disconnect() {
   clearTimeout(unreadTimer);
+  resetRecovery();
   socket?.close();
   socket = null;
   set({ status: ENABLED ? "connecting" : "off", visitors: new Map(), toasts: [] });

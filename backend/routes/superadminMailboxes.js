@@ -11,7 +11,7 @@ const DEFAULT_COLOR = "#0d7a6f";
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 const { clearMailboxCache } = require("../services/email/mailboxAccessCache");
 
-const EDITABLE = ["displayName", "color", "signature", "isActive", "sortOrder"];
+const EDITABLE = ["displayName", "color", "signature", "isActive", "sortOrder", "allowedForMarketing"];
 // Removed setting that a cached old page may still send: silently ignored, never an error.
 const IGNORED = ["trackOpensDefault"];
 
@@ -37,6 +37,7 @@ function serialize(mb, messageCount = 0) {
     signature: mb.signature,
     sortOrder: mb.sortOrder,
     isActive: mb.isActive,
+    allowedForMarketing: Boolean(mb.allowedForMarketing),
     deactivatedAt: mb.deactivatedAt,
     lastSyncAt: mb.lastSyncAt,
     lastSyncError: mb.lastSyncError || "",
@@ -77,6 +78,10 @@ function validateFields(body, { requireAll }) {
   if (body.isActive !== undefined) {
     if (typeof body.isActive !== "boolean") throw new ValidationError("isActive must be true or false.");
     out.isActive = body.isActive;
+  }
+  if (body.allowedForMarketing !== undefined) {
+    if (typeof body.allowedForMarketing !== "boolean") throw new ValidationError("allowedForMarketing must be true or false.");
+    out.allowedForMarketing = body.allowedForMarketing;
   }
   return out;
 }
