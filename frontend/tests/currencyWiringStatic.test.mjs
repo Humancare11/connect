@@ -56,8 +56,8 @@ test("the booking form: PayPal provider is keyed by currency, no hard-coded USD,
   assert.ok(src.includes("paypalProviderProps(clientId, currency)"));
   assert.equal(/currency:\s*"USD"/.test(src), false);
   // the intent / order requests carry what is being booked, never a currency or an amount
-  assert.ok(/create-intent-by-amount", \{\s*priceType,\s*priceRef,\s*\}\)/.test(src));
-  assert.ok(/create-order-by-amount", \{\s*priceType,\s*priceRef,\s*\}\)/.test(src));
+  assert.ok(/create-intent-by-amount", \{\s*priceType,\s*priceRef,\s*\}, WEB_CLIENT_CONFIG\)/.test(src));
+  assert.ok(/create-order-by-amount", \{\s*priceType,\s*priceRef,\s*\}, WEB_CLIENT_CONFIG\)/.test(src));
 });
 
 test("the doctor-fee booking page stays USD", () => {
@@ -107,7 +107,7 @@ test("rupees: Razorpay only - Stripe, PayPal and the PayPal script are not offer
   assert.ok(/\{isInr \? \(\s*<button[\s\S]*?onClick=\{payWithRazorpay\}[\s\S]*?\) : \(\s*<>/.test(src));
   assert.ok(src.includes("/api/razorpay/create-order"));
   // The order request carries only what is booked: never an amount or a currency.
-  assert.ok(/api\.post\("\/api\/razorpay\/create-order", \{ priceType, priceRef \}\)/.test(src));
+  assert.ok(/api\.post\("\/api\/razorpay\/create-order", \{ priceType, priceRef \}, WEB_CLIENT_CONFIG\)/.test(src));
   // The Razorpay script is loaded only from the click (a rupee payment about to start), not at page load.
   assert.equal(src.includes("checkout.razorpay.com"), false);
   assert.ok(read("utils", "razorpayCheckout.js").includes("https://checkout.razorpay.com/v1/checkout.js"));
