@@ -5,3 +5,12 @@ SEO_CODE_REVIEW.md
 UI_AUDIT_REPORT.md
 UI_AUDIT_REPORT_2.md
 artifacts/
+
+# Local working files and reports: kept on disk, never committed
+/backend/scripts/dbProfile.js
+/backend/scripts/prodCounts.js
+/booking-flow-preview.html
+/cookie-report.md
+/docs/translation/VIDEO-CALL-NEGATIVE-TEST-REPORT.md
+/referral-diff.txt
+/uat_to_main_merge_report.md
