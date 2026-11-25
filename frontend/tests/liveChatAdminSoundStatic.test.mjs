@@ -54,8 +54,10 @@ test("notifications never carry message text", () => {
   assert.doesNotMatch(message, /notify[^\n]*message\.text/);
 });
 
-test("quiet chime is softer and a failed unlock is retried; the hint follows the audio state", () => {
-  assert.match(notify, /quiet \? 0\.05 : 0\.12/);
+test("the chime has one loud level, and a failed unlock is retried; the hint follows the audio state", () => {
+  assert.match(notify, /const peak = 0\.6;/);
+  assert.match(notify, /export function playChime\(\) \{/);
+  assert.doesNotMatch(notify, /quiet \?|0\.05 : 0\.12/);
   assert.match(notify, /audio\?\.state === "running"\) done\(\)/);
   assert.match(notify, /export function subscribeAudioState/);
   assert.match(banner, /Click anywhere on this page to enable sound/);

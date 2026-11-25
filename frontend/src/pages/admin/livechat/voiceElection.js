@@ -3,7 +3,7 @@
 // Every open admin tab hears every event. The tabs agree on ONE speaker with a short claim round: a Live Chat tab
 // wins over a dashboard tab, then a tab the admin has clicked in, then a visible tab, then a random number. A single
 // tab simply wins after the claim window.
-export const ELECTION_WINDOW_MS = 300;
+export const ELECTION_WINDOW_MS = 600; // also lets the chime finish before the voice starts
 
 const beats = (a, b) => {
   for (const key of ["lc", "activated", "visible", "random"]) if (a[key] !== b[key]) return a[key] > b[key];

@@ -73,11 +73,11 @@ export function installAudioUnlock() {
   window.addEventListener("keydown", unlock);
 }
 
-// Two soft notes. Silent if muted, if the page was never interacted with, or if audio is unavailable.
-// `quiet` is the softer variant for a chat the admin already has open (their window just isn't focused).
-export function playChime({ quiet = false } = {}) {
+// Two notes, at the same loud level in every case (0.6 of full scale: the two notes barely overlap, so no clipping).
+// Silent if the page was never interacted with, or if audio is unavailable.
+export function playChime() {
   if (!soundEnabled() || !audio || audio.state !== "running") return;
-  const peak = quiet ? 0.05 : 0.12;
+  const peak = 0.6;
   try {
     const now = audio.currentTime;
     [880, 1175].forEach((freq, i) => {
