@@ -28,7 +28,7 @@ import { paymentFields } from "../utils/booking";
 import { loadRazorpayScript, buildRazorpayOptions } from "../utils/razorpayCheckout";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
 import PatientDetailsStep from "../components/booking/PatientDetailsStep";
-import { profileIsComplete, isProfileIncompleteError } from "../utils/patientProfile";
+import { profileIsComplete, isProfileIncompleteError, WEB_CLIENT_CONFIG } from "../utils/patientProfile";
 import { normalizeAppointmentTree, selectionFromUrl, selectionMatchesRoute } from "../utils/appointmentTree";
 import ReportFileList from "../components/ReportFileList";
 import "./Appointment.css";
@@ -435,7 +435,7 @@ export function PaymentStage({
       const res = await api.post("/api/payments/create-intent-by-amount", {
         priceType,
         priceRef,
-      });
+      }, WEB_CLIENT_CONFIG);
       if (!(await chargeMatchesScreen(res.data))) {
         setStripeError(CHANGED_MSG);
         return;
@@ -477,7 +477,7 @@ export function PaymentStage({
     const res = await api.post("/api/paypal/create-order-by-amount", {
       priceType,
       priceRef,
-    }).catch(profileGate);
+    }, WEB_CLIENT_CONFIG).catch(profileGate);
     if (!(await chargeMatchesScreen(res.data))) throw new Error(CHANGED_MSG);
     updateCharge(chargeOf(res.data));
     return res.data.orderId;
@@ -515,7 +515,7 @@ export function PaymentStage({
         setRazorpayBusy(false);
         return;
       }
-      const res = await api.post("/api/razorpay/create-order", { priceType, priceRef });
+      const res = await api.post("/api/razorpay/create-order", { priceType, priceRef }, WEB_CLIENT_CONFIG);
       if (!(await chargeMatchesScreen(res.data))) throw new Error(CHANGED_MSG);
       updateCharge(chargeOf(res.data));
       const checkout = new window.Razorpay(

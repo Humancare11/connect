@@ -66,9 +66,16 @@ function bookingSnapshot(user, at = new Date()) {
 
 const PROFILE_INCOMPLETE_MSG = "Please complete your date of birth and gender to continue.";
 
+// The gate is for the WEBSITE, which says so with the header "X-Client: web". The mobile app (no "Complete your details" step)
+// sends no such header and is not gated, unless ENFORCE_PROFILE_GATE_APP=true (read on every call; default false).
+const profileGateApplies = (req) =>
+  String(req.headers?.["x-client"] || "").trim().toLowerCase() === "web" ||
+  String(process.env.ENFORCE_PROFILE_GATE_APP || "").trim().toLowerCase() === "true";
+
 // Express middleware for the routes that START a payment (after verifyUserToken). Answers 422 PROFILE_INCOMPLETE so the website can
 // show the "Complete your details" step. It never runs on a booking-create route: a patient who has already paid is never refused.
 async function requireCompleteProfile(req, res, next) {
+  if (!profileGateApplies(req)) return next();
   try {
     const user = await User.findById(req.user?.id).select("dob gender").lean();
     if (!user) return next(); // the route's own handling decides what a missing user means

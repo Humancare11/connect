@@ -25,5 +25,8 @@ export const genderError = (gender) => (GENDER_OPTIONS.includes(String(gender ||
 // True when the signed-in patient's profile already has a usable DOB and gender (the step is then skipped).
 export const profileIsComplete = (user) => !!user && !dobError(user.dob) && !genderError(user.gender);
 
+// Sent on the calls that start a payment: the server asks for date of birth and gender from the website only.
+export const WEB_CLIENT_CONFIG = { headers: { "X-Client": "web" } };
+
 // True for the server's "start of payment" refusal, so the page can show the details step instead of a payment error.
 export const isProfileIncompleteError = (err) => err?.response?.status === 422 && err?.response?.data?.code === "PROFILE_INCOMPLETE";

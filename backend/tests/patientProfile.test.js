@@ -116,10 +116,10 @@ const makeUser = (extra = {}) => User.create({
 });
 
 describe("requireCompleteProfile (the gate on the routes that start a payment)", () => {
-  const run = async (userId) => {
+  const run = async (userId, headers = { "x-client": "web" }) => {
     const res = makeRes();
     let nextCalled = false;
-    await P.requireCompleteProfile({ user: { id: String(userId) } }, res, () => { nextCalled = true; });
+    await P.requireCompleteProfile({ user: { id: String(userId) }, headers }, res, () => { nextCalled = true; });
     return { res, nextCalled };
   };
 
@@ -142,6 +142,54 @@ describe("requireCompleteProfile (the gate on the routes that start a payment)",
     const { res, nextCalled } = await run(u._id);
     assert.equal(nextCalled, true);
     assert.equal(res.statusCode, 200);
+  });
+  describe("website only", () => {
+    const flag = process.env.ENFORCE_PROFILE_GATE_APP;
+    const setFlag = (value) => {
+      if (value === undefined) delete process.env.ENFORCE_PROFILE_GATE_APP;
+      else process.env.ENFORCE_PROFILE_GATE_APP = value;
+    };
+    after(() => setFlag(flag));
+
+    test("without X-Client: web (the mobile app, old builds) an incomplete profile passes", async () => {
+      const u = await makeUser();
+      for (const value of [undefined, "", "false"]) {
+        setFlag(value);
+        for (const headers of [{}, { "x-client": "app" }, { "x-client-platform": "android", "x-app-version": "1.0.0+16" }]) {
+          const { res, nextCalled } = await run(u._id, headers);
+          assert.equal(nextCalled, true, JSON.stringify({ value, headers }));
+          assert.equal(res.statusCode, 200);
+        }
+      }
+    });
+    test("X-Client: web is gated whatever the letter case", async () => {
+      setFlag(undefined);
+      const u = await makeUser();
+      const { res, nextCalled } = await run(u._id, { "x-client": " Web " });
+      assert.equal(nextCalled, false);
+      assert.equal(res.statusCode, 422);
+    });
+    test("ENFORCE_PROFILE_GATE_APP=true gates requests without the header too", async () => {
+      setFlag("true");
+      const u = await makeUser();
+      const { res, nextCalled } = await run(u._id, {});
+      assert.equal(nextCalled, false);
+      assert.equal(res.statusCode, 422);
+      assert.equal(res.body.code, "PROFILE_INCOMPLETE");
+      const done = await makeUser({ dob: "1990-01-01", gender: "Female" });
+      assert.equal((await run(done._id, {})).nextCalled, true);
+    });
+    test("the website can send the header across origins (CORS), and sends it on every payment start", () => {
+      const fs = require("node:fs");
+      const path = require("node:path");
+      const read = (p) => fs.readFileSync(path.join(__dirname, "..", p), "utf8");
+      assert.match(read("server.js"), /allowedHeaders: \[[^\]]*"X-Client"/);
+      assert.match(read("../frontend/src/utils/patientProfile.js"), /WEB_CLIENT_CONFIG = \{ headers: \{ "X-Client": "web" \} \}/);
+      const pages = read("../frontend/src/pages/AppointmentBookingForm.jsx") + read("../frontend/src/pages/BookAppointment.jsx");
+      const starts = pages.match(/api\.post\("\/api\/(payments\/create-intent|paypal\/create-order|razorpay\/create-order)[^;]*/g) || [];
+      assert.equal(starts.length, 5);
+      for (const call of starts) assert.match(call, /WEB_CLIENT_CONFIG/, call);
+    });
   });
   test("every route that starts a payment has the gate, and no booking-create route does", () => {
     const has = (router, method, path) => {

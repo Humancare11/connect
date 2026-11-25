@@ -16,7 +16,7 @@ import { uploadFileDirectToS3 } from "../utils/directUpload";
 import { useAuth } from "../context/AuthContext";
 import { useCurrency } from "../hooks/useCurrency";
 import PatientDetailsStep from "../components/booking/PatientDetailsStep";
-import { profileIsComplete, isProfileIncompleteError } from "../utils/patientProfile";
+import { profileIsComplete, isProfileIncompleteError, WEB_CLIENT_CONFIG } from "../utils/patientProfile";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
@@ -269,7 +269,7 @@ export function PaymentStage({
     setStripeCreating(true);
     try {
       const doctorId = getBookingDoctorId(doctor);
-      const res = await api.post("/api/payments/create-intent", { doctorId });
+      const res = await api.post("/api/payments/create-intent", { doctorId }, WEB_CLIENT_CONFIG);
       setClientSecret(res.data.clientSecret);
       setMethod("stripe");
     } catch (err) {
@@ -291,7 +291,7 @@ export function PaymentStage({
     setPaypalError("");
     try {
       const doctorId = getBookingDoctorId(doctor);
-      const res = await api.post("/api/paypal/create-order", { doctorId });
+      const res = await api.post("/api/paypal/create-order", { doctorId }, WEB_CLIENT_CONFIG);
       return res.data.orderId;
     } catch (err) {
       if (isProfileIncompleteError(err)) {
