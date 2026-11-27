@@ -1,15 +1,10 @@
-// Shared WebRTC ICE server configuration builder — same STUN/TURN resolution
-// logic used by the appointment-based VideoCall page, kept as an independent
-// module so the Direct Video Call flow can reuse it without importing from
-// (or risking any change to) VideoCall.jsx.
-
-const FALLBACK_STUN_URLS = [
-  "stun:stun.l.google.com:19302",
-  "stun:stun1.l.google.com:19302",
-  "stun:stun2.l.google.com:19302",
-  "stun:stun3.l.google.com:19302",
-  "stun:stun4.l.google.com:19302",
-];
+// ICE helpers for the Direct Video Call page, kept as an independent module so
+// it never has to import from (or risk changing) VideoCall.jsx.
+//
+// No TURN server or TURN credential is ever configured here: anything in a
+// VITE_* variable ends up readable in the public bundle. TURN always comes from
+// the backend's /ice-servers endpoint, which mints short-lived credentials. The
+// build-time config below is STUN only and is the fallback when that fails.
 
 const parseCsv = (value) =>
   String(value || "")
@@ -82,85 +77,32 @@ export const hasTurnServer = (iceServers) =>
   Array.isArray(iceServers) &&
   iceServers.some((server) => normalizeIceUrls(server?.urls).some(isTurnUrl));
 
-const buildIceServerConfig = () => {
-  const jsonConfig = import.meta.env.VITE_RTC_ICE_SERVERS_JSON;
-  if (jsonConfig) {
-    try {
-      const parsed = JSON.parse(jsonConfig);
-      const iceServers = sanitizeIceServers(
-        Array.isArray(parsed) ? parsed : parsed?.iceServers,
-      );
-      if (Array.isArray(iceServers) && iceServers.length) {
-        const error = validateIceServers(iceServers);
-        if (import.meta.env.PROD && !hasTurnServer(iceServers)) {
-          console.warn(
-            "No TURN server configured. Same-network calls may work, but calls across strict NATs can fail.",
-          );
-        }
-        return {
-          config: {
-            iceServers,
-            iceCandidatePoolSize: Number(
-              import.meta.env.VITE_RTC_ICE_CANDIDATE_POOL_SIZE || 10,
-            ),
-            bundlePolicy: "max-bundle",
-            rtcpMuxPolicy: "require",
-          },
-          error,
-        };
-      }
-      console.warn("VITE_RTC_ICE_SERVERS_JSON did not contain iceServers.");
-    } catch (err) {
-      return {
-        config: null,
-        error: `Invalid VITE_RTC_ICE_SERVERS_JSON: ${err.message}`,
-      };
-    }
-  }
+const DEFAULT_STUN_URLS = [
+  "stun:stun.l.google.com:19302",
+  "stun:stun1.l.google.com:19302",
+];
 
-  const stunUrls = parseCsv(import.meta.env.VITE_RTC_STUN_URLS);
-  const turnUrls = parseCsv(import.meta.env.VITE_RTC_TURN_URLS);
-  const turnUsername = import.meta.env.VITE_RTC_TURN_USERNAME || "";
-  const turnCredential = import.meta.env.VITE_RTC_TURN_CREDENTIAL || "";
-
-  const iceServers = [
-    ...(stunUrls.length ? stunUrls : FALLBACK_STUN_URLS).map((urls) => ({
-      urls,
-    })),
-  ];
-
-  if (turnUrls.length && turnUsername && turnCredential) {
-    iceServers.push({
-      urls: turnUrls,
-      username: turnUsername,
-      credential: turnCredential,
-    });
-  } else if (turnUrls.length) {
-    console.warn(
-      "VITE_RTC_TURN_URLS is set, but TURN username/credential is missing. Continuing with STUN-only ICE.",
-    );
-  }
-
-  const error = validateIceServers(iceServers);
-  if (import.meta.env.PROD && !hasTurnServer(iceServers)) {
-    console.warn(
-      "No TURN server configured. Same-network calls may work, but calls across strict NATs can fail.",
-    );
-  }
-
+// Only stun:/stuns: entries are accepted, so a TURN url left in the variable by
+// mistake can never reach a build.
+export const buildStunOnlyConfig = (stunUrlsCsv) => {
+  const configured = parseCsv(stunUrlsCsv).filter((url) => /^stuns?:/i.test(url));
   return {
-    config: {
-      iceServers,
-      iceCandidatePoolSize: Number(
-        import.meta.env.VITE_RTC_ICE_CANDIDATE_POOL_SIZE || 10,
-      ),
-      bundlePolicy: "max-bundle",
-      rtcpMuxPolicy: "require",
-    },
-    error,
+    iceServers: (configured.length ? configured : DEFAULT_STUN_URLS).map(
+      (urls) => ({ urls }),
+    ),
+    iceCandidatePoolSize: 10,
+    bundlePolicy: "max-bundle",
+    rtcpMuxPolicy: "require",
   };
 };
 
-const RTC_SETUP = buildIceServerConfig();
-export const RTC_CONFIG = RTC_SETUP.config;
-export const RTC_CONFIG_ERROR = RTC_SETUP.error;
+const configuredStunUrls = () => {
+  try {
+    // Replaced by Vite at build time; import.meta.env does not exist in Node.
+    return import.meta.env.VITE_RTC_STUN_URLS;
+  } catch {
+    return "";
+  }
+};
+
+export const STUN_ONLY_CONFIG = buildStunOnlyConfig(configuredStunUrls());

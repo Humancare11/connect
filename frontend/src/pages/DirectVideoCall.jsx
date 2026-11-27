@@ -3,8 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import socket from "../socket";
 import api from "../api";
 import {
-  RTC_CONFIG,
-  RTC_CONFIG_ERROR,
+  STUN_ONLY_CONFIG,
   sanitizeIceServers,
   validateIceServers,
   hasTurnServer,
@@ -313,34 +312,18 @@ const MEDIA_STALL_COOLDOWN_MS = 25000;
 const AUTO_REBUILD_MAX_COUNT = 3;
 const AUTO_REBUILD_WINDOW_MS = 60000;
 
-// Last-resort ICE config. RTC_CONFIG (built from VITE_RTC_* at build time) is
-// null when VITE_RTC_ICE_SERVERS_JSON is malformed — without this guard that
-// would reach `new RTCPeerConnection(null)`, i.e. host candidates only and
-// LAN-only calls, with no signal. A public-STUN config still traverses most
-// NATs and is a safe floor.
-const STUN_ONLY_FALLBACK = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-  ],
-  iceCandidatePoolSize: 10,
-  bundlePolicy: "max-bundle",
-  rtcpMuxPolicy: "require",
-};
-
 // Short-lived TURN credentials minted by the backend for this specific room
 // (see GET /api/direct-video-room/:roomId/ice-servers) — the same approach
 // the appointment VideoCall page uses, kept independent since guests here
 // have no authenticated identity to gate that page's endpoint on. Falls back
-// to the static RTC_CONFIG (built from VITE_RTC_TURN_* at build time), then to
-// public STUN, if the fetch fails or is unreachable — so a backend hiccup
-// degrades rather than blocks the call.
+// to STUN only if the fetch fails or is unreachable, as that page does, so a
+// backend hiccup degrades rather than blocks the call.
 // A momentary network blip on this one round trip shouldn't be able to
 // permanently degrade the call to STUN-only — retry once with a short backoff
 // before giving up, like VideoCall.jsx does. Only *request* failures are
 // retried; a response that came back but doesn't validate is a persistent
 // server-side config problem, so that's reported and falls straight through
-// to the static fallback rather than being retried pointlessly.
+// to the STUN-only fallback rather than being retried pointlessly.
 const ICE_FETCH_RETRY_DELAYS_MS = [1200];
 
 async function fetchDirectRoomIceConfig(roomId) {
@@ -352,13 +335,13 @@ async function fetchDirectRoomIceConfig(roomId) {
       if (!validationError && iceServers.length) {
         return {
           iceServers,
-          iceCandidatePoolSize: RTC_CONFIG?.iceCandidatePoolSize ?? 10,
+          iceCandidatePoolSize: STUN_ONLY_CONFIG.iceCandidatePoolSize,
           bundlePolicy: "max-bundle",
           rtcpMuxPolicy: "require",
         };
       }
       console.error(
-        "[direct-video-call] /ice-servers returned an unusable config — using static fallback:",
+        "[direct-video-call] /ice-servers returned an unusable config — falling back to STUN only:",
         validationError || "no ICE servers in response",
       );
       break;
@@ -366,7 +349,7 @@ async function fetchDirectRoomIceConfig(roomId) {
       const nextDelay = ICE_FETCH_RETRY_DELAYS_MS[attempt];
       if (nextDelay === undefined) {
         console.warn(
-          "[direct-video-call] /ice-servers fetch failed, falling back to static config:",
+          "[direct-video-call] /ice-servers fetch failed, falling back to STUN only:",
           err.message,
         );
         break;
@@ -374,15 +357,7 @@ async function fetchDirectRoomIceConfig(roomId) {
       await new Promise((resolve) => setTimeout(resolve, nextDelay));
     }
   }
-  if (!RTC_CONFIG) {
-    console.error(
-      "[direct-video-call] No usable build-time ICE config" +
-        (RTC_CONFIG_ERROR ? ` (${RTC_CONFIG_ERROR})` : "") +
-        " — falling back to public STUN only. Calls across strict NATs may fail.",
-    );
-    return STUN_ONLY_FALLBACK;
-  }
-  return RTC_CONFIG;
+  return STUN_ONLY_CONFIG;
 }
 
 const playVideoElement = async (videoEl) => {
@@ -3109,7 +3084,7 @@ export default function DirectVideoCall() {
 
       // fetchDirectRoomIceConfig never resolves to null, but keep a floor here
       // too so a rejected promise can't reach `new RTCPeerConnection(null)`.
-      const iceConfig = (await iceConfigPromiseRef.current) || RTC_CONFIG || STUN_ONLY_FALLBACK;
+      const iceConfig = (await iceConfigPromiseRef.current) || STUN_ONLY_CONFIG;
       if (isStale()) return;
 
       // Warn (once we're actually building the connection) if the config we
