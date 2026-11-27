@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const http = require("node:http");
 const EventEmitter = require("node:events");
 const { Server } = require("socket.io");
-const { createGracefulShutdown, registerShutdownSignals } = require("../utils/gracefulShutdown");
+const { createGracefulShutdown, registerShutdownSignals, isServerShutdownDisconnect } = require("../utils/gracefulShutdown");
 
 const quietLogger = () => {
   const lines = { log: [], error: [] };
@@ -31,6 +31,21 @@ test("real http + socket.io server: closes once, no ERR_SERVER_NOT_RUNNING, exit
   assert.equal(dbCloses, 1);
   assert.equal(server.listening, false);
   assert.deepEqual(logger.lines.error, []);
+});
+
+test("io.close() disconnects sockets with the reason the server treats as shutdown", async () => {
+  // Guards the Socket.IO reason string isServerShutdownDisconnect relies on.
+  const server = http.createServer();
+  const io = new Server(server);
+  await new Promise((resolve) => server.listen(0, resolve));
+  const { io: ioClient } = require("socket.io-client");
+  const reason = new Promise((resolve) => io.on("connection", (socket) => socket.on("disconnect", resolve)));
+  const client = ioClient(`http://127.0.0.1:${server.address().port}`, { transports: ["websocket"], reconnection: false });
+  await new Promise((resolve) => client.on("connect", resolve));
+  await io.close();
+  assert.equal(isServerShutdownDisconnect(await reason), true);
+  assert.equal(isServerShutdownDisconnect("transport close"), false);
+  client.close();
 });
 
 test("a second signal does not run shutdown again", async () => {

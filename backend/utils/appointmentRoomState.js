@@ -18,6 +18,11 @@ const appointmentIdOfRoom = (room) => (typeof room === "string" && room.startsWi
 // The appointment ids of the appointment_* rooms this socket is in, oldest first.
 const appointmentRoomsOf = (socket) => [...socket.rooms].map(appointmentIdOfRoom).filter(Boolean);
 
+// Optional `reason` on "participant-left" (older clients ignore it). SHUTDOWN is
+// part of the vocabulary but is never sent today: a server that is shutting down
+// announces no departures at all (see server.js "disconnect").
+const LEFT_REASONS = Object.freeze({ EXPLICIT: "explicit", GRACE_EXPIRED: "grace_expired", SHUTDOWN: "shutdown" });
+
 // An event payload with the call it belongs to. Existing fields win, so a payload is never changed, only added to.
 const withAppointmentId = (appointmentId, payload = {}) => ({ appointmentId: String(appointmentId), ...payload });
 
@@ -36,7 +41,7 @@ function rebuildAfterRecovery(socket, state) {
 // Leaves one room: tells the others in it (with the call's id) and forgets the room if it is now empty.
 function leaveAppointmentRoom(socket, appointmentId, state) {
   const room = appointmentRoomName(appointmentId);
-  socket.to(room).emit("participant-left", withAppointmentId(appointmentId));
+  socket.to(room).emit("participant-left", withAppointmentId(appointmentId, { reason: LEFT_REASONS.EXPLICIT }));
   socket.leave(room);
   if (String(state.socketRooms.get(socket.id) || "") === String(appointmentId)) state.socketRooms.delete(socket.id);
   const remaining = socket.nsp.adapter.rooms.get(room);
@@ -53,6 +58,7 @@ function leaveOtherAppointmentRooms(socket, appointmentId, state) {
 
 module.exports = {
   PREFIX,
+  LEFT_REASONS,
   appointmentRoomName,
   appointmentIdOfRoom,
   appointmentRoomsOf,

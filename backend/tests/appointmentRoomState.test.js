@@ -121,7 +121,7 @@ test("recovery: the room bookkeeping is rebuilt on its own, so leave-appointment
 
     a.emit("leave-appointment-room", { appointmentId: "X" });
     await sleep(100);
-    assert.deepEqual(bLog, [{ e: "participant-left", payload: { appointmentId: "X" } }], "the peer is told, and which call it was");
+    assert.deepEqual(bLog, [{ e: "participant-left", payload: { appointmentId: "X", reason: "explicit" } }], "the peer is told, which call it was, and why");
     assert.equal(serverSocket(srv, a).rooms.has("appointment_X"), false, "the socket really left the room");
     assert.equal(srv.state.socketRooms.has(a.id), false);
   } finally {
@@ -170,7 +170,7 @@ test("call A ends after a recovered reconnect, call B starts on the same socket:
     assert.equal(srv.state.socketRooms.get(a.id), "B");
     // The "a left" event travels over the network: wait for it instead of assuming it has already arrived.
     for (let i = 0; i < 100 && !peerALog.some((x) => x.e === "participant-left"); i++) await sleep(20);
-    assert.deepEqual(peerALog.filter((x) => x.e === "participant-left"), [{ e: "participant-left", payload: { appointmentId: "A" } }], "call A's peer was told a left, tagged A");
+    assert.deepEqual(peerALog.filter((x) => x.e === "participant-left"), [{ e: "participant-left", payload: { appointmentId: "A", reason: "explicit" } }], "call A's peer was told a left, tagged A");
 
     // The late participant-left for call A (what the old grace timer sent into the room by name).
     srv.io.to("appointment_A").emit("participant-left", withAppointmentId("A"));
@@ -278,7 +278,7 @@ test("every appointment call event carries appointmentId (added only: no existin
     /emit\("camera-state", \{ appointmentId: String\(appointmentId\), isCamOff: Boolean\(isCamOff\) \}\)/,
     /emit\("request-peer-rebuild", withAppointmentId\(appointmentId\)\)/,
     /emit\("peer-socket-down", withAppointmentId\(appointmentId\)\)/,
-    /emit\("participant-left", withAppointmentId\(appointmentId\)\)/,
+    /emit\("participant-left", withAppointmentId\(appointmentId, \{ reason: LEFT_REASONS\.GRACE_EXPIRED \}\)\)/,
   ];
   for (const re of carries) assert.match(source, re, String(re));
   assert.equal((source.match(/emit\("peer-socket-up", withAppointmentId\(appointmentId\)\)/g) || []).length, 2);

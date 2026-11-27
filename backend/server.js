@@ -49,7 +49,7 @@ const { recordSecurityEvent } = require("./utils/securityMonitor");
 const { makeSocketLimiter } = require("./utils/socketRateLimit");
 const { normalizeDenyReason } = require("./utils/roomDenyReason");
 const { createGraceTimerRegistry } = require("./utils/graceTimers");
-const { createGracefulShutdown, registerShutdownSignals } = require("./utils/gracefulShutdown");
+const { createGracefulShutdown, registerShutdownSignals, isServerShutdownDisconnect } = require("./utils/gracefulShutdown");
 const { installSocketErrorGuard } = require("./utils/socketErrorGuard");
 const { createPresenceDownTracker } = require("./utils/presenceDown");
 const CallReport = require("./models/CallReport");
@@ -652,7 +652,7 @@ const searchRouter = require("./routes/search");
 app.use("/api/search", searchRouter);
 app.use("/api/search", searchRouter.handleSearchErrors);
 const { decideAppointmentAccess, deniedMessage } = require("./utils/appointmentRoomAccess");
-const { withAppointmentId, rebuildAfterRecovery, leaveAppointmentRoom, leaveOtherAppointmentRooms } = require("./utils/appointmentRoomState");
+const { LEFT_REASONS, withAppointmentId, rebuildAfterRecovery, leaveAppointmentRoom, leaveOtherAppointmentRooms } = require("./utils/appointmentRoomState");
 
 // Health Check
 app.get("/api/health", (req, res) => {
@@ -2552,12 +2552,15 @@ io.on("connection", (socket) => {
       // connection trouble. A no-op send if nobody else is left. See
       // join-appointment-room below for where this gets resolved (peer-socket-up)
       // or the setTimeout below for where it times out (participant-left).
-      if (disconnectedUserId) {
+      // Neither signal when it is this server going away (restart / deploy):
+      // media is peer-to-peer or relayed and carries on, and both clients rejoin.
+      const serverClosing = isServerShutdownDisconnect(reason);
+      if (disconnectedUserId && !serverClosing) {
         io.to(appointmentRoom).emit("peer-socket-down", withAppointmentId(appointmentId));
         appointmentPresenceDown.markDown(appointmentId, disconnectedUserId);
       }
 
-      appointmentLeaveTimers.schedule(appointmentLeaveKey(appointmentId, disconnectedUserId), SOCKET_LEAVE_GRACE_MS, () => {
+      if (!serverClosing) appointmentLeaveTimers.schedule(appointmentLeaveKey(appointmentId, disconnectedUserId), SOCKET_LEAVE_GRACE_MS, () => {
         const sameUserStillInRoom = Array.from(socketRooms.entries()).some(([sid, roomAppointmentId]) => {
           if (String(roomAppointmentId) !== String(appointmentId)) return false;
           const peerSocket = io.sockets.sockets.get(sid);
@@ -2573,7 +2576,7 @@ io.on("connection", (socket) => {
 
         if (!sameUserStillInRoom) {
           callReportRecorder.onLeft({ appointmentId: String(appointmentId), role: reportRole, how: "grace_expired" });
-          io.to(appointmentRoom).emit("participant-left", withAppointmentId(appointmentId));
+          io.to(appointmentRoom).emit("participant-left", withAppointmentId(appointmentId, { reason: LEFT_REASONS.GRACE_EXPIRED }));
           // Deliberately NOT clearing roomActivated here: this path also
           // fires when both participants drop at once (e.g. a shared
           // network outage) and later both reconnect — clearing it would
@@ -3367,8 +3370,12 @@ io.on("connection", (socket) => {
     // rooms. Resolved by direct-peer-socket-up on rejoin (handlePinRoomJoin
     // and both join-direct-room branches below) or timed out by
     // direct-participant-left in the setTimeout further down.
-    io.to(room).emit("direct-peer-socket-down");
-    directPresenceDown.markDown(roomId, guestId);
+    // Skipped, like the leave timer below, when this server is shutting down.
+    const serverClosing = isServerShutdownDisconnect(reason);
+    if (!serverClosing) {
+      io.to(room).emit("direct-peer-socket-down");
+      directPresenceDown.markDown(roomId, guestId);
+    }
 
     // disconnect_reason: prefer a fresh client/beacon hint (best-effort —
     // may not exist), then Socket.IO's own reason where it's unambiguous
@@ -3419,7 +3426,7 @@ io.on("connection", (socket) => {
       });
     }
 
-    directLeaveTimers.schedule(directLeaveKey(roomId, guestId), DIRECT_ROOM_LEAVE_GRACE_MS, () => {
+    if (!serverClosing) directLeaveTimers.schedule(directLeaveKey(roomId, guestId), DIRECT_ROOM_LEAVE_GRACE_MS, () => {
       const sameGuestStillInRoom = Array.from(directRoomSockets.values()).some(
         (m) => String(m.roomId) === String(roomId) && m.guestId === guestId
       );
