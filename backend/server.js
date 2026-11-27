@@ -1219,12 +1219,13 @@ const directRoomRoles = new Map();
 // per room, the next time anyone actually joins it. roomId -> {
 //   doctor: { guestId, socketId, sessionId, lastTakeoverAt } | null,
 //   patient: { ... } | null,
+//   displacedTabs: Set<tabId>,  // tabs replaced by a newer one — see handlePinRoomJoin
 // }
 const directPinRoomSlots = new Map();
 function getPinRoomEntry(roomId) {
   let entry = directPinRoomSlots.get(roomId);
   if (!entry) {
-    entry = { doctor: null, patient: null };
+    entry = { doctor: null, patient: null, displacedTabs: new Set() };
     directPinRoomSlots.set(roomId, entry);
   }
   return entry;
@@ -1657,7 +1658,7 @@ function roleDisplayName(role) {
 // replaced here by two fixed, named slots whose ownership is decided by a
 // signed session token, not join order. See utils/directSessionToken.js
 // and the doctorSession/patientSession fields on DirectVideoRoom.
-async function handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToken }) {
+async function handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToken, tabId: rawTabId }) {
   const decoded = sessionToken ? verifySessionToken(sessionToken) : null;
   if (!decoded || String(decoded.roomId) !== String(roomId) || (decoded.role !== "doctor" && decoded.role !== "patient")) {
     socket.emit("direct-room-error", { code: "pin_required", msg: "Please enter the PIN to join." });
@@ -1674,15 +1675,30 @@ async function handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToke
   const slots = getPinRoomEntry(roomId);
   const current = slots[role];
 
+  // Optional per-page-load id (older web builds send none). A tab that has been
+  // replaced stays replaced, even if it was offline at the time and so never
+  // received the notice; otherwise its automatic rejoin would take the seat back
+  // and the two tabs would keep knocking each other out. Reloading the page
+  // gives a new tabId, which is how the user deliberately moves the call back.
+  const tabId = typeof rawTabId === "string" && DIRECT_GUEST_ID_PATTERN.test(rawTabId) ? rawTabId : "";
+  const duplicateNotice = { msg: "This meeting was opened in another tab or window." };
+  if (tabId && slots.displacedTabs.has(tabId)) {
+    socket.emit("direct-duplicate-session", duplicateNotice);
+    return;
+  }
+  if (tabId && current?.tabId && current.tabId !== tabId) slots.displacedTabs.add(current.tabId);
+
   // Evict a stale socket for the SAME role+session — a refresh or duplicate
   // tab, not a different device (a different device would carry a
   // different, no-longer-current sessionId and would have been rejected
-  // above already).
+  // above already). Tell it, so it stops instead of carrying on half-connected.
   if (current?.socketId && current.socketId !== socket.id) {
     const staleSocket = io.sockets.sockets.get(current.socketId);
     if (staleSocket) {
       staleSocket.leave(room);
       directRoomSockets.delete(current.socketId);
+      staleSocket.emit("direct-duplicate-session", duplicateNotice);
+      logDirectRoom("stale_socket_evicted", { roomId, guestId: current.guestId, socketId: current.socketId, role });
     }
   }
 
@@ -1691,7 +1707,7 @@ async function handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToke
   // room call right after verify-direct-pin created it.
   const resumedCall = current?.sessionId === sessionId;
 
-  slots[role] = { guestId, socketId: socket.id, sessionId, lastTakeoverAt: current?.lastTakeoverAt || 0 };
+  slots[role] = { guestId, socketId: socket.id, sessionId, tabId, lastTakeoverAt: current?.lastTakeoverAt || 0 };
   directRoomSockets.set(socket.id, { roomId, guestId, name: roleDisplayName(role), role });
   socket.join(room);
   directLeaveTimers.cancel(directLeaveKey(roomId, guestId));
@@ -2812,7 +2828,7 @@ io.on("connection", (socket) => {
     socket.emit("direct-pin-ok", { role, sessionToken: signSessionToken({ roomId, role, sessionId }) });
   });
 
-  socket.on("join-direct-room", async ({ roomId, guestId, name, sessionToken } = {}) => {
+  socket.on("join-direct-room", async ({ roomId, guestId, name, sessionToken, tabId } = {}) => {
     if (!roomId || typeof roomId !== "string" || !DIRECT_ROOM_ID_PATTERN.test(roomId)) {
       socket.emit("direct-room-error", { code: "invalid", msg: "This meeting link is invalid." });
       return;
@@ -2870,7 +2886,7 @@ io.on("connection", (socket) => {
     }
 
     if (roomDoc.doctorPinEncrypted) {
-      return handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToken });
+      return handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToken, tabId });
     }
 
     const guestName = sanitizeGuestName(name);

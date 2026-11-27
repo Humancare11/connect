@@ -485,6 +485,13 @@ function PinInput({ value, onChange, disabled }) {
 export default function DirectVideoCall() {
   const { roomId } = useParams();
   const guestIdRef = useRef(getOrCreateGuestId(roomId));
+  // New for every page load and never stored: lets the server tell a second tab
+  // (which shares the guestId and PIN session) from this tab reconnecting.
+  const [tabId] = useState(() =>
+    typeof crypto?.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `tab-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+  );
 
   // stage: checking -> [pin ->] prejoin -> call -> ended | error
   // "pin" is skipped entirely for legacy (pre-PIN) rooms, and skipped for
@@ -3397,6 +3404,7 @@ export default function DirectVideoCall() {
         guestId: guestIdRef.current,
         name: guestName,
         sessionToken: sessionTokenRef.current,
+        tabId,
       });
       resyncConnectionStateFromPeerConnection();
     };
