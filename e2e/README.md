@@ -54,6 +54,13 @@ normal booking (status must be `confirmed`, doctor and patient assigned); the
 direct room via the admin "direct video room" tool. The repo has no seed script
 for these, so `helpers/seed.js` (local only) is the reference for the shape.
 
+## No analytics traffic
+
+The test browser cannot resolve `googletagmanager.com` or `livechatinc.com` (a
+launch argument in `playwright.config.js`), so runs never reach the analytics
+container or the LiveChat widget. `tests/tracker-block.spec.js` proves it. Running against an
+existing environment with `E2E_BASE_URL` keeps the same block.
+
 ## Workers
 
 Tests run **one at a time by default** (`workers: 1` in `playwright.config.js`)
