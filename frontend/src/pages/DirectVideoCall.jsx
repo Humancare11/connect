@@ -18,6 +18,14 @@ import { isRetryableDirectCode, nextJoinRetryDelay } from "../utils/roomDenyRetr
 import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
 import { createRestartRequestBackoff } from "../utils/retryBackoff";
 import { buildCallStatsSample } from "../utils/callStatsSample";
+import { flagEnabled } from "../utils/featureFlags";
+import {
+  HELD_CALL_CHECK_MS,
+  RESTART_BEFORE_REBUILD_MS,
+  createHeldCallWatch,
+  restartRecovered,
+  shouldHoldCall,
+} from "../utils/keepLiveCall";
 import { probeSocketAlive } from "../utils/socketLiveness";
 import { useSlowConnectNotice } from "../utils/slowConnectNotice";
 import { createLocalMediaRecovery, hasEndedTrack } from "../utils/localMediaRecovery";
@@ -313,6 +321,12 @@ const MEDIA_STALL_COOLDOWN_MS = 25000;
 // not a runaway loop.
 const AUTO_REBUILD_MAX_COUNT = 3;
 const AUTO_REBUILD_WINDOW_MS = 60000;
+const KEEP_LIVE_CALL_ENABLED = flagEnabled(import.meta.env.VITE_RTC_KEEP_LIVE_CALL);
+const isPcConnected = (peer) =>
+  !!peer &&
+  (peer.connectionState === "connected" ||
+    peer.iceConnectionState === "connected" ||
+    peer.iceConnectionState === "completed");
 
 // Short-lived TURN credentials minted by the backend for this specific room
 // (see GET /api/direct-video-room/:roomId/ice-servers) — the same approach
@@ -698,6 +712,10 @@ export default function DirectVideoCall() {
   const lastStatsSampleRef = useRef(null);
   // Network route in use (relay/direct, protocol, TURN host), for the admin report.
   const lastRouteRef = useRef({});
+  // utils/keepLiveCall.js: the pending "rebuild if the restart did not help"
+  // timer, and the interval watching a call held after participant-left.
+  const staleResumeTimerRef = useRef(null);
+  const heldCallTimerRef = useRef(null);
   // Last RTT/jitter/quality sampled by the 5s stats poll below — read by the
   // separate, faster direct-call-stats interval so that one doesn't need its
   // own getStats() poll (which would mean two concurrent stats polls running
@@ -1285,6 +1303,8 @@ export default function DirectVideoCall() {
   //   reconnect and start flowing media again.
   const evaluateMediaStallWatchdog = useCallback(
     (pc, statsReport) => {
+      // A held call (signaling gone, media flowing) must not be rebuilt.
+      if (heldCallTimerRef.current) return;
       if (Date.now() < mediaStallCooldownUntilRef.current) return;
 
       const pcAgeMs = pcCreatedAtRef.current ? Date.now() - pcCreatedAtRef.current : 0;
@@ -2351,9 +2371,50 @@ export default function DirectVideoCall() {
       }
     };
 
+    const scheduleStaleRebuild = (stalePc) => {
+      if (staleResumeTimerRef.current) return; // repeated peer-joined must not postpone it
+      staleResumeTimerRef.current = window.setTimeout(() => {
+        staleResumeTimerRef.current = null;
+        if (!mountedRef.current || pcRef.current !== stalePc || !peerPresentRef.current) return;
+        if (restartRecovered(stalePc)) return;
+        // Without signaling a rebuild cannot negotiate: wait rather than tear down.
+        if (!socket.connected) {
+          scheduleStaleRebuild(stalePc);
+          return;
+        }
+        void requestPcRebuild("peer_joined_unhealthy_resume");
+      }, RESTART_BEFORE_REBUILD_MS);
+    };
+
+    const stopHoldingCall = () => {
+      window.clearInterval(heldCallTimerRef.current);
+      heldCallTimerRef.current = null;
+    };
+
+    // The server gave up on the peer's signaling but media still works.
+    const holdCall = (heldPc) => {
+      if (heldCallTimerRef.current) return;
+      const watch = createHeldCallWatch(Date.now());
+      heldCallTimerRef.current = window.setInterval(async () => {
+        const bytes = await sampleInboundBytes(heldPc);
+        if (!mountedRef.current || !heldCallTimerRef.current) return;
+        if (pcRef.current !== heldPc) {
+          stopHoldingCall(); // replaced or already torn down
+          return;
+        }
+        if (watch.update(Date.now(), { connected: isPcConnected(heldPc), bytes }) === "end") {
+          handleParticipantLeft(); // no reason: the ordinary teardown
+        }
+      }, HELD_CALL_CHECK_MS);
+    };
+
     const handlePeerJoined = ({ name, resumedCall } = {}) => {
       if (!mountedRef.current) return;
       restartBackoffRef.current.reset();
+      if (heldCallTimerRef.current) {
+        stopHoldingCall(); // they are back
+        clearWaitingForOldPeer();
+      }
       peerPresentRef.current = true;
       setPeerLeftNotice(false);
       setPeerName(name || "");
@@ -2412,11 +2473,12 @@ export default function DirectVideoCall() {
       // setupPeerConnection() call below), and must never consume the
       // automatic-rebuild rate limit or go through requestPcRebuild's
       // teardown machinery, which has nothing to tear down.
+      const staleResumed = Boolean(existingPc && resuming && !existingPcHealthy && pcAgeMs > REBUILD_GRACE_MS);
       const pcNeedsTeardown = Boolean(
         existingPc &&
           (existingPc.signalingState === "closed" ||
             existingPc.connectionState === "failed" ||
-            (resuming && !existingPcHealthy && pcAgeMs > REBUILD_GRACE_MS)),
+            (staleResumed && !KEEP_LIVE_CALL_ENABLED)),
       );
       // TEMPORARY (RETRY_DEBUG)
       retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "handlePeerJoined", {
@@ -2470,6 +2532,13 @@ export default function DirectVideoCall() {
       startConnectionWatchdog();
       startReconnectStallWatch(resuming ? 8000 : 20000);
 
+      // Merely disconnected after a resume: restart ICE first, rebuild only if
+      // that has not helped.
+      if (staleResumed && !pcNeedsTeardown) {
+        scheduleIceRestart();
+        scheduleStaleRebuild(existingPc);
+      }
+
       // If the server says the call was already active before this
       // direct-peer-joined (the peer refreshed / reconnected rather than
       // joining fresh) and we're the side that KEPT its RTCPeerConnection,
@@ -2512,7 +2581,8 @@ export default function DirectVideoCall() {
       retryDebugLog(role, roomId, "direct-peer-socket-down:RECEIVED", {});
       waitingForOldPeerRef.current = true;
       setWaitingForOldPeer(true);
-      setReconnectStalled(true);
+      // While our connection is healthy: show "waiting", but no Retry button.
+      if (!KEEP_LIVE_CALL_ENABLED || !isPcConnected(pcRef.current)) setReconnectStalled(true);
     };
 
     // The same peer whose socket dropped has rejoined the room.
@@ -2523,8 +2593,16 @@ export default function DirectVideoCall() {
       clearWaitingForOldPeer();
     };
 
-    const handleParticipantLeft = () => {
+    const handleParticipantLeft = (payload) => {
       if (!mountedRef.current) return;
+      const currentPc = pcRef.current;
+      if (shouldHoldCall({ enabled: KEEP_LIVE_CALL_ENABLED, reason: payload?.reason, connected: isPcConnected(currentPc) })) {
+        holdCall(currentPc);
+        return;
+      }
+      stopHoldingCall();
+      window.clearTimeout(staleResumeTimerRef.current);
+      staleResumeTimerRef.current = null;
 
       // The peer is genuinely gone — either they left deliberately, or a
       // ~15s disconnect grace already elapsed (server.js). There is nothing
@@ -3625,6 +3703,9 @@ export default function DirectVideoCall() {
       socket.off("direct-room-error", handleJoinRefused);
       socket.off("direct-peer-joined", handlePeerJoined);
       socket.off("direct-participant-left", handleParticipantLeft);
+      stopHoldingCall();
+      window.clearTimeout(staleResumeTimerRef.current);
+      staleResumeTimerRef.current = null;
       socket.off("direct-peer-socket-down", handleDirectPeerSocketDown);
       socket.off("direct-peer-socket-up", handleDirectPeerSocketUp);
       socket.off("direct-room-closed", handleRoomClosed);
@@ -4509,7 +4590,7 @@ export default function DirectVideoCall() {
                 (manualReconnecting): the tap itself clears reconnectStalled,
                 which used to make the banner — and its "Reconnecting…"
                 button — vanish the instant it was pressed. */}
-            {(reconnectStalled || manualReconnecting) && !slowConnect && (
+            {(reconnectStalled || manualReconnecting || (KEEP_LIVE_CALL_ENABLED && waitingForOldPeer)) && !slowConnect && (
               <div className="hc-vc__reconnect-stalled-notice">
                 <span>
                   <FiAlertTriangle />
@@ -4523,14 +4604,16 @@ export default function DirectVideoCall() {
                         ? "Still unable to reconnect. You can keep trying or end the call."
                         : "Reconnection is taking longer than expected."}
                 </span>
-                <button
-                  type="button"
-                  className="hc-vc__rx-btn-primary"
-                  onClick={forceReconnect}
-                  disabled={manualReconnecting}
-                >
-                  {manualReconnecting ? "Reconnecting…" : "Retry"}
-                </button>
+                {(reconnectStalled || manualReconnecting) && (
+                  <button
+                    type="button"
+                    className="hc-vc__rx-btn-primary"
+                    onClick={forceReconnect}
+                    disabled={manualReconnecting}
+                  >
+                    {manualReconnecting ? "Reconnecting…" : "Retry"}
+                  </button>
+                )}
                 {reconnectStallCountRef.current >= MAX_RECONNECT_STALL_RETRIES && (
                   <button type="button" className="hc-vc__rx-btn-ghost" onClick={leaveCall}>
                     End Call

@@ -3123,7 +3123,7 @@ io.on("connection", (socket) => {
 
     const meta = directRoomSockets.get(socket.id);
     const room = directRoomName(roomId);
-    socket.to(room).emit("direct-participant-left");
+    socket.to(room).emit("direct-participant-left", { reason: LEFT_REASONS.EXPLICIT });
     socket.leave(room);
     directRoomSockets.delete(socket.id);
 
@@ -3488,7 +3488,7 @@ io.on("connection", (socket) => {
       directPresenceDown.clearDown(roomId, guestId);
 
       if (!sameGuestStillInRoom) {
-        io.to(room).emit("direct-participant-left");
+        io.to(room).emit("direct-participant-left", { reason: LEFT_REASONS.GRACE_EXPIRED });
         const remaining = io.sockets.adapter.rooms.get(room);
         if (!remaining || remaining.size === 0) scheduleDirectRoomRolesCleanup(roomId);
       }

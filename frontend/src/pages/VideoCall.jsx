@@ -22,6 +22,13 @@ import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
 import { createRestartRequestBackoff } from "../utils/retryBackoff";
 import { flagEnabled } from "../utils/featureFlags";
 import {
+  HELD_CALL_CHECK_MS,
+  RESTART_BEFORE_REBUILD_MS,
+  createHeldCallWatch,
+  restartRecovered,
+  shouldHoldCall,
+} from "../utils/keepLiveCall";
+import {
   OWN_RESTART_MIN_GAP_MS,
   doctorRestartDecision,
   doctorRestartsItself,
@@ -574,8 +581,14 @@ const REPORTED_VIDEO_EVENTS = {
   ice_restart_offer_sent: "ice_restart",
   ice_connection_failed: "ice_failed",
 };
+const isPcConnected = (peer) =>
+  !!peer &&
+  (peer.connectionState === "connected" ||
+    peer.iceConnectionState === "connected" ||
+    peer.iceConnectionState === "completed");
 const WEB_CLIENT_CAPABILITIES = { peerRebuild: true, iceRestart: true };
 const DOCTOR_ICE_RESTART_ENABLED = flagEnabled(import.meta.env.VITE_RTC_DOCTOR_ICE_RESTART);
+const KEEP_LIVE_CALL_ENABLED = flagEnabled(import.meta.env.VITE_RTC_KEEP_LIVE_CALL);
 // Doctor-side downgrade for a peer that lacks peerRebuild (an older mobile
 // build): instead of rebuilding the doctor's pc — which that peer could not
 // follow, since it can't apply an answer carrying a new DTLS fingerprint —
@@ -1106,6 +1119,10 @@ export default function VideoCall() {
   // For the doctor-side ICE restart (utils/doctorIceRestart.js).
   const lastPeerOfferAtRef = useRef(0);
   const lastOwnRestartAtRef = useRef(0);
+  // utils/keepLiveCall.js: the pending "rebuild if the restart did not help"
+  // timer, and the interval watching a call held after participant-left.
+  const staleResumeTimerRef = useRef(null);
+  const heldCallTimerRef = useRef(null);
   // Correlates a video-answer back to the specific video-offer it's meant to
   // answer. Socket.IO's connectionStateRecovery (server.js) replays buffered
   // room events across a brief reconnect — under some timings that can
@@ -4030,7 +4047,8 @@ export default function VideoCall() {
       retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "peer-socket-down:RECEIVED", {});
       waitingForOldPeerRef.current = true;
       setWaitingForOldPeer(true);
-      setReconnectStalled(true);
+      // While our connection is healthy: show "waiting", but no Retry button.
+      if (!KEEP_LIVE_CALL_ENABLED || !isPcConnected(pc)) setReconnectStalled(true);
     };
 
     // The same peer whose socket dropped has rejoined the room.
@@ -4040,9 +4058,53 @@ export default function VideoCall() {
       clearWaitingForOldPeer();
     };
 
+    const scheduleStaleRebuild = (stalePc) => {
+      if (staleResumeTimerRef.current) return; // repeated peer-joined must not postpone it
+      staleResumeTimerRef.current = window.setTimeout(() => {
+        staleResumeTimerRef.current = null;
+        if (!mounted || pcRef.current !== stalePc || !peerPresentRef.current) return;
+        if (restartRecovered(stalePc)) return;
+        // Without signaling a rebuild cannot negotiate: wait rather than tear down.
+        if (!socket.connected) {
+          scheduleStaleRebuild(stalePc);
+          return;
+        }
+        logVideoEvent("peer_rejoined_pc_rebuild", { reason: "stale_resumed" });
+        void requestPcRebuild("stale_resumed", { countsTowardLimit: true });
+      }, RESTART_BEFORE_REBUILD_MS);
+    };
+
+    const stopHoldingCall = () => {
+      window.clearInterval(heldCallTimerRef.current);
+      heldCallTimerRef.current = null;
+    };
+
+    // The server gave up on the peer's signaling but media still works.
+    const holdCall = () => {
+      if (heldCallTimerRef.current) return;
+      const heldPc = pc;
+      const watch = createHeldCallWatch(Date.now());
+      logVideoEvent("call_held_signaling_gone", {});
+      heldCallTimerRef.current = window.setInterval(async () => {
+        const bytes = await sampleInboundBytes(heldPc);
+        if (!mounted || !heldCallTimerRef.current) return;
+        if (pcRef.current !== heldPc) {
+          stopHoldingCall(); // replaced or already torn down
+          return;
+        }
+        if (watch.update(Date.now(), { connected: isPcConnected(heldPc), bytes }) === "end") {
+          handleParticipantLeft(); // no reason: the ordinary teardown
+        }
+      }, HELD_CALL_CHECK_MS);
+    };
+
     const handlePeerJoined = (payload = {}) => {
       restartBackoffRef.current.reset();
       flushCallEvents();
+      if (heldCallTimerRef.current) {
+        stopHoldingCall(); // they are back
+        clearWaitingForOldPeer();
+      }
       // peer-joined is only echoed to a socket the server let into the room.
       joinDenyAttemptRef.current = 0;
       setJoinRetryPhase(null);
@@ -4122,11 +4184,12 @@ export default function VideoCall() {
         const pcAgeMs = pcCreatedAtRef.current
           ? Date.now() - pcCreatedAtRef.current
           : Infinity;
+        const staleResumed = Boolean(resumedCall && !pcHealthy && pcAgeMs > REBUILD_GRACE_MS);
         const pcNeedsRebuild =
           !existingPc ||
           existingPc.signalingState === "closed" ||
           existingPc.connectionState === "failed" ||
-          (resumedCall && !pcHealthy && pcAgeMs > REBUILD_GRACE_MS);
+          (staleResumed && !KEEP_LIVE_CALL_ENABLED);
         retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "handlePeerJoined", {
           resumedCall: Boolean(resumedCall),
           existingPcConnectionState: existingPc?.connectionState ?? null,
@@ -4173,6 +4236,13 @@ export default function VideoCall() {
           (existingPc.connectionState === "connected" ||
             existingPc.iceConnectionState === "connected" ||
             existingPc.iceConnectionState === "completed");
+
+        // Merely disconnected after a resume: the restart offer / request below
+        // goes first; rebuild only if that has not helped.
+        if (staleResumed && !pcNeedsRebuild) {
+          scheduleIceRestart();
+          scheduleStaleRebuild(existingPc);
+        }
 
         if (isReadyRef.current && !currentlyConnected) startConnectionWatchdog();
         // Resuming a known-active call should recover in ~1-2s (see the
@@ -4222,8 +4292,15 @@ export default function VideoCall() {
       }
     };
 
-    const handleParticipantLeft = () => {
+    const handleParticipantLeft = (payload) => {
       if (!mounted) return;
+      if (shouldHoldCall({ enabled: KEEP_LIVE_CALL_ENABLED, reason: payload?.reason, connected: isPcConnected(pc) })) {
+        holdCall();
+        return;
+      }
+      stopHoldingCall();
+      window.clearTimeout(staleResumeTimerRef.current);
+      staleResumeTimerRef.current = null;
       peerJoinedRef.current = false;
       // The peer genuinely left (a ~15s disconnect grace already elapsed
       // server-side, or they left deliberately). Stand the recovery machinery
@@ -4703,7 +4780,7 @@ export default function VideoCall() {
     let watchdogBusy = false;
     const mediaWatchdogTimer = window.setInterval(async () => {
       if (!mounted || pc.signalingState === "closed" || watchdogBusy) return;
-      if (!peerPresentRef.current || !isReadyRef.current) {
+      if (!peerPresentRef.current || !isReadyRef.current || heldCallTimerRef.current) {
         watchdogPrev = null;
         watchdogStallCount = 0;
         return;
@@ -4871,6 +4948,9 @@ export default function VideoCall() {
       socket.off("ice-restart-request", handleIceRestartRequest);
       socket.off("peer-joined", handlePeerJoined);
       socket.off("participant-left", handleParticipantLeft);
+      stopHoldingCall();
+      window.clearTimeout(staleResumeTimerRef.current);
+      staleResumeTimerRef.current = null;
       socket.off("peer-socket-down", handlePeerSocketDown);
       socket.off("peer-socket-up", handlePeerSocketUp);
       socket.off("appointment-message", handleChatMessage);
@@ -6283,7 +6363,7 @@ export default function VideoCall() {
                 which used to make the banner (and its "Reconnecting…"
                 button) vanish the instant it was pressed. It goes away when
                 the rebuilt connection is healthy or the hold ends. */}
-            {(reconnectStalled || manualReconnecting) && !slowConnect && (
+            {(reconnectStalled || manualReconnecting || (KEEP_LIVE_CALL_ENABLED && waitingForOldPeer)) && !slowConnect && (
               <div className="hc-vc__reconnect-stalled-notice">
                 <span>
                   <FiAlertTriangle />
@@ -6297,14 +6377,16 @@ export default function VideoCall() {
                         ? "Still unable to reconnect. You can keep trying or end the call."
                         : "Reconnection is taking longer than expected."}
                 </span>
-                <button
-                  type="button"
-                  className="hc-vc__rx-btn-primary"
-                  onClick={forceReconnect}
-                  disabled={manualReconnecting}
-                >
-                  {manualReconnecting ? "Reconnecting…" : "Retry"}
-                </button>
+                {(reconnectStalled || manualReconnecting) && (
+                  <button
+                    type="button"
+                    className="hc-vc__rx-btn-primary"
+                    onClick={forceReconnect}
+                    disabled={manualReconnecting}
+                  >
+                    {manualReconnecting ? "Reconnecting…" : "Retry"}
+                  </button>
+                )}
                 {reconnectStallCountRef.current >= MAX_RECONNECT_STALL_RETRIES && (
                   <button
                     type="button"
