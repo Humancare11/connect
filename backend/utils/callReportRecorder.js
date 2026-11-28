@@ -19,6 +19,11 @@ const RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
 // sides stayed together at least this long.
 const INFERRED_CONNECTED_MIN_SEC = 15;
 const DENIED_EVENT_MIN_GAP_MS = 30_000;
+// Recovery steps a participant's client reports. Capped per participant so a
+// noisy client can never push the server's own events out of the report.
+const CLIENT_EVENT_TYPES = ["manual_retry", "ice_restart", "pc_rebuild", "ice_failed"];
+const CLIENT_EVENT_MIN_GAP_MS = 5_000;
+const CLIENT_EVENT_MAX_PER_ROLE = 40;
 
 // Stats: samples closer together than this are used for the live view only;
 // aggregates fold roughly one sample per 30s however often a client sends.
@@ -287,6 +292,24 @@ function createCallReportRecorder({ CallReport, logger = console, now = () => Da
     return write(id, update, { upsert: false });
   }
 
+  // A recovery step reported by a participant's client (informational only).
+  function onClientEvent({ appointmentId, role, type, reason }) {
+    const id = String(appointmentId || "");
+    const st = states.get(id);
+    if (!st || !ROLES.includes(role) || !CLIENT_EVENT_TYPES.includes(type)) return undefined;
+    const rr = st.roles[role];
+    const t = now();
+    rr.clientEvents = rr.clientEvents || { count: 0, lastAt: {} };
+    if (rr.clientEvents.count >= CLIENT_EVENT_MAX_PER_ROLE) return undefined;
+    if (t - (rr.clientEvents.lastAt[type] || 0) < CLIENT_EVENT_MIN_GAP_MS) return undefined;
+    rr.clientEvents.count += 1;
+    rr.clientEvents.lastAt[type] = t;
+    const cleanReason = typeof reason === "string" ? reason.replace(/[^a-z_]/gi, "").slice(0, 40) : "";
+    const update = newUpdate(t, st.kind);
+    addEvent(update, t, type, role, cleanReason ? { reason: cleanReason } : undefined);
+    return write(id, update, { upsert: false });
+  }
+
   // The appointment was completed / cancelled by the system.
   function onCallEnded({ appointmentId, reason }) {
     const id = String(appointmentId || "");
@@ -322,7 +345,7 @@ function createCallReportRecorder({ CallReport, logger = console, now = () => Da
     await Promise.allSettled(Array.from(chains.values()));
   }
 
-  return { onJoin, onDrop, onLeft, onConnected, onJoinDenied, onCallEnded, onStats, flushStats, openSegmentSec, flush, _states: states };
+  return { onJoin, onDrop, onLeft, onConnected, onJoinDenied, onClientEvent, onCallEnded, onStats, flushStats, openSegmentSec, flush, _states: states };
 }
 
-module.exports = { createCallReportRecorder, EVENT_CAP, RETENTION_MS, INFERRED_CONNECTED_MIN_SEC, STATS_FOLD_MIN_GAP_MS, STATS_FLUSH_MS };
+module.exports = { createCallReportRecorder, CLIENT_EVENT_TYPES, CLIENT_EVENT_MAX_PER_ROLE, EVENT_CAP, RETENTION_MS, INFERRED_CONNECTED_MIN_SEC, STATS_FOLD_MIN_GAP_MS, STATS_FLUSH_MS };

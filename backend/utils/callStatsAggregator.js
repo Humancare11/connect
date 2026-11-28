@@ -9,8 +9,11 @@
 // Everything a client sends is attacker-controlled: every field is range
 // checked and anything implausible is dropped (never clamped into the data).
 
+const { sanitizeTurnHost } = require("./turnHost");
+
 const ICE_TYPES = ["host", "srflx", "prflx", "relay"];
 const QUALITIES = ["good", "weak", "poor", "unknown"];
+const RELAY_PROTOCOLS = ["udp", "tcp", "tls"];
 
 const LIMITS = {
   rtt: { min: 0, max: 60_000 }, // ms
@@ -31,6 +34,9 @@ function sanitizeStatsSample(raw) {
     jitter: num(raw.jitter, LIMITS.jitter),
     bitrateKbps: num(raw.bitrateKbps, LIMITS.bitrateKbps),
     iceType: ICE_TYPES.includes(raw.iceType) ? raw.iceType : "",
+    // Optional (newer clients): how the relay was reached, and which of our TURN servers.
+    relayProtocol: RELAY_PROTOCOLS.includes(raw.relayProtocol) ? raw.relayProtocol : "",
+    turnHost: sanitizeTurnHost(raw.turnHost),
     quality: QUALITIES.includes(raw.quality) ? raw.quality : "unknown",
     connectionState: typeof raw.connectionState === "string" ? raw.connectionState.replace(/[^a-z-]/gi, "").slice(0, 20) : "",
     outKbps: num(raw.outKbps, LIMITS.bitrateKbps),
@@ -52,8 +58,10 @@ function createPendingStats() {
     jitter: { sum: 0, n: 0, min: Infinity, max: -Infinity },
     bitrate: { sum: 0, n: 0, min: Infinity, max: -Infinity },
     ice: {},
+    protocol: {},
     quality: {},
     lastIceType: "",
+    lastTurnHost: "",
     lastQuality: "",
     lastSampleAt: 0,
   });
@@ -78,6 +86,8 @@ function createPendingStats() {
         agg.ice[sample.iceType] = (agg.ice[sample.iceType] || 0) + 1;
         agg.lastIceType = sample.iceType;
       }
+      if (sample.relayProtocol) agg.protocol[sample.relayProtocol] = (agg.protocol[sample.relayProtocol] || 0) + 1;
+      if (sample.turnHost) agg.lastTurnHost = sample.turnHost;
       agg.quality[sample.quality] = (agg.quality[sample.quality] || 0) + 1;
       agg.lastQuality = sample.quality;
       agg.lastSampleAt = at;
@@ -104,6 +114,8 @@ function createPendingStats() {
       }
       for (const [k, c] of Object.entries(agg.ice)) update.$inc[p(`ice.${k}`)] = c;
       for (const [k, c] of Object.entries(agg.quality)) update.$inc[p(`quality.${k}`)] = c;
+      for (const [k, c] of Object.entries(agg.protocol)) update.$inc[p(`protocol.${k}`)] = c;
+      if (agg.lastTurnHost) update.$set[p("lastTurnHost")] = agg.lastTurnHost;
       if (agg.lastIceType) update.$set[p("lastIceType")] = agg.lastIceType;
       update.$set[p("lastQuality")] = agg.lastQuality;
       update.$set[p("lastSampleAt")] = new Date(agg.lastSampleAt);
@@ -132,6 +144,8 @@ function summarizeStats(stats) {
     bitrateKbps: { avg: round(avg(stats.bitrateSum, stats.bitrateN), 0), min: stats.bitrateMin ?? null, max: stats.bitrateMax ?? null },
     iceType: dominantIce,
     iceCounts: ice,
+    relayProtocol: Object.entries(stats.protocol || {}).sort((a, b) => b[1] - a[1])[0]?.[0] || "",
+    turnHost: stats.lastTurnHost || "",
     qualityCounts: quality,
     lastQuality: stats.lastQuality || "",
     lastSampleAt: stats.lastSampleAt || null,
@@ -141,4 +155,4 @@ function summarizeStats(stats) {
 const connectionTypeLabel = (iceType) =>
   iceType === "relay" ? "Relay (TURN)" : ["host", "srflx", "prflx"].includes(iceType) ? "Direct (peer-to-peer)" : "Unknown";
 
-module.exports = { sanitizeStatsSample, createPendingStats, summarizeStats, connectionTypeLabel, ICE_TYPES, QUALITIES, LIMITS };
+module.exports = { RELAY_PROTOCOLS, sanitizeStatsSample, createPendingStats, summarizeStats, connectionTypeLabel, ICE_TYPES, QUALITIES, LIMITS };

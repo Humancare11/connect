@@ -8,6 +8,10 @@
 
 const isNotRunning = (err) => err && err.code === "ERR_SERVER_NOT_RUNNING";
 
+// The Socket.IO "disconnect" reason when io.close() drops a socket. The client
+// did nothing and will reconnect, so nobody must be told it dropped or left.
+const isServerShutdownDisconnect = (reason) => reason === "server shutting down";
+
 function createGracefulShutdown({
   io,
   server,
@@ -74,4 +78,4 @@ function registerShutdownSignals(proc, handler) {
   return true;
 }
 
-module.exports = { createGracefulShutdown, registerShutdownSignals };
+module.exports = { createGracefulShutdown, registerShutdownSignals, isServerShutdownDisconnect };

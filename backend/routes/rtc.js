@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { verifyToken } = require("../middleware/verifyToken");
 const { generateTurnCredentials } = require("../utils/turnCredentials");
+const { appClientMemory } = require("../utils/appClientMemory");
 
 function parseCsv(value) {
   return String(value || "")
@@ -40,6 +41,7 @@ const TURN_REGIONS = [
 // (doctor/user/admin); the credential isn't tied to a specific appointment,
 // this is just to avoid handing out relay credentials to anonymous callers.
 router.get("/ice-servers", verifyToken, (req, res) => {
+  appClientMemory.remember(req.user?.id, req.headers); // for the call report
   const stunUrls = parseCsv(process.env.RTC_STUN_URLS);
   const iceServers = [{ urls: stunUrls.length ? stunUrls : FALLBACK_STUN_URLS }];
 

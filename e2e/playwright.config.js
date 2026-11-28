@@ -122,6 +122,14 @@ export default defineConfig({
         // Expose real host ICE candidates (no mDNS obfuscation) so two
         // browsers on one machine connect directly without needing TURN.
         "--disable-features=WebRtcHideLocalIpsWithMdns",
+        // No test traffic may reach analytics or visitor tracking: Google Tag
+        // Manager and the LiveChat widget (whose script also throws "License
+        // expired") cannot be resolved at all. Applies to every context, popup,
+        // tab and iframe this browser opens. Proven by tests/tracker-block.spec.js.
+        "--host-resolver-rules=" +
+          ["googletagmanager.com", "livechatinc.com"]
+            .flatMap((host) => [`MAP ${host} ~NOTFOUND`, `MAP *.${host} ~NOTFOUND`])
+            .join(", "),
       ],
     },
   },

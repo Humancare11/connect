@@ -106,7 +106,8 @@ test("a peer that never returns is declared gone after the grace period (partici
   const { doctor, patient } = await bothJoined();
   const t0 = Date.now();
   patient.close();
-  await stack.waitFor(doctor, "participant-left", { timeout: GRACE_MS + 3000 });
+  const left = await stack.waitFor(doctor, "participant-left", { timeout: GRACE_MS + 3000 });
+  assert.equal(left.reason, "grace_expired");
   assert.ok(Date.now() - t0 >= GRACE_MS - 200, "must not be announced before the grace period");
   doctor.close();
 });
@@ -199,7 +200,7 @@ test("signaling from a socket that never joined is refused with a clear error", 
 test("events after leave-appointment-room are refused", async () => {
   const { doctor, patient } = await bothJoined();
   patient.emit("leave-appointment-room", { appointmentId: stack.ids.appointmentId });
-  await stack.waitFor(doctor, "participant-left");
+  assert.equal((await stack.waitFor(doctor, "participant-left")).reason, "explicit");
   patient.events.length = 0;
   patient.emit("video-offer", { appointmentId: stack.ids.appointmentId, offer: VALID_SDP("offer") });
   assert.equal((await stack.waitFor(patient, "signaling-error")).code, "not_in_room");

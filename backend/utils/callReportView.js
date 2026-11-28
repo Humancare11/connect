@@ -58,6 +58,14 @@ function describeEvent(event) {
         : d.reason === "cancelled"
           ? "The appointment was cancelled - the call was ended"
           : "The call was ended by the system";
+    case "manual_retry":
+      return `${name} tapped Retry`;
+    case "ice_restart":
+      return `${name}'s connection started an ICE restart`;
+    case "pc_rebuild":
+      return `${name}'s video connection was rebuilt${d.reason ? ` (${d.reason.replace(/_/g, " ")})` : ""}`;
+    case "ice_failed":
+      return `${name}'s network path failed`;
     default:
       return `${name}: ${event.type}`;
   }
@@ -143,6 +151,7 @@ function buildParticipants(report) {
         role,
         joinedFrom: describeClientLabel(x),
         platform: x.platform || "unknown",
+        appVersion: x.appVersion || "",
         platformSource: x.platformSource || "",
         device: x.deviceModel || "",
         firstJoinedAt: x.firstJoinedAt || null,

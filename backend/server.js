@@ -49,12 +49,16 @@ const { recordSecurityEvent } = require("./utils/securityMonitor");
 const { makeSocketLimiter } = require("./utils/socketRateLimit");
 const { normalizeDenyReason } = require("./utils/roomDenyReason");
 const { createGraceTimerRegistry } = require("./utils/graceTimers");
-const { createGracefulShutdown, registerShutdownSignals } = require("./utils/gracefulShutdown");
+const { createGracefulShutdown, registerShutdownSignals, isServerShutdownDisconnect } = require("./utils/gracefulShutdown");
 const { installSocketErrorGuard } = require("./utils/socketErrorGuard");
 const { createPresenceDownTracker } = require("./utils/presenceDown");
 const CallReport = require("./models/CallReport");
 const { createCallReportRecorder } = require("./utils/callReportRecorder");
-const { describeJoinClient, describeClientLabel } = require("./utils/clientDescriptor");
+const { appClientMemory } = require("./utils/appClientMemory");
+const { sanitizeCapabilities } = require("./utils/clientCapabilities");
+const { sanitizeTurnHost } = require("./utils/turnHost");
+const { RELAY_PROTOCOLS, ICE_TYPES } = require("./utils/callStatsAggregator");
+const { describeJoinClient, describeClientLabel, observeUserAgent } = require("./utils/clientDescriptor");
 const { parseTrustProxy } = require("./utils/clientIp");
 const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
@@ -652,7 +656,7 @@ const searchRouter = require("./routes/search");
 app.use("/api/search", searchRouter);
 app.use("/api/search", searchRouter.handleSearchErrors);
 const { decideAppointmentAccess, deniedMessage } = require("./utils/appointmentRoomAccess");
-const { withAppointmentId, rebuildAfterRecovery, leaveAppointmentRoom, leaveOtherAppointmentRooms } = require("./utils/appointmentRoomState");
+const { LEFT_REASONS, withAppointmentId, rebuildAfterRecovery, leaveAppointmentRoom, leaveOtherAppointmentRooms } = require("./utils/appointmentRoomState");
 
 // Health Check
 app.get("/api/health", (req, res) => {
@@ -744,6 +748,7 @@ const callConnectedLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 // call-stats: every 30s normally, every ~3s while an admin watches the report.
 const callStatsLimiter = makeSocketLimiter({ windowMs: 2000, max: 2 });
 const callWatchLimiter = makeSocketLimiter({ windowMs: 5000, max: 10 });
+const callEventLimiter = makeSocketLimiter({ windowMs: 5000, max: 8 });
 // A rebuild request is a rare recovery signal (the client side already caps
 // itself at a few automatic rebuilds per minute) — 3 per 10s is ample headroom
 // for a legitimate manual-Retry + automatic-watchdog overlap while still
@@ -764,6 +769,7 @@ const directChatLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 const directSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 6 });
 const directIceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 60 });
 const directIceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
+const directManualRetryLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 // Matches cameraStateLimiter above — same event shape, same room-scoped relay.
 const directMediaStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 // Fired at most once or twice per side per call (connect, maybe a
@@ -805,6 +811,8 @@ const SOCKET_LIMITERS = [
   directSdpLimiter,
   directIceCandidateLimiter,
   directIceRestartLimiter,
+  directManualRetryLimiter,
+  callEventLimiter,
   directMediaStateLimiter,
   directCallConnectedLimiter,
   directCallStatsLimiter,
@@ -1018,13 +1026,6 @@ function hasOtherUserInRoom(existingSocketIds, excludeUserId) {
   return false;
 }
 
-// Only known boolean flags are accepted from the client; anything missing or
-// malformed reads as "not supported" so an old (or hostile) client can't
-// opt itself into behavior it doesn't have.
-function sanitizeCapabilities(raw) {
-  return { peerRebuild: Boolean(raw && raw.peerRebuild === true) };
-}
-
 // Capabilities of the participant in `roomSocketIds` who is NOT
 // `excludeUserId` (i.e. the joining socket's peer), or null if nobody else is
 // present. Same live-socket/identity walk as hasOtherUserInRoom.
@@ -1219,12 +1220,13 @@ const directRoomRoles = new Map();
 // per room, the next time anyone actually joins it. roomId -> {
 //   doctor: { guestId, socketId, sessionId, lastTakeoverAt } | null,
 //   patient: { ... } | null,
+//   displacedTabs: Set<tabId>,  // tabs replaced by a newer one — see handlePinRoomJoin
 // }
 const directPinRoomSlots = new Map();
 function getPinRoomEntry(roomId) {
   let entry = directPinRoomSlots.get(roomId);
   if (!entry) {
-    entry = { doctor: null, patient: null };
+    entry = { doctor: null, patient: null, displacedTabs: new Set() };
     directPinRoomSlots.set(roomId, entry);
   }
   return entry;
@@ -1657,7 +1659,7 @@ function roleDisplayName(role) {
 // replaced here by two fixed, named slots whose ownership is decided by a
 // signed session token, not join order. See utils/directSessionToken.js
 // and the doctorSession/patientSession fields on DirectVideoRoom.
-async function handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToken }) {
+async function handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToken, tabId: rawTabId }) {
   const decoded = sessionToken ? verifySessionToken(sessionToken) : null;
   if (!decoded || String(decoded.roomId) !== String(roomId) || (decoded.role !== "doctor" && decoded.role !== "patient")) {
     socket.emit("direct-room-error", { code: "pin_required", msg: "Please enter the PIN to join." });
@@ -1674,15 +1676,30 @@ async function handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToke
   const slots = getPinRoomEntry(roomId);
   const current = slots[role];
 
+  // Optional per-page-load id (older web builds send none). A tab that has been
+  // replaced stays replaced, even if it was offline at the time and so never
+  // received the notice; otherwise its automatic rejoin would take the seat back
+  // and the two tabs would keep knocking each other out. Reloading the page
+  // gives a new tabId, which is how the user deliberately moves the call back.
+  const tabId = typeof rawTabId === "string" && DIRECT_GUEST_ID_PATTERN.test(rawTabId) ? rawTabId : "";
+  const duplicateNotice = { msg: "This meeting was opened in another tab or window." };
+  if (tabId && slots.displacedTabs.has(tabId)) {
+    socket.emit("direct-duplicate-session", duplicateNotice);
+    return;
+  }
+  if (tabId && current?.tabId && current.tabId !== tabId) slots.displacedTabs.add(current.tabId);
+
   // Evict a stale socket for the SAME role+session — a refresh or duplicate
   // tab, not a different device (a different device would carry a
   // different, no-longer-current sessionId and would have been rejected
-  // above already).
+  // above already). Tell it, so it stops instead of carrying on half-connected.
   if (current?.socketId && current.socketId !== socket.id) {
     const staleSocket = io.sockets.sockets.get(current.socketId);
     if (staleSocket) {
       staleSocket.leave(room);
       directRoomSockets.delete(current.socketId);
+      staleSocket.emit("direct-duplicate-session", duplicateNotice);
+      logDirectRoom("stale_socket_evicted", { roomId, guestId: current.guestId, socketId: current.socketId, role });
     }
   }
 
@@ -1691,7 +1708,7 @@ async function handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToke
   // room call right after verify-direct-pin created it.
   const resumedCall = current?.sessionId === sessionId;
 
-  slots[role] = { guestId, socketId: socket.id, sessionId, lastTakeoverAt: current?.lastTakeoverAt || 0 };
+  slots[role] = { guestId, socketId: socket.id, sessionId, tabId, lastTakeoverAt: current?.lastTakeoverAt || 0 };
   directRoomSockets.set(socket.id, { roomId, guestId, name: roleDisplayName(role), role });
   socket.join(room);
   directLeaveTimers.cancel(directLeaveKey(roomId, guestId));
@@ -2099,7 +2116,12 @@ io.on("connection", (socket) => {
     // utils/clientDescriptor.js) - informational only.
     const recordJoinForReport = () => {
       try {
-        const client = describeJoinClient({ declared: clientInfo, userAgent: socket.handshake?.headers?.["user-agent"] });
+        const userAgent = socket.handshake?.headers?.["user-agent"];
+        // A client that declares nothing but is not a browser (the installed app):
+        // use what it told the API moments ago.
+        const declared =
+          clientInfo ?? (observeUserAgent(userAgent).kind !== "browser" ? appClientMemory.recall(access.identity.userId) : undefined);
+        const client = describeJoinClient({ declared, userAgent });
         client.label = describeClientLabel(client);
         if (appointmentCallWatchers.has(String(appointmentId))) socket.emit("call-monitoring-active", true);
         callReportRecorder.onJoin({
@@ -2470,6 +2492,20 @@ io.on("connection", (socket) => {
     return undefined;
   });
 
+  // A recovery step (retry tapped, ICE restart, rebuild, failure) for the report.
+  socket.on("call-event", ({ appointmentId, type, reason } = {}) => {
+    if (!appointmentId) return rejectSignal(socket, "call-event", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "call-event", "not_in_room");
+    if (!callEventLimiter.allow(socket.id)) return undefined;
+    callReportRecorder.onClientEvent({
+      appointmentId: String(appointmentId),
+      role: callReportRole(socketUsers.get(socket.id)?.role || socket.userRole),
+      type,
+      reason,
+    });
+    return undefined;
+  });
+
   // Admin-only live watch. Anyone else is ignored silently: no error, no
   // security event - the report endpoints are the audited surface.
   socket.on("admin-watch-call", ({ appointmentId } = {}) => {
@@ -2552,12 +2588,15 @@ io.on("connection", (socket) => {
       // connection trouble. A no-op send if nobody else is left. See
       // join-appointment-room below for where this gets resolved (peer-socket-up)
       // or the setTimeout below for where it times out (participant-left).
-      if (disconnectedUserId) {
+      // Neither signal when it is this server going away (restart / deploy):
+      // media is peer-to-peer or relayed and carries on, and both clients rejoin.
+      const serverClosing = isServerShutdownDisconnect(reason);
+      if (disconnectedUserId && !serverClosing) {
         io.to(appointmentRoom).emit("peer-socket-down", withAppointmentId(appointmentId));
         appointmentPresenceDown.markDown(appointmentId, disconnectedUserId);
       }
 
-      appointmentLeaveTimers.schedule(appointmentLeaveKey(appointmentId, disconnectedUserId), SOCKET_LEAVE_GRACE_MS, () => {
+      if (!serverClosing) appointmentLeaveTimers.schedule(appointmentLeaveKey(appointmentId, disconnectedUserId), SOCKET_LEAVE_GRACE_MS, () => {
         const sameUserStillInRoom = Array.from(socketRooms.entries()).some(([sid, roomAppointmentId]) => {
           if (String(roomAppointmentId) !== String(appointmentId)) return false;
           const peerSocket = io.sockets.sockets.get(sid);
@@ -2573,7 +2612,7 @@ io.on("connection", (socket) => {
 
         if (!sameUserStillInRoom) {
           callReportRecorder.onLeft({ appointmentId: String(appointmentId), role: reportRole, how: "grace_expired" });
-          io.to(appointmentRoom).emit("participant-left", withAppointmentId(appointmentId));
+          io.to(appointmentRoom).emit("participant-left", withAppointmentId(appointmentId, { reason: LEFT_REASONS.GRACE_EXPIRED }));
           // Deliberately NOT clearing roomActivated here: this path also
           // fires when both participants drop at once (e.g. a shared
           // network outage) and later both reconnect — clearing it would
@@ -2809,7 +2848,7 @@ io.on("connection", (socket) => {
     socket.emit("direct-pin-ok", { role, sessionToken: signSessionToken({ roomId, role, sessionId }) });
   });
 
-  socket.on("join-direct-room", async ({ roomId, guestId, name, sessionToken } = {}) => {
+  socket.on("join-direct-room", async ({ roomId, guestId, name, sessionToken, tabId } = {}) => {
     if (!roomId || typeof roomId !== "string" || !DIRECT_ROOM_ID_PATTERN.test(roomId)) {
       socket.emit("direct-room-error", { code: "invalid", msg: "This meeting link is invalid." });
       return;
@@ -2867,7 +2906,7 @@ io.on("connection", (socket) => {
     }
 
     if (roomDoc.doctorPinEncrypted) {
-      return handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToken });
+      return handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToken, tabId });
     }
 
     const guestName = sanitizeGuestName(name);
@@ -3084,7 +3123,7 @@ io.on("connection", (socket) => {
 
     const meta = directRoomSockets.get(socket.id);
     const room = directRoomName(roomId);
-    socket.to(room).emit("direct-participant-left");
+    socket.to(room).emit("direct-participant-left", { reason: LEFT_REASONS.EXPLICIT });
     socket.leave(room);
     directRoomSockets.delete(socket.id);
 
@@ -3170,13 +3209,20 @@ io.on("connection", (socket) => {
     if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-ice-restart-request", "not_in_room");
     if (!directIceRestartLimiter.allow(socket.id)) return rejectSignal(socket, "direct-ice-restart-request", "rate_limited");
     const meta = directRoomSockets.get(socket.id);
-    // The client-visible signal that a Retry/reconnect is under way — a
-    // manual "Retry" tap (forceReconnect) asks the polite peer to restart
-    // ICE exactly this way, so this is the one reliable server-side trace
-    // of a retry happening at all (the WebRTC offer/answer/ICE renegotiation
-    // itself never touches the signaling server's own logDirectRoom hooks).
-    logDirectRoom("retry", { roomId, guestId: meta?.guestId, socketId: socket.id });
+    // Sent only by the client's own recovery, never by a Retry tap (see
+    // "direct-manual-retry"). It is the server-side trace that a connection is
+    // struggling: the renegotiation itself never reaches logDirectRoom.
+    logDirectRoom("auto_reconnect", { roomId, guestId: meta?.guestId, socketId: socket.id });
     socket.to(directRoomName(roomId)).emit("direct-ice-restart-request");
+  });
+
+  // A person tapped Retry. Recorded only; nothing is relayed to the peer.
+  socket.on("direct-manual-retry", ({ roomId } = {}) => {
+    if (!roomId) return rejectSignal(socket, "direct-manual-retry", "invalid_payload");
+    if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-manual-retry", "not_in_room");
+    if (!directManualRetryLimiter.allow(socket.id)) return rejectSignal(socket, "direct-manual-retry", "rate_limited");
+    const meta = directRoomSockets.get(socket.id);
+    logDirectRoom("manual_retry", { roomId, guestId: meta?.guestId, socketId: socket.id });
   });
 
   // Relays a guest's mic/camera on-off state to the other participant —
@@ -3283,6 +3329,15 @@ io.on("connection", (socket) => {
     const quality = typeof sample.quality === "string" ? sample.quality.slice(0, 16) : "";
     const micOn = !!sample.micOn;
     const camOn = !!sample.camOn;
+    // Optional (newer web builds): the network route in use.
+    const iceType = ICE_TYPES.includes(sample.iceType) ? sample.iceType : "";
+    const relayProtocol = RELAY_PROTOCOLS.includes(sample.relayProtocol) ? sample.relayProtocol : "";
+    const turnHost = sanitizeTurnHost(sample.turnHost);
+    const route = {
+      ...(iceType ? { iceType } : {}),
+      ...(relayProtocol ? { relayProtocol } : {}),
+      ...(turnHost ? { turnHost } : {}),
+    };
 
     const watchers = directRoomWatchers.get(roomId);
     if (watchers && watchers.size > 0) {
@@ -3296,6 +3351,7 @@ io.on("connection", (socket) => {
         packetLoss,
         jitter,
         quality,
+        ...route,
       });
     }
 
@@ -3303,9 +3359,10 @@ io.on("connection", (socket) => {
       const key = `${roomId}:${meta.guestId}`;
       const last = directLastLoggedQuality.get(key);
       const now = Date.now();
-      if (!last || last.quality !== quality || now - last.loggedAt >= DIRECT_QUALITY_HEARTBEAT_MS) {
-        directLastLoggedQuality.set(key, { quality, loggedAt: now });
-        logDirectRoom("network_quality", { roomId, guestId: meta.guestId, role, socketId: socket.id, quality });
+      const routeKey = `${iceType}/${relayProtocol}/${turnHost}`;
+      if (!last || last.quality !== quality || last.routeKey !== routeKey || now - last.loggedAt >= DIRECT_QUALITY_HEARTBEAT_MS) {
+        directLastLoggedQuality.set(key, { quality, routeKey, loggedAt: now });
+        logDirectRoom("network_quality", { roomId, guestId: meta.guestId, role, socketId: socket.id, quality, ...route });
       }
     }
   });
@@ -3367,8 +3424,12 @@ io.on("connection", (socket) => {
     // rooms. Resolved by direct-peer-socket-up on rejoin (handlePinRoomJoin
     // and both join-direct-room branches below) or timed out by
     // direct-participant-left in the setTimeout further down.
-    io.to(room).emit("direct-peer-socket-down");
-    directPresenceDown.markDown(roomId, guestId);
+    // Skipped, like the leave timer below, when this server is shutting down.
+    const serverClosing = isServerShutdownDisconnect(reason);
+    if (!serverClosing) {
+      io.to(room).emit("direct-peer-socket-down");
+      directPresenceDown.markDown(roomId, guestId);
+    }
 
     // disconnect_reason: prefer a fresh client/beacon hint (best-effort —
     // may not exist), then Socket.IO's own reason where it's unambiguous
@@ -3419,7 +3480,7 @@ io.on("connection", (socket) => {
       });
     }
 
-    directLeaveTimers.schedule(directLeaveKey(roomId, guestId), DIRECT_ROOM_LEAVE_GRACE_MS, () => {
+    if (!serverClosing) directLeaveTimers.schedule(directLeaveKey(roomId, guestId), DIRECT_ROOM_LEAVE_GRACE_MS, () => {
       const sameGuestStillInRoom = Array.from(directRoomSockets.values()).some(
         (m) => String(m.roomId) === String(roomId) && m.guestId === guestId
       );
@@ -3427,7 +3488,7 @@ io.on("connection", (socket) => {
       directPresenceDown.clearDown(roomId, guestId);
 
       if (!sameGuestStillInRoom) {
-        io.to(room).emit("direct-participant-left");
+        io.to(room).emit("direct-participant-left", { reason: LEFT_REASONS.GRACE_EXPIRED });
         const remaining = io.sockets.adapter.rooms.get(room);
         if (!remaining || remaining.size === 0) scheduleDirectRoomRolesCleanup(roomId);
       }

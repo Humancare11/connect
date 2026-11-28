@@ -22,6 +22,10 @@ const END_REASON_LABELS = {
 
 const PLATFORM_BADGES = { web: "Web", android: "App · Android", ios: "App · iOS", app: "App" };
 
+const NOT_REPORTED = "not reported";
+// Protocol / server only exist for relayed calls, and only newer clients send them.
+const relayDetail = (p, value) => value || (p.stats && p.stats.iceType !== "relay" && p.stats.iceType ? "no relay" : NOT_REPORTED);
+
 const PARTICIPANT_COLUMNS = [
   { header: "Role", render: (p) => roleLabel(p.role) },
   {
@@ -34,6 +38,7 @@ const PARTICIPANT_COLUMNS = [
       </span>
     ),
   },
+  { header: "App version", render: (p) => (p.platform === "web" ? "-" : p.appVersion || NOT_REPORTED) },
   { header: "First join", render: (p) => formatDate(p.firstJoinedAt) },
   { header: "Last seen", render: (p) => formatDate(p.lastSeenAt) },
   { header: "Left", render: (p) => formatDate(p.leftAt) },
@@ -45,6 +50,8 @@ const PARTICIPANT_COLUMNS = [
     header: "Connection type",
     render: (p) => (p.statsReceived ? p.connectionType : <span style={{ color: "#9ca3af" }}>No stats received</span>),
   },
+  { header: "Relay protocol", render: (p) => relayDetail(p, p.stats?.relayProtocol?.toUpperCase()) },
+  { header: "TURN server", render: (p) => relayDetail(p, p.stats?.turnHost) },
   { header: "Delay (ms) min / avg / max", render: (p) => triple(p.stats?.rttMs) },
   { header: "Packet loss (%) avg / max", render: (p) => pair(p.stats?.packetLossPct) },
   { header: "Jitter (ms) avg / max", render: (p) => pair(p.stats?.jitterMs) },
@@ -242,6 +249,9 @@ export default function AdminAppointmentCallReport() {
             renderExtra={(sample) => (
               <>
                 <span>{sample.iceType ? (sample.iceType === "relay" ? "Relay" : "Direct") : "-"}</span>
+                {sample.iceType === "relay" && (
+                  <span>{sample.relayProtocol ? sample.relayProtocol.toUpperCase() : NOT_REPORTED}</span>
+                )}
                 <span>In: {typeof sample.bitrateKbps === "number" ? `${sample.bitrateKbps} kbps` : "-"}</span>
                 <span>Out: {typeof sample.outKbps === "number" ? `${sample.outKbps} kbps` : "-"}</span>
                 <span>{sample.resolution || "-"}</span>

@@ -16,10 +16,15 @@ export const classifyQuality = ({ rtt, packetLoss }) => {
 
 const finite = (v) => typeof v === "number" && Number.isFinite(v);
 
+// "turns:turn.example.com:443?transport=tcp" -> "turn.example.com"
+const turnHostOf = (url) => /^turns?:([a-z0-9.-]+)/i.exec(String(url || ""))?.[1]?.toLowerCase() || "";
+
 export function buildCallStatsSample(report, previous, nowMs, extra = {}) {
   let rtt = null;
   let jitterSec = null;
   let iceType = "";
+  let relayProtocol = "";
+  let turnHost = "";
   let packetsReceived = 0;
   let packetsLost = 0;
   let bytesIn = 0;
@@ -47,6 +52,12 @@ export function buildCallStatsSample(report, previous, nowMs, extra = {}) {
     // Relayed if EITHER end of the chosen pair is a TURN relay.
     const types = [local?.candidateType, remote?.candidateType];
     iceType = types.includes("relay") ? "relay" : types.find((t) => ["host", "srflx", "prflx"].includes(t)) || "";
+    // Only our own relay candidate says how we reached TURN and which server
+    // (browser support varies; absent simply means "not reported").
+    if (local?.candidateType === "relay") {
+      relayProtocol = ["udp", "tcp", "tls"].includes(local.relayProtocol) ? local.relayProtocol : "";
+      turnHost = turnHostOf(local.url);
+    }
   }
 
   report.forEach((r) => {
@@ -87,6 +98,8 @@ export function buildCallStatsSample(report, previous, nowMs, extra = {}) {
     bitrateKbps,
     outKbps,
     iceType,
+    relayProtocol,
+    turnHost,
     resolution,
     quality: classifyQuality({ rtt, packetLoss: pl }),
     ...extra,

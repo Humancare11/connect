@@ -36,7 +36,9 @@ async function httpStatus(url) {
   }
 }
 
-async function startStack({ env = {}, graceMs = 1500 } = {}) {
+// `controllable: true` preloads shutdownControl.js and opens an IPC channel, so a
+// test can run the server's real SIGTERM handler (Windows cannot send SIGTERM).
+async function startStack({ env = {}, graceMs = 1500, controllable = false } = {}) {
   const mongod = await MongoMemoryServer.create();
   const mongoUri = mongod.getUri("signal_test");
   const port = await freePort();
@@ -73,7 +75,12 @@ async function startStack({ env = {}, graceMs = 1500 } = {}) {
   let child = null;
 
   async function startBackend() {
-    child = spawn(process.execPath, ["server.js"], { cwd: BACKEND_DIR, env: childEnv, stdio: ["ignore", "pipe", "pipe"] });
+    const preload = controllable ? ["-r", path.join(__dirname, "shutdownControl.js")] : [];
+    child = spawn(process.execPath, [...preload, "server.js"], {
+      cwd: BACKEND_DIR,
+      env: childEnv,
+      stdio: ["ignore", "pipe", "pipe", ...(controllable ? ["ipc"] : [])],
+    });
     child.stdout.on("data", (d) => logs.push(String(d)));
     child.stderr.on("data", (d) => logs.push(String(d)));
     child.exited = new Promise((resolve) => child.once("exit", (code, signal) => resolve({ code, signal })));
@@ -91,6 +98,14 @@ async function startStack({ env = {}, graceMs = 1500 } = {}) {
     child = null;
     c.kill("SIGKILL");
     await c.exited;
+  }
+
+  // Asks a `controllable` backend to shut down gracefully and waits for it to exit.
+  async function shutdownBackend() {
+    const c = child;
+    child = null;
+    c.send("shutdown");
+    return c.exited;
   }
 
   // ---- seed (own connection, then disconnect so the server owns the DB)
@@ -285,6 +300,7 @@ async function startStack({ env = {}, graceMs = 1500 } = {}) {
     login,
     stop,
     stopBackend,
+    shutdownBackend,
     startBackend,
     killMongo: () => mongod.stop(),
     models: { Appointment, DirectVideoRoom, User, Doctor, CallReport: require(path.join(BACKEND_DIR, "models/CallReport.js")) },

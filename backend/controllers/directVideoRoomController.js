@@ -510,6 +510,13 @@ const PROBLEM_DISCONNECT_REASONS = new Set([
 // Plain-language summary for one timeline event, e.g. "Guest joined from
 // iPhone, WhatsApp browser". Falls back to the raw type for anything not
 // explicitly worded below rather than hiding it.
+// " (relay over TLS via turn.example)" for entries that carry the network route.
+function describeRoute({ iceType, relayProtocol, turnHost } = {}) {
+  if (!iceType) return "";
+  if (iceType !== "relay") return " (direct)";
+  return ` (relay${relayProtocol ? ` over ${relayProtocol.toUpperCase()}` : ""}${turnHost ? ` via ${turnHost}` : ""})`;
+}
+
 function describeEvent(event) {
   // "initiator"/"guest" only ever appear on rooms created before PINs
   // existed (see DirectVideoRoom.doctorPinEncrypted) — a PIN room's events
@@ -550,9 +557,14 @@ function describeEvent(event) {
     case "media_state_changed":
       return `${who} turned the ${event.detail?.isMicOff ? "mic off" : "mic on"}, camera ${event.detail?.isCamOff ? "off" : "on"}`;
     case "network_quality":
-      return `${who}'s connection quality: ${event.detail?.quality || "unknown"}`;
-    case "retry":
+      return `${who}'s connection quality: ${event.detail?.quality || "unknown"}${describeRoute(event.detail)}`;
+    case "manual_retry":
       return `${who} tapped Retry to reconnect`;
+    case "auto_reconnect":
+      return `${who}'s connection tried to reconnect automatically`;
+    // Older entries: recorded for every reconnect request, tapped or not.
+    case "retry":
+      return `${who} reconnect attempt`;
     case "connected":
       return `Call connected`;
     case "admin_extend_link":
