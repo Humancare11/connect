@@ -22,6 +22,18 @@ import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
 import { createRestartRequestBackoff } from "../utils/retryBackoff";
 import { flagEnabled } from "../utils/featureFlags";
 import {
+  REJOIN_RESTART_HOLD_MS,
+  canRequestPeerRestart,
+  doctorNeedsPatientRebuild,
+  offerBlocker,
+  restartRequestAction,
+} from "../utils/negotiationRules";
+import {
+  REMOTE_VIDEO_CHECK_MS,
+  createRemoteVideoWatch,
+  presentedFrames,
+} from "../utils/remoteVideoWatch";
+import {
   HELD_CALL_CHECK_MS,
   RESTART_BEFORE_REBUILD_MS,
   createHeldCallWatch,
@@ -1123,6 +1135,13 @@ export default function VideoCall() {
   // timer, and the interval watching a call held after participant-left.
   const staleResumeTimerRef = useRef(null);
   const heldCallTimerRef = useRef(null);
+  // utils/negotiationRules.js
+  const restartHoldUntilRef = useRef(0);
+  const parkedRestartPcRef = useRef(null);
+  const askedPatientRebuildForRef = useRef(null);
+  // utils/remoteVideoWatch.js: the notice, and the connection's restart action.
+  const [videoPaused, setVideoPaused] = useState(false);
+  const remoteVideoRestartRef = useRef(() => {});
   // Correlates a video-answer back to the specific video-offer it's meant to
   // answer. Socket.IO's connectionStateRecovery (server.js) replays buffered
   // room events across a brief reconnect — under some timings that can
@@ -2611,6 +2630,15 @@ export default function VideoCall() {
       }
       return result;
     };
+    // The peer's offers this pc has been given, so a re-sent one is applied once
+    // and a pc that is already answering never asks for a new session.
+    const receivedOfferIds = new Set();
+    let offerReceived = false;
+    // isReadyRef survives a rebuild; this says whether THIS pc has its media.
+    let mediaSettled = false;
+    void localReadyPromise.then(() => {
+      mediaSettled = true;
+    });
 
     if (pcRef.current && pcRef.current.signalingState !== "closed") {
       // TEMPORARY (RETRY_DEBUG)
@@ -2702,6 +2730,20 @@ export default function VideoCall() {
       if (!mounted || pc.signalingState === "closed" || makingOfferRef.current)
         return false;
       if (!isReadyRef.current) return false;
+      const blocker = offerBlocker({
+        isDoctor,
+        iceRestart,
+        hasRemoteDescription: Boolean(pc.remoteDescription),
+        mediaSettled,
+        rebuildInProgress: pcRebuildInProgressRef.current,
+        socketConnected: socket.connected,
+        now: Date.now(),
+        holdUntil: restartHoldUntilRef.current,
+      });
+      if (blocker !== "send") {
+        logger.info("Skipping offer:", blocker);
+        return false;
+      }
       if (pc.signalingState !== "stable") {
         // A peer connection parked in "have-local-offer" past its answer
         // deadline is holding a dead offer nothing will ever answer — every
@@ -2895,6 +2937,14 @@ export default function VideoCall() {
       // Nothing to restart to once the peer has genuinely left — see
       // peerPresentRef. handlePeerJoined re-drives recovery when they return.
       if (!peerPresentRef.current) return;
+      if (
+        !canRequestPeerRestart({
+          hasRemoteDescription: Boolean(pc.remoteDescription),
+          signalingState: pc.signalingState,
+          rebuildInProgress: pcRebuildInProgressRef.current,
+        })
+      )
+        return;
       if (!restartBackoffRef.current.tryAcquire()) return;
       socket.emit("ice-restart-request", { appointmentId });
       logVideoEvent("ice_restart_requested_from_peer", {
@@ -3195,7 +3245,12 @@ export default function VideoCall() {
         if (staleTracksOfKind.length > 0) trackWasReplaced = true;
         staleTracksOfKind.forEach((stale) => remoteStream.removeTrack(stale));
 
-        if (!remoteStream.getTrackById(track.id)) remoteStream.addTrack(track);
+        // A track added to a stream already on screen may never be drawn (seen
+        // with video arriving after audio): rebind with a new stream below.
+        if (!remoteStream.getTrackById(track.id)) {
+          remoteStream.addTrack(track);
+          trackWasReplaced = true;
+        }
 
         // A receiver's track fires "mute" when RTP stops arriving for that
         // specific SSRC (e.g. the sender's encoder hiccups, or a transient
@@ -3433,6 +3488,15 @@ export default function VideoCall() {
       }, ICE_RESTART_DELAY_MS);
     };
 
+    pc.onsignalingstatechange = () => {
+      if (!mounted || pc.signalingState !== "stable" || parkedRestartPcRef.current !== pc) return;
+      parkedRestartPcRef.current = null;
+      void handleIceRestartRequest();
+    };
+    remoteVideoRestartRef.current = () => {
+      if (mounted && pc.signalingState !== "closed") void createAndSendOffer({ iceRestart: true });
+    };
+
     pc.onconnectionstatechange = () => {
       const s = pc.connectionState;
       // TEMPORARY (RETRY_DEBUG)
@@ -3510,6 +3574,11 @@ export default function VideoCall() {
     // Socket handlers
     const handleOffer = async ({ offer, offerId: incomingOfferId }) => {
       if (!offer || !mounted) return;
+      offerReceived = true;
+      if (incomingOfferId) {
+        if (receivedOfferIds.has(incomingOfferId)) return;
+        receivedOfferIds.add(incomingOfferId);
+      }
       lastPeerOfferAtRef.current = Date.now();
       // An offer means the peer is here and negotiating — keep the recovery
       // machinery armed for them.
@@ -3960,6 +4029,16 @@ export default function VideoCall() {
 
     const handleIceRestartRequest = async () => {
       if (!mounted || !isReadyRef.current || !peerPresentRef.current) return;
+      const action = restartRequestAction({
+        hasRemoteDescription: Boolean(pc.remoteDescription),
+        signalingState: pc.signalingState,
+        rebuildInProgress: pcRebuildInProgressRef.current,
+      });
+      if (action !== "process") {
+        parkedRestartPcRef.current = action === "park" ? pc : null;
+        logger.info("ICE restart request:", action);
+        return;
+      }
       // The doctor still never self-initiates an offer as a matter of
       // course (see handlePeerJoined) — but if the PATIENT explicitly asks
       // for a restart because it just exhausted its own recovery attempts
@@ -4010,6 +4089,21 @@ export default function VideoCall() {
         connectionState: pc.connectionState,
         iceConnectionState: pc.iceConnectionState,
       });
+      if (!pc.remoteDescription) {
+        // Nothing to tear down: just (re)send the one offer. An unanswered one
+        // goes out again unchanged - a second, different offer (after a
+        // rollback) cannot be applied by a peer that did get the first.
+        if (pc.signalingState === "have-local-offer" && pendingOfferIdRef.current) {
+          socket.emit("video-offer", {
+            appointmentId,
+            offer: pc.localDescription,
+            offerId: pendingOfferIdRef.current,
+          });
+        } else {
+          void createAndSendOffer({ iceRestart: false });
+        }
+        return;
+      }
       if (pcAgeMs < REBUILD_GRACE_MS) {
         retryDebugLog(role, appointmentId, "request-peer-rebuild:IGNORED_pc_already_fresh", {
           pcAgeMs,
@@ -4236,6 +4330,28 @@ export default function VideoCall() {
           (existingPc.connectionState === "connected" ||
             existingPc.iceConnectionState === "connected" ||
             existingPc.iceConnectionState === "completed");
+
+        if (!isDoctor && resumedCall && !pcHealthy && existingPc?.remoteDescription) {
+          restartHoldUntilRef.current = Date.now() + REJOIN_RESTART_HOLD_MS;
+          scheduleIceRestart();
+        }
+        if (
+          existingPc &&
+          askedPatientRebuildForRef.current !== existingPc &&
+          doctorNeedsPatientRebuild({
+            isDoctor,
+            resumedCall,
+            hasRemoteDescription: Boolean(existingPc.remoteDescription),
+            signalingState: existingPc.signalingState,
+            offerReceived,
+          })
+        ) {
+          askedPatientRebuildForRef.current = existingPc;
+          // A client that cannot follow a rebuild is asked for an ICE restart.
+          const event = peerCapabilitiesRef.current?.peerRebuild ? "request-peer-rebuild" : "ice-restart-request";
+          socket.emit(event, { appointmentId });
+          logVideoEvent("rejoin_new_session_requested", { event });
+        }
 
         // Merely disconnected after a resume: the restart offer / request below
         // goes first; rebuild only if that has not helped.
@@ -4605,6 +4721,10 @@ export default function VideoCall() {
         return;
       }
       if (!isDoctor && isReadyRef.current) {
+        if (pc.remoteDescription) {
+          restartHoldUntilRef.current = Date.now() + REJOIN_RESTART_HOLD_MS;
+          scheduleIceRestart();
+        }
         window.setTimeout(() => {
           if (
             !mounted ||
@@ -4968,6 +5088,10 @@ export default function VideoCall() {
       pc.oniceconnectionstatechange = null;
       pc.close();
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      // Forget the stopped stream: until a rebuilt connection has its new one,
+      // the camera-health poll would otherwise see "ended" tracks, open a
+      // second camera and ask the peer to rebuild again.
+      localStreamRef.current = null;
       // A rebuild (manual Retry, or the automatic pcNeedsRebuild path in
       // handlePeerJoined — both set manualReconnectRef.current, captured
       // above as isManualReconnect) tears down and recreates the whole
@@ -5051,6 +5175,37 @@ export default function VideoCall() {
     iceConfigError,
     sessionEnded,
   ]);
+
+  // Connected, the other camera on, but no new picture: utils/remoteVideoWatch.js.
+  useEffect(() => {
+    if (!KEEP_LIVE_CALL_ENABLED) return undefined;
+    const watch = createRemoteVideoWatch();
+    const timer = setInterval(() => {
+      const pc = pcRef.current;
+      const video = isSwappedRef.current ? pipVideoRef.current : mainVideoRef.current;
+      const stream = remoteStreamRef.current;
+      const result = watch.update(Date.now(), {
+        eligible: Boolean(
+          pc?.connectionState === "connected" &&
+            !remoteCamOffRef.current &&
+            stream?.getVideoTracks().length &&
+            document.visibilityState === "visible",
+        ),
+        frames: presentedFrames(video),
+      });
+      setVideoPaused(result !== "ok");
+      if (result === "reattach") {
+        remoteStreamRef.current = new MediaStream(stream.getTracks());
+        assignStreams(isSwappedRef.current);
+      } else if (result === "restart") {
+        remoteVideoRestartRef.current();
+      }
+    }, REMOTE_VIDEO_CHECK_MS);
+    return () => {
+      clearInterval(timer);
+      setVideoPaused(false);
+    };
+  }, [assignStreams]);
 
   // ── Call timer ────────────────────────────────────────────────────
   useEffect(() => {
@@ -6298,6 +6453,15 @@ export default function VideoCall() {
                       : "Both participants are ready. Video starting soon."
                     : "Share the appointment link with the other person to begin."}
                 </p>
+              </div>
+            )}
+
+            {videoPaused && (
+              <div className="hc-vc__reconnect-stalled-notice hc-vc__video-paused" role="status">
+                <span>
+                  <FiAlertTriangle />
+                </span>
+                <span>Video paused - reconnecting</span>
               </div>
             )}
 

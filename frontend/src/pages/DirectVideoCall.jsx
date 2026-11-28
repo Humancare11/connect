@@ -20,6 +20,11 @@ import { createRestartRequestBackoff } from "../utils/retryBackoff";
 import { buildCallStatsSample } from "../utils/callStatsSample";
 import { flagEnabled } from "../utils/featureFlags";
 import {
+  REMOTE_VIDEO_CHECK_MS,
+  createRemoteVideoWatch,
+  presentedFrames,
+} from "../utils/remoteVideoWatch";
+import {
   HELD_CALL_CHECK_MS,
   RESTART_BEFORE_REBUILD_MS,
   createHeldCallWatch,
@@ -716,6 +721,10 @@ export default function DirectVideoCall() {
   // timer, and the interval watching a call held after participant-left.
   const staleResumeTimerRef = useRef(null);
   const heldCallTimerRef = useRef(null);
+  // utils/remoteVideoWatch.js: the notice, and the connection's restart action.
+  const [videoPaused, setVideoPaused] = useState(false);
+  const remoteVideoRestartRef = useRef(() => {});
+  const peerCamOffRef = useRef(false);
   // Last RTT/jitter/quality sampled by the 5s stats poll below — read by the
   // separate, faster direct-call-stats interval so that one doesn't need its
   // own getStats() poll (which would mean two concurrent stats polls running
@@ -1698,6 +1707,39 @@ export default function DirectVideoCall() {
     stopCallTimer();
     stopStatsCollection();
   }, [roomId, stopCallTimer, stopStatsCollection, stopMutedReminderMeter]);
+
+  // Connected, the other camera on, but no new picture: utils/remoteVideoWatch.js.
+  useEffect(() => {
+    peerCamOffRef.current = peerCamOff;
+  }, [peerCamOff]);
+  useEffect(() => {
+    if (stage !== "call" || !KEEP_LIVE_CALL_ENABLED) return undefined;
+    const watch = createRemoteVideoWatch();
+    const timer = setInterval(() => {
+      const video = isSwappedRef.current ? pipVideoRef.current : mainVideoRef.current;
+      const stream = remoteStreamRef.current;
+      const result = watch.update(Date.now(), {
+        eligible: Boolean(
+          pcRef.current?.connectionState === "connected" &&
+            !peerCamOffRef.current &&
+            stream?.getVideoTracks().length &&
+            document.visibilityState === "visible",
+        ),
+        frames: presentedFrames(video),
+      });
+      setVideoPaused(result !== "ok");
+      if (result === "reattach") {
+        remoteStreamRef.current = new MediaStream(stream.getTracks());
+        assignStreams(isSwappedRef.current);
+      } else if (result === "restart") {
+        remoteVideoRestartRef.current();
+      }
+    }, REMOTE_VIDEO_CHECK_MS);
+    return () => {
+      clearInterval(timer);
+      setVideoPaused(false);
+    };
+  }, [stage, assignStreams]);
 
   // ── Step 3: media + peer connection + signaling, once the guest joins ────
   useEffect(() => {
@@ -3249,7 +3291,12 @@ export default function DirectVideoCall() {
             .filter((existing) => existing.kind === track.kind && existing.id !== track.id);
           if (staleTracksOfKind.length > 0) trackWasReplaced = true;
           staleTracksOfKind.forEach((stale) => remoteStream.removeTrack(stale));
-          if (!remoteStream.getTrackById(track.id)) remoteStream.addTrack(track);
+          // A track added to a stream already on screen may never be drawn:
+          // rebind with a new stream below.
+          if (!remoteStream.getTrackById(track.id)) {
+            remoteStream.addTrack(track);
+            trackWasReplaced = true;
+          }
 
           // A receiver's track fires "mute" when RTP stops arriving for that
           // specific SSRC (e.g. the sender's encoder hiccups, or a transient
@@ -3430,6 +3477,7 @@ export default function DirectVideoCall() {
       }
     };
     setupPeerConnectionRef.current = setupPeerConnection;
+    remoteVideoRestartRef.current = () => void createAndSendIceRestartOffer();
     requestPcRebuildRef.current = requestPcRebuild;
 
     // See kickIceRecoveryRef's declaration — invoked directly from the
@@ -4590,6 +4638,15 @@ export default function DirectVideoCall() {
                 (manualReconnecting): the tap itself clears reconnectStalled,
                 which used to make the banner — and its "Reconnecting…"
                 button — vanish the instant it was pressed. */}
+            {videoPaused && (
+              <div className="hc-vc__reconnect-stalled-notice hc-vc__video-paused" role="status">
+                <span>
+                  <FiAlertTriangle />
+                </span>
+                <span>Video paused - reconnecting</span>
+              </div>
+            )}
+
             {(reconnectStalled || manualReconnecting || (KEEP_LIVE_CALL_ENABLED && waitingForOldPeer)) && !slowConnect && (
               <div className="hc-vc__reconnect-stalled-notice">
                 <span>
