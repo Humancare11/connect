@@ -21,6 +21,8 @@ const statsSchema = new mongoose.Schema(
     jitterSum: Number, jitterN: Number, jitterMin: Number, jitterMax: Number,
     bitrateSum: Number, bitrateN: Number, bitrateMin: Number, bitrateMax: Number,
     ice: { host: Number, srflx: Number, prflx: Number, relay: Number },
+    protocol: { udp: Number, tcp: Number, tls: Number }, // to the TURN server, when relayed
+    lastTurnHost: String, // a configured TURN hostname or "other"; never an address
     quality: { good: Number, weak: Number, poor: Number, unknown: Number },
     lastIceType: String,
     lastQuality: String,

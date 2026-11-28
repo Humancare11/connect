@@ -17,6 +17,7 @@ import { retryDebugLog, retryDebugPollInboundVideoStats } from "../utils/retryDe
 import { isRetryableDirectCode, nextJoinRetryDelay } from "../utils/roomDenyRetry";
 import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
 import { createRestartRequestBackoff } from "../utils/retryBackoff";
+import { buildCallStatsSample } from "../utils/callStatsSample";
 import { probeSocketAlive } from "../utils/socketLiveness";
 import { useSlowConnectNotice } from "../utils/slowConnectNotice";
 import { createLocalMediaRecovery, hasEndedTrack } from "../utils/localMediaRecovery";
@@ -695,6 +696,8 @@ export default function DirectVideoCall() {
   const dragRef = useRef({ active: false, ox: 0, oy: 0, ex: 0, ey: 0 });
   const statsTimerRef = useRef(null);
   const lastStatsSampleRef = useRef(null);
+  // Network route in use (relay/direct, protocol, TURN host), for the admin report.
+  const lastRouteRef = useRef({});
   // Last RTT/jitter/quality sampled by the 5s stats poll below — read by the
   // separate, faster direct-call-stats interval so that one doesn't need its
   // own getStats() poll (which would mean two concurrent stats polls running
@@ -1397,6 +1400,12 @@ export default function DirectVideoCall() {
           lastRttRef.current = diagnostics.rtt;
           lastJitterRef.current = jitterStreams > 0 ? Math.round((jitterSum / jitterStreams) * 1000) : null;
           lastQualityRef.current = quality;
+          const { sample: routeSample } = buildCallStatsSample(stats, null, Date.now());
+          lastRouteRef.current = {
+            iceType: routeSample.iceType,
+            relayProtocol: routeSample.relayProtocol,
+            turnHost: routeSample.turnHost,
+          };
           evaluateMediaStallWatchdog(pc, stats);
         } catch (err) {
           console.warn("[direct-video-call] getStats failed:", err.message);
@@ -1427,6 +1436,7 @@ export default function DirectVideoCall() {
       const sample = lastStatsSampleRef.current;
       socket.emit("direct-call-stats", {
         roomId,
+        ...lastRouteRef.current,
         micOn: micOnRef.current,
         camOn: camOnRef.current,
         connectionState: pcRef.current?.connectionState || "unknown",

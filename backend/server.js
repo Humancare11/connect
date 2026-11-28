@@ -54,7 +54,10 @@ const { installSocketErrorGuard } = require("./utils/socketErrorGuard");
 const { createPresenceDownTracker } = require("./utils/presenceDown");
 const CallReport = require("./models/CallReport");
 const { createCallReportRecorder } = require("./utils/callReportRecorder");
-const { describeJoinClient, describeClientLabel } = require("./utils/clientDescriptor");
+const { appClientMemory } = require("./utils/appClientMemory");
+const { sanitizeTurnHost } = require("./utils/turnHost");
+const { RELAY_PROTOCOLS, ICE_TYPES } = require("./utils/callStatsAggregator");
+const { describeJoinClient, describeClientLabel, observeUserAgent } = require("./utils/clientDescriptor");
 const { parseTrustProxy } = require("./utils/clientIp");
 const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
@@ -744,6 +747,7 @@ const callConnectedLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 // call-stats: every 30s normally, every ~3s while an admin watches the report.
 const callStatsLimiter = makeSocketLimiter({ windowMs: 2000, max: 2 });
 const callWatchLimiter = makeSocketLimiter({ windowMs: 5000, max: 10 });
+const callEventLimiter = makeSocketLimiter({ windowMs: 5000, max: 8 });
 // A rebuild request is a rare recovery signal (the client side already caps
 // itself at a few automatic rebuilds per minute) — 3 per 10s is ample headroom
 // for a legitimate manual-Retry + automatic-watchdog overlap while still
@@ -807,6 +811,7 @@ const SOCKET_LIMITERS = [
   directIceCandidateLimiter,
   directIceRestartLimiter,
   directManualRetryLimiter,
+  callEventLimiter,
   directMediaStateLimiter,
   directCallConnectedLimiter,
   directCallStatsLimiter,
@@ -2117,7 +2122,12 @@ io.on("connection", (socket) => {
     // utils/clientDescriptor.js) - informational only.
     const recordJoinForReport = () => {
       try {
-        const client = describeJoinClient({ declared: clientInfo, userAgent: socket.handshake?.headers?.["user-agent"] });
+        const userAgent = socket.handshake?.headers?.["user-agent"];
+        // A client that declares nothing but is not a browser (the installed app):
+        // use what it told the API moments ago.
+        const declared =
+          clientInfo ?? (observeUserAgent(userAgent).kind !== "browser" ? appClientMemory.recall(access.identity.userId) : undefined);
+        const client = describeJoinClient({ declared, userAgent });
         client.label = describeClientLabel(client);
         if (appointmentCallWatchers.has(String(appointmentId))) socket.emit("call-monitoring-active", true);
         callReportRecorder.onJoin({
@@ -2485,6 +2495,20 @@ io.on("connection", (socket) => {
     if (sample && watchers && watchers.size > 0) {
       io.to(callMonitorRoomName(id)).emit("call-live-stats", { appointmentId: id, role, at: Date.now(), ...sample });
     }
+    return undefined;
+  });
+
+  // A recovery step (retry tapped, ICE restart, rebuild, failure) for the report.
+  socket.on("call-event", ({ appointmentId, type, reason } = {}) => {
+    if (!appointmentId) return rejectSignal(socket, "call-event", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "call-event", "not_in_room");
+    if (!callEventLimiter.allow(socket.id)) return undefined;
+    callReportRecorder.onClientEvent({
+      appointmentId: String(appointmentId),
+      role: callReportRole(socketUsers.get(socket.id)?.role || socket.userRole),
+      type,
+      reason,
+    });
     return undefined;
   });
 
@@ -3311,6 +3335,15 @@ io.on("connection", (socket) => {
     const quality = typeof sample.quality === "string" ? sample.quality.slice(0, 16) : "";
     const micOn = !!sample.micOn;
     const camOn = !!sample.camOn;
+    // Optional (newer web builds): the network route in use.
+    const iceType = ICE_TYPES.includes(sample.iceType) ? sample.iceType : "";
+    const relayProtocol = RELAY_PROTOCOLS.includes(sample.relayProtocol) ? sample.relayProtocol : "";
+    const turnHost = sanitizeTurnHost(sample.turnHost);
+    const route = {
+      ...(iceType ? { iceType } : {}),
+      ...(relayProtocol ? { relayProtocol } : {}),
+      ...(turnHost ? { turnHost } : {}),
+    };
 
     const watchers = directRoomWatchers.get(roomId);
     if (watchers && watchers.size > 0) {
@@ -3324,6 +3357,7 @@ io.on("connection", (socket) => {
         packetLoss,
         jitter,
         quality,
+        ...route,
       });
     }
 
@@ -3331,9 +3365,10 @@ io.on("connection", (socket) => {
       const key = `${roomId}:${meta.guestId}`;
       const last = directLastLoggedQuality.get(key);
       const now = Date.now();
-      if (!last || last.quality !== quality || now - last.loggedAt >= DIRECT_QUALITY_HEARTBEAT_MS) {
-        directLastLoggedQuality.set(key, { quality, loggedAt: now });
-        logDirectRoom("network_quality", { roomId, guestId: meta.guestId, role, socketId: socket.id, quality });
+      const routeKey = `${iceType}/${relayProtocol}/${turnHost}`;
+      if (!last || last.quality !== quality || last.routeKey !== routeKey || now - last.loggedAt >= DIRECT_QUALITY_HEARTBEAT_MS) {
+        directLastLoggedQuality.set(key, { quality, routeKey, loggedAt: now });
+        logDirectRoom("network_quality", { roomId, guestId: meta.guestId, role, socketId: socket.id, quality, ...route });
       }
     }
   });

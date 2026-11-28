@@ -563,6 +563,11 @@ const PEER_REBUILD_WAIT_MS = 6000;
 const MANUAL_RECONNECT_HOLD_MS = 5000;
 // Announced in join-appointment-room (see emitOnlineAndJoinRoom). Keep in
 // sync with what the client actually implements.
+// Internal video events that also go on the admin call report.
+const REPORTED_VIDEO_EVENTS = {
+  ice_restart_offer_sent: "ice_restart",
+  ice_connection_failed: "ice_failed",
+};
 const WEB_CLIENT_CAPABILITIES = { peerRebuild: true };
 // Doctor-side downgrade for a peer that lacks peerRebuild (an older mobile
 // build): instead of rebuilding the doctor's pc — which that peer could not
@@ -1105,6 +1110,8 @@ export default function VideoCall() {
   const offerAnswerTimeoutRef = useRef(null);
   // Paces "restart ICE" requests to the peer — see utils/retryBackoff.js.
   const restartBackoffRef = useRef(createRestartRequestBackoff());
+  const callEventQueueRef = useRef([]);
+  const roomJoinAcceptedRef = useRef(false);
   const iceRecoveryAttemptsRef = useRef(0);
   const lastIceRecoveryAtRef = useRef(0);
   const pageUnloadingRef = useRef(false);
@@ -1679,6 +1686,26 @@ export default function VideoCall() {
     queued.forEach((payload) => socket.emit("video-telemetry", payload));
   }, []);
 
+  // Recovery steps for the admin call report. Sent once the room join is
+  // accepted; a few are kept while signaling is down.
+  const reportCallEvent = useCallback(
+    (type, reason) => {
+      if (!appointmentId) return;
+      const queue = callEventQueueRef.current;
+      queue.push({ appointmentId, type, ...(reason ? { reason } : {}) });
+      if (queue.length > 10) queue.shift();
+      if (socket.connected && roomJoinAcceptedRef.current) {
+        queue.splice(0).forEach((payload) => socket.emit("call-event", payload));
+      }
+    },
+    [appointmentId],
+  );
+
+  const flushCallEvents = useCallback(() => {
+    roomJoinAcceptedRef.current = true;
+    callEventQueueRef.current.splice(0).forEach((payload) => socket.emit("call-event", payload));
+  }, []);
+
   const logVideoEvent = useCallback(
     (event, details = {}) => {
       const payload = {
@@ -1697,6 +1724,9 @@ export default function VideoCall() {
 
       if (!appointmentId) return;
 
+      const reportType = REPORTED_VIDEO_EVENTS[event];
+      if (reportType) reportCallEvent(reportType);
+
       if (socket.connected) {
         flushTelemetryQueue();
         socket.emit("video-telemetry", payload);
@@ -1706,7 +1736,7 @@ export default function VideoCall() {
         if (queue.length > TELEMETRY_QUEUE_MAX) queue.shift();
       }
     },
-    [appointmentId, isDoctor, flushTelemetryQueue],
+    [appointmentId, isDoctor, flushTelemetryQueue, reportCallEvent],
   );
 
   const stopStatsCollection = useCallback(() => {
@@ -2472,9 +2502,10 @@ export default function VideoCall() {
       setReconnectStalled(false);
       setReconnectNonce((n) => n + 1);
       log("START", { countsTowardLimit });
+      if (!manual) reportCallEvent("pc_rebuild", reason);
       return "started";
     },
-    [appointmentId, cancelPeerRebuildWait, isDoctor],
+    [appointmentId, cancelPeerRebuildWait, isDoctor, reportCallEvent],
   );
 
   useEffect(() => {
@@ -3973,6 +4004,7 @@ export default function VideoCall() {
 
     const handlePeerJoined = (payload = {}) => {
       restartBackoffRef.current.reset();
+      flushCallEvents();
       // peer-joined is only echoed to a socket the server let into the room.
       joinDenyAttemptRef.current = 0;
       setJoinRetryPhase(null);
@@ -4245,6 +4277,7 @@ export default function VideoCall() {
     };
     const handleChatHistory = (payload) => {
       // The server only sends history after accepting a join.
+      flushCallEvents();
       joinDenyAttemptRef.current = 0;
       setJoinRetryPhase(null);
       if (mounted && payload?.appointmentId === appointmentId) {
@@ -4399,6 +4432,7 @@ export default function VideoCall() {
 
     const handleSocketDisconnect = () => {
       joinedSocketIdRef.current = "";
+      roomJoinAcceptedRef.current = false;
       if (!mounted) return;
       logVideoEvent("socket_disconnected_during_call", {
         inCall: inCallRef.current,
@@ -4884,6 +4918,7 @@ export default function VideoCall() {
     retryJoin,
     logVideoEvent,
     flushTelemetryQueue,
+    flushCallEvents,
     stopStatsCollection,
     performCleanup,
     requestPcRebuild,
@@ -5365,8 +5400,9 @@ export default function VideoCall() {
     // every automatic trigger. manual: true bypasses the automatic-rebuild
     // rate limit and always takes effect; on the doctor side it also asks
     // the patient to rebuild (request-peer-rebuild) — see requestPcRebuild.
+    reportCallEvent("manual_retry");
     void requestPcRebuild("manual_retry", { manual: true });
-  }, [appointmentId, isDoctor, requestPcRebuild]);
+  }, [appointmentId, isDoctor, requestPcRebuild, reportCallEvent]);
 
   // "Still trying" notice (observational only - never touches recovery).
   // Held back only while a join retry / manual Retry / media recovery is in
