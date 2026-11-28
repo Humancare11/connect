@@ -19,6 +19,7 @@ import { extractDtlsFingerprint, extractSdpDirections } from "../utils/webrtcSdp
 import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTimeout";
 import { isTerminalDenyReason, nextJoinRetryDelay } from "../utils/roomDenyRetry";
 import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
+import { createRestartRequestBackoff } from "../utils/retryBackoff";
 import { probeSocketAlive } from "../utils/socketLiveness";
 import { buildCallStatsSample } from "../utils/callStatsSample";
 import { useSlowConnectNotice } from "../utils/slowConnectNotice";
@@ -1102,7 +1103,8 @@ export default function VideoCall() {
   // Fires if no answer arrives for our outstanding offer within
   // OFFER_ANSWER_TIMEOUT_MS — see createAndSendOffer for why this exists.
   const offerAnswerTimeoutRef = useRef(null);
-  const restartRequestInFlightRef = useRef(false);
+  // Paces "restart ICE" requests to the peer — see utils/retryBackoff.js.
+  const restartBackoffRef = useRef(createRestartRequestBackoff());
   const iceRecoveryAttemptsRef = useRef(0);
   const lastIceRecoveryAtRef = useRef(0);
   const pageUnloadingRef = useRef(false);
@@ -1362,6 +1364,7 @@ export default function VideoCall() {
           socket.connect();
         });
       }
+      restartBackoffRef.current.reset();
       kickIceRecoveryRef.current();
       // Also give the remote-video renderer a chance to recover in case the
       // PeerConnection never actually left "connected" throughout — see
@@ -1631,7 +1634,7 @@ export default function VideoCall() {
     lastReceivedOfferIdRef.current = null;
     clearTimeout(offerAnswerTimeoutRef.current);
     offerAnswerTimeoutRef.current = null;
-    restartRequestInFlightRef.current = false;
+    restartBackoffRef.current.reset();
     screenSharingRef.current = false;
     screenShareStartInProgressRef.current = false;
     screenShareStopInProgressRef.current = false;
@@ -2597,6 +2600,8 @@ export default function VideoCall() {
     remoteStreamRef.current = remoteStream;
     if (mainVideoRef.current) mainVideoRef.current.srcObject = remoteStream;
     const isPolitePeer = isDoctor;
+    // A new connection starts with an immediate first request.
+    restartBackoffRef.current.reset();
 
     const resetIgnoredOffer = () => {
       clearTimeout(ignoreOfferResetTimerRef.current);
@@ -2832,16 +2837,12 @@ export default function VideoCall() {
       // Nothing to restart to once the peer has genuinely left — see
       // peerPresentRef. handlePeerJoined re-drives recovery when they return.
       if (!peerPresentRef.current) return;
-      if (restartRequestInFlightRef.current) return;
-      restartRequestInFlightRef.current = true;
+      if (!restartBackoffRef.current.tryAcquire()) return;
       socket.emit("ice-restart-request", { appointmentId });
       logVideoEvent("ice_restart_requested_from_peer", {
         connectionState: pc.connectionState,
         iceConnectionState: pc.iceConnectionState,
       });
-      window.setTimeout(() => {
-        restartRequestInFlightRef.current = false;
-      }, ICE_RESTART_DELAY_MS * 2);
     };
 
     const scheduleIceRestart = () => {
@@ -3228,7 +3229,7 @@ export default function VideoCall() {
       clearTimeout(iceRestartTimerRef.current);
       clearTimeout(connectionFailTimerRef.current);
       iceRestartTimerRef.current = null;
-      restartRequestInFlightRef.current = false;
+      restartBackoffRef.current.reset();
       iceRecoveryAttemptsRef.current = 0;
       pendingOfferSentAtRef.current = 0;
       peerPresentRef.current = true;
@@ -3971,6 +3972,7 @@ export default function VideoCall() {
     };
 
     const handlePeerJoined = (payload = {}) => {
+      restartBackoffRef.current.reset();
       // peer-joined is only echoed to a socket the server let into the room.
       joinDenyAttemptRef.current = 0;
       setJoinRetryPhase(null);
@@ -4181,7 +4183,7 @@ export default function VideoCall() {
       makingOfferRef.current = false;
       ignoreOfferRef.current = false;
       settingRemoteAnswerPendingRef.current = false;
-      restartRequestInFlightRef.current = false;
+      restartBackoffRef.current.reset();
       iceRecoveryAttemptsRef.current = 0;
       stopStatsCollection();
       // A genuinely new peer session starts fresh: stale state here would
@@ -4426,6 +4428,7 @@ export default function VideoCall() {
     // join to "connect" and only does its own follow-up below.
     const handleSocketReconnect = () => {
       if (!mounted) return;
+      restartBackoffRef.current.reset();
       logVideoEvent("socket_reconnected_during_call", {
         inCall: inCallRef.current,
         role: isDoctor ? "doctor" : "user",
@@ -4499,6 +4502,7 @@ export default function VideoCall() {
     const verifyConnectionAfterVisible = async () => {
       if (verifyingVisibilityRef.current || !peerPresentRef.current) return;
       verifyingVisibilityRef.current = true;
+      restartBackoffRef.current.reset();
       try {
         if (!mounted || !peerPresentRef.current || pc.signalingState === "closed")
           return;
@@ -4768,7 +4772,6 @@ export default function VideoCall() {
       iceRestartTimerRef.current = null;
       ignoreOfferResetTimerRef.current = null;
       reconnectStallTimerRef.current = null;
-      restartRequestInFlightRef.current = false;
       // A manual forceReconnect() also tears this effect down and re-runs
       // it (via reconnectNonce), but that's not a real departure — skip the
       // leave-room emit so the peer doesn't see a spurious "left the call".

@@ -764,6 +764,7 @@ const directChatLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 const directSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 6 });
 const directIceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 60 });
 const directIceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
+const directManualRetryLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 // Matches cameraStateLimiter above — same event shape, same room-scoped relay.
 const directMediaStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 // Fired at most once or twice per side per call (connect, maybe a
@@ -805,6 +806,7 @@ const SOCKET_LIMITERS = [
   directSdpLimiter,
   directIceCandidateLimiter,
   directIceRestartLimiter,
+  directManualRetryLimiter,
   directMediaStateLimiter,
   directCallConnectedLimiter,
   directCallStatsLimiter,
@@ -3189,13 +3191,20 @@ io.on("connection", (socket) => {
     if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-ice-restart-request", "not_in_room");
     if (!directIceRestartLimiter.allow(socket.id)) return rejectSignal(socket, "direct-ice-restart-request", "rate_limited");
     const meta = directRoomSockets.get(socket.id);
-    // The client-visible signal that a Retry/reconnect is under way — a
-    // manual "Retry" tap (forceReconnect) asks the polite peer to restart
-    // ICE exactly this way, so this is the one reliable server-side trace
-    // of a retry happening at all (the WebRTC offer/answer/ICE renegotiation
-    // itself never touches the signaling server's own logDirectRoom hooks).
-    logDirectRoom("retry", { roomId, guestId: meta?.guestId, socketId: socket.id });
+    // Sent only by the client's own recovery, never by a Retry tap (see
+    // "direct-manual-retry"). It is the server-side trace that a connection is
+    // struggling: the renegotiation itself never reaches logDirectRoom.
+    logDirectRoom("auto_reconnect", { roomId, guestId: meta?.guestId, socketId: socket.id });
     socket.to(directRoomName(roomId)).emit("direct-ice-restart-request");
+  });
+
+  // A person tapped Retry. Recorded only; nothing is relayed to the peer.
+  socket.on("direct-manual-retry", ({ roomId } = {}) => {
+    if (!roomId) return rejectSignal(socket, "direct-manual-retry", "invalid_payload");
+    if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-manual-retry", "not_in_room");
+    if (!directManualRetryLimiter.allow(socket.id)) return rejectSignal(socket, "direct-manual-retry", "rate_limited");
+    const meta = directRoomSockets.get(socket.id);
+    logDirectRoom("manual_retry", { roomId, guestId: meta?.guestId, socketId: socket.id });
   });
 
   // Relays a guest's mic/camera on-off state to the other participant —

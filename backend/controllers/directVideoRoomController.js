@@ -551,8 +551,13 @@ function describeEvent(event) {
       return `${who} turned the ${event.detail?.isMicOff ? "mic off" : "mic on"}, camera ${event.detail?.isCamOff ? "off" : "on"}`;
     case "network_quality":
       return `${who}'s connection quality: ${event.detail?.quality || "unknown"}`;
-    case "retry":
+    case "manual_retry":
       return `${who} tapped Retry to reconnect`;
+    case "auto_reconnect":
+      return `${who}'s connection tried to reconnect automatically`;
+    // Older entries: recorded for every reconnect request, tapped or not.
+    case "retry":
+      return `${who} reconnect attempt`;
     case "connected":
       return `Call connected`;
     case "admin_extend_link":

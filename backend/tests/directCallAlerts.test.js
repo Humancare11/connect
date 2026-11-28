@@ -68,23 +68,49 @@ describe("directCallAlerts", () => {
     assert.equal(created.length, 0);
   });
 
-  test("3 retries within the window raise repeated_retries exactly once", async () => {
+  test("3 Retry taps within the window raise repeated_retries exactly once", async () => {
     const { AlertModel, sendEmailFn, created } = makeFakes();
     let clock = 1_000_000;
     const engine = createAlertEngine({ AlertModel, sendEmailFn, now: () => clock, retryWindowMs: 5000 });
 
-    engine.onEvent("retry", { roomId: "room1" });
-    clock += 1000;
-    engine.onEvent("retry", { roomId: "room1" });
-    clock += 1000;
-    engine.onEvent("retry", { roomId: "room1" }); // 3rd within the 5s window
-    clock += 1000;
-    engine.onEvent("retry", { roomId: "room1" }); // 4th — already alerted, debounced
+    for (let i = 0; i < 4; i += 1) { // the 4th is already alerted, debounced
+      engine.onEvent("manual_retry", { roomId: "room1" });
+      clock += 1000;
+    }
     await new Promise((r) => setImmediate(r));
 
     assert.equal(created.length, 1);
     assert.equal(created[0].type, "repeated_retries");
-    assert.equal(created[0].detail.retryCount, 3);
+    assert.equal(created[0].message, "Retry tapped 3 times within 5 minutes.");
+    assert.deepEqual(created[0].detail, { retryCount: 3, trigger: "manual" });
+  });
+
+  test("automatic reconnects alert only at 6 within 5 minutes, with their own wording", async () => {
+    const { AlertModel, sendEmailFn, created } = makeFakes();
+    let clock = 1_000_000;
+    const engine = createAlertEngine({ AlertModel, sendEmailFn, now: () => clock });
+
+    for (let i = 0; i < 5; i += 1) {
+      engine.onEvent("auto_reconnect", { roomId: "room1" });
+      clock += 1000;
+    }
+    await new Promise((r) => setImmediate(r));
+    assert.equal(created.length, 0, "5 automatic attempts are not enough");
+
+    engine.onEvent("auto_reconnect", { roomId: "room1" });
+    await new Promise((r) => setImmediate(r));
+    assert.equal(created.length, 1);
+    assert.equal(created[0].message, "6 automatic reconnect attempts within 5 minutes.");
+    assert.deepEqual(created[0].detail, { retryCount: 6, trigger: "automatic" });
+  });
+
+  test("taps and automatic attempts are counted separately", async () => {
+    const { AlertModel, sendEmailFn, created } = makeFakes();
+    const engine = createAlertEngine({ AlertModel, sendEmailFn });
+    for (let i = 0; i < 2; i += 1) engine.onEvent("manual_retry", { roomId: "room1" });
+    for (let i = 0; i < 5; i += 1) engine.onEvent("auto_reconnect", { roomId: "room1" });
+    await new Promise((r) => setImmediate(r));
+    assert.equal(created.length, 0);
   });
 
   test("retries spread outside the window never reach the threshold", async () => {
@@ -92,11 +118,10 @@ describe("directCallAlerts", () => {
     let clock = 1_000_000;
     const engine = createAlertEngine({ AlertModel, sendEmailFn, now: () => clock, retryWindowMs: 5000 });
 
-    engine.onEvent("retry", { roomId: "room1" });
-    clock += 6000; // outside the 5s window — the first retry ages out
-    engine.onEvent("retry", { roomId: "room1" });
-    clock += 6000;
-    engine.onEvent("retry", { roomId: "room1" });
+    for (let i = 0; i < 3; i += 1) {
+      engine.onEvent("manual_retry", { roomId: "room1" });
+      clock += 6000; // each earlier tap has aged out of the 5s window
+    }
     await new Promise((r) => setImmediate(r));
 
     assert.equal(created.length, 0);

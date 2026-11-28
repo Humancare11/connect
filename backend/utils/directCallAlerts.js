@@ -7,7 +7,8 @@
 // best-effort admin notification, not a source of truth.
 const DEBOUNCE_MS = 10 * 60 * 1000; // max one alert per room per 10 minutes
 const RETRY_WINDOW_MS = 5 * 60 * 1000;
-const RETRY_THRESHOLD = 3;
+const RETRY_THRESHOLD = 3; // taps on the Retry button
+const AUTO_RETRY_THRESHOLD = 6; // reconnect requests the client sends by itself
 const NEVER_CONNECTED_MS = 60 * 1000;
 
 // ON in dev/e2e by default. In production, ON only when there's somewhere to
@@ -44,10 +45,12 @@ function createAlertEngine({
   debounceMs = DEBOUNCE_MS,
   retryWindowMs = RETRY_WINDOW_MS,
   retryThreshold = RETRY_THRESHOLD,
+  autoRetryThreshold = AUTO_RETRY_THRESHOLD,
   neverConnectedMs = NEVER_CONNECTED_MS,
 } = {}) {
   const lastAlertAtByRoom = new Map();
-  const retryTimestampsByRoom = new Map();
+  const retryTimestampsByRoom = new Map(); // manual taps
+  const autoRetryTimestampsByRoom = new Map();
   const connectTimerByRoom = new Map();
   const connectedRooms = new Set();
 
@@ -113,6 +116,7 @@ function createAlertEngine({
   function cleanupRoom(roomId) {
     lastAlertAtByRoom.delete(roomId);
     retryTimestampsByRoom.delete(roomId);
+    autoRetryTimestampsByRoom.delete(roomId);
     connectedRooms.delete(roomId);
     clearNeverConnectedTimer(roomId);
   }
@@ -135,18 +139,22 @@ function createAlertEngine({
         return;
       }
 
-      if (type === "retry") {
-        const timestamps = (retryTimestampsByRoom.get(roomId) || []).filter(
+      if (type === "manual_retry" || type === "auto_reconnect") {
+        const manual = type === "manual_retry";
+        const byRoom = manual ? retryTimestampsByRoom : autoRetryTimestampsByRoom;
+        const timestamps = (byRoom.get(roomId) || []).filter(
           (t) => now() - t < retryWindowMs,
         );
         timestamps.push(now());
-        retryTimestampsByRoom.set(roomId, timestamps);
-        if (timestamps.length >= retryThreshold) {
+        byRoom.set(roomId, timestamps);
+        if (timestamps.length >= (manual ? retryThreshold : autoRetryThreshold)) {
           void raise("repeated_retries", {
             roomId,
             doctorName,
-            message: `${timestamps.length} reconnect attempts within 5 minutes.`,
-            detail: { retryCount: timestamps.length },
+            message: manual
+              ? `Retry tapped ${timestamps.length} times within 5 minutes.`
+              : `${timestamps.length} automatic reconnect attempts within 5 minutes.`,
+            detail: { retryCount: timestamps.length, trigger: manual ? "manual" : "automatic" },
           });
         }
         return;

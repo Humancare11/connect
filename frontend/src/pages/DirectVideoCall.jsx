@@ -16,6 +16,7 @@ import HumancareLogo from "../assets/VideoCallingImage.png";
 import { retryDebugLog, retryDebugPollInboundVideoStats } from "../utils/retryDebug";
 import { isRetryableDirectCode, nextJoinRetryDelay } from "../utils/roomDenyRetry";
 import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
+import { createRestartRequestBackoff } from "../utils/retryBackoff";
 import { probeSocketAlive } from "../utils/socketLiveness";
 import { useSlowConnectNotice } from "../utils/slowConnectNotice";
 import { createLocalMediaRecovery, hasEndedTrack } from "../utils/localMediaRecovery";
@@ -709,7 +710,8 @@ export default function DirectVideoCall() {
   const iceRestartTimerRef = useRef(null);
   const iceRecoveryAttemptsRef = useRef(0);
   const lastIceRecoveryAtRef = useRef(0);
-  const restartRequestInFlightRef = useRef(false);
+  // Paces "restart ICE" requests to the peer — see utils/retryBackoff.js.
+  const restartBackoffRef = useRef(createRestartRequestBackoff());
   const hasConnectedOnceRef = useRef(false);
   // Set on a disconnected/failed transition after the call has connected at
   // least once, and consumed the next time the connection reports healthy
@@ -907,6 +909,7 @@ export default function DirectVideoCall() {
           socket.connect();
         });
       }
+      restartBackoffRef.current.reset();
       kickIceRecoveryRef.current();
       // Also give the remote-video renderer a chance to recover in case the
       // PeerConnection never actually left "connected" throughout — see
@@ -1913,7 +1916,7 @@ export default function DirectVideoCall() {
         clearTimeout(connectionFailTimerRef.current);
         connectionFailTimerRef.current = null;
         iceRecoveryAttemptsRef.current = 0;
-        restartRequestInFlightRef.current = false;
+        restartBackoffRef.current.reset();
         // The pc we're about to build has no prior negotiation — nothing
         // meaningful to compare a future offer's fingerprint against.
         // Clearing this (rather than leaving the old peer's fingerprint in
@@ -2340,6 +2343,7 @@ export default function DirectVideoCall() {
 
     const handlePeerJoined = ({ name, resumedCall } = {}) => {
       if (!mountedRef.current) return;
+      restartBackoffRef.current.reset();
       peerPresentRef.current = true;
       setPeerLeftNotice(false);
       setPeerName(name || "");
@@ -2532,7 +2536,7 @@ export default function DirectVideoCall() {
       pendingOfferIdRef.current = null;
       pendingRemoteOfferRef.current = null;
       pendingCandidatesRef.current = [];
-      restartRequestInFlightRef.current = false;
+      restartBackoffRef.current.reset();
       iceRecoveryAttemptsRef.current = 0;
       makingOfferRef.current = false;
       ignoreOfferRef.current = false;
@@ -2713,12 +2717,8 @@ export default function DirectVideoCall() {
     };
 
     const requestPeerIceRestart = () => {
-      if (restartRequestInFlightRef.current) return;
-      restartRequestInFlightRef.current = true;
+      if (!restartBackoffRef.current.tryAcquire()) return;
       socket.emit("direct-ice-restart-request", { roomId });
-      window.setTimeout(() => {
-        restartRequestInFlightRef.current = false;
-      }, ICE_RESTART_DELAY_MS * 2);
     };
 
     // Self-heals a degraded/dropped connection instead of only waiting on
@@ -2851,7 +2851,7 @@ export default function DirectVideoCall() {
       clearTimeout(connectionFailTimerRef.current);
       connectionFailTimerRef.current = null;
       iceRecoveryAttemptsRef.current = 0;
-      restartRequestInFlightRef.current = false;
+      restartBackoffRef.current.reset();
       clearReconnectStallWatch();
       // A pending orphaned-answer recheck (handleAnswer) is moot once the pc
       // is actually healthy again.
@@ -3427,6 +3427,7 @@ export default function DirectVideoCall() {
     // handleSocketReconnect.
     const handleSocketReconnect = () => {
       if (!mountedRef.current) return;
+      restartBackoffRef.current.reset();
       window.setTimeout(() => {
         const pc = pcRef.current;
         if (
@@ -3503,6 +3504,7 @@ export default function DirectVideoCall() {
       }
       if (verifyingVisibilityRef.current) return;
       verifyingVisibilityRef.current = true;
+      restartBackoffRef.current.reset();
       try {
         const pc = pcRef.current;
         if (!pc || pc.signalingState === "closed") return;
@@ -3998,6 +4000,7 @@ export default function DirectVideoCall() {
     manualReconnectCooldownTimerRef.current = window.setTimeout(releaseManualReconnectGuard, 5000);
 
     if (socket.connected) {
+      socket.emit("direct-manual-retry", { roomId });
       // The actual teardown/rebuild is delegated to requestPcRebuild
       // (manual: true) — it bypasses the automatic-rebuild rate limit and,
       // if an automatic rebuild happens to already be in flight, preempts
