@@ -55,6 +55,7 @@ const { createPresenceDownTracker } = require("./utils/presenceDown");
 const CallReport = require("./models/CallReport");
 const { createCallReportRecorder } = require("./utils/callReportRecorder");
 const { appClientMemory } = require("./utils/appClientMemory");
+const { sanitizeCapabilities } = require("./utils/clientCapabilities");
 const { sanitizeTurnHost } = require("./utils/turnHost");
 const { RELAY_PROTOCOLS, ICE_TYPES } = require("./utils/callStatsAggregator");
 const { describeJoinClient, describeClientLabel, observeUserAgent } = require("./utils/clientDescriptor");
@@ -1023,13 +1024,6 @@ function hasOtherUserInRoom(existingSocketIds, excludeUserId) {
     }
   }
   return false;
-}
-
-// Only known boolean flags are accepted from the client; anything missing or
-// malformed reads as "not supported" so an old (or hostile) client can't
-// opt itself into behavior it doesn't have.
-function sanitizeCapabilities(raw) {
-  return { peerRebuild: Boolean(raw && raw.peerRebuild === true) };
 }
 
 // Capabilities of the participant in `roomSocketIds` who is NOT

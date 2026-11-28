@@ -20,6 +20,12 @@ import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTi
 import { isTerminalDenyReason, nextJoinRetryDelay } from "../utils/roomDenyRetry";
 import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
 import { createRestartRequestBackoff } from "../utils/retryBackoff";
+import { flagEnabled } from "../utils/featureFlags";
+import {
+  OWN_RESTART_MIN_GAP_MS,
+  doctorRestartDecision,
+  doctorRestartsItself,
+} from "../utils/doctorIceRestart";
 import { probeSocketAlive } from "../utils/socketLiveness";
 import { buildCallStatsSample } from "../utils/callStatsSample";
 import { useSlowConnectNotice } from "../utils/slowConnectNotice";
@@ -568,7 +574,8 @@ const REPORTED_VIDEO_EVENTS = {
   ice_restart_offer_sent: "ice_restart",
   ice_connection_failed: "ice_failed",
 };
-const WEB_CLIENT_CAPABILITIES = { peerRebuild: true };
+const WEB_CLIENT_CAPABILITIES = { peerRebuild: true, iceRestart: true };
+const DOCTOR_ICE_RESTART_ENABLED = flagEnabled(import.meta.env.VITE_RTC_DOCTOR_ICE_RESTART);
 // Doctor-side downgrade for a peer that lacks peerRebuild (an older mobile
 // build): instead of rebuilding the doctor's pc — which that peer could not
 // follow, since it can't apply an answer carrying a new DTLS fingerprint —
@@ -1096,6 +1103,9 @@ export default function VideoCall() {
   // The offerId of the most recent remote offer we accepted — echoed back
   // in our video-answer so the offerer can correlate it (see below).
   const lastReceivedOfferIdRef = useRef(null);
+  // For the doctor-side ICE restart (utils/doctorIceRestart.js).
+  const lastPeerOfferAtRef = useRef(0);
+  const lastOwnRestartAtRef = useRef(0);
   // Correlates a video-answer back to the specific video-offer it's meant to
   // answer. Socket.IO's connectionStateRecovery (server.js) replays buffered
   // room events across a brief reconnect — under some timings that can
@@ -2913,7 +2923,24 @@ export default function VideoCall() {
             iceRecoveryAttemptsRef.current = 0;
           }
 
-          if (iceRecoveryAttemptsRef.current >= ICE_MAX_RECOVERY_ATTEMPTS) {
+          const ownRestart = doctorRestartsItself({
+            enabled: DOCTOR_ICE_RESTART_ENABLED,
+            isDoctor,
+            peerCapabilities: peerCapabilitiesRef.current,
+          });
+          const ownRestartWaits =
+            ownRestart &&
+            doctorRestartDecision({
+              now,
+              lastPeerOfferAt: lastPeerOfferAtRef.current,
+              lastOwnRestartAt: lastOwnRestartAtRef.current,
+              signalingState: pc.signalingState,
+              makingOffer: makingOfferRef.current,
+            }) === "wait";
+
+          if (ownRestartWaits) {
+            // Try again on the next tick.
+          } else if (iceRecoveryAttemptsRef.current >= ICE_MAX_RECOVERY_ATTEMPTS) {
             logVideoEvent("ice_recovery_exhausted", {
               connectionState: pc.connectionState,
               iceConnectionState: pc.iceConnectionState,
@@ -2929,7 +2956,10 @@ export default function VideoCall() {
               iceConnectionState: pc.iceConnectionState,
             });
 
-            if (isDoctor) {
+            if (ownRestart) {
+              lastOwnRestartAtRef.current = now;
+              await createAndSendOffer({ iceRestart: true });
+            } else if (isDoctor) {
               requestPeerIceRestart();
             } else {
               await createAndSendOffer({ iceRestart: true });
@@ -3463,6 +3493,7 @@ export default function VideoCall() {
     // Socket handlers
     const handleOffer = async ({ offer, offerId: incomingOfferId }) => {
       if (!offer || !mounted) return;
+      lastPeerOfferAtRef.current = Date.now();
       // An offer means the peer is here and negotiating — keep the recovery
       // machinery armed for them.
       peerPresentRef.current = true;
@@ -3927,6 +3958,13 @@ export default function VideoCall() {
         pc.iceConnectionState === "completed"
       )
         return;
+      const ownRestart = doctorRestartsItself({
+        enabled: DOCTOR_ICE_RESTART_ENABLED,
+        isDoctor,
+        peerCapabilities: peerCapabilitiesRef.current,
+      });
+      if (ownRestart && Date.now() - lastOwnRestartAtRef.current < OWN_RESTART_MIN_GAP_MS) return;
+      if (ownRestart) lastOwnRestartAtRef.current = Date.now();
       logger.info("Peer requested ICE restart.");
       logVideoEvent("ice_restart_request_received", {
         connectionState: pc.connectionState,
@@ -4017,7 +4055,10 @@ export default function VideoCall() {
       if (peerCapabilities !== undefined) {
         peerCapabilitiesRef.current =
           peerCapabilities && typeof peerCapabilities === "object"
-            ? { peerRebuild: peerCapabilities.peerRebuild === true }
+            ? {
+                peerRebuild: peerCapabilities.peerRebuild === true,
+                iceRestart: peerCapabilities.iceRestart === true,
+              }
             : null;
       } else if (peerCapabilitiesRef.current === null) {
         peerCapabilitiesRef.current = { peerRebuild: false };
